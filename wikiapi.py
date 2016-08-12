@@ -5,8 +5,9 @@
 #
 from commons import *
 
+
 class wikiconnect:
-	from constans import ask_save_prompts
+	from commons import ask_save_prompts
 	global URLapi, URLindex, URLhtml
 	# URLapi = 'https://ru.wikipedia.org/w/api.php'
 	# URLindex = 'https://ru.wikipedia.org/w/index.php'
@@ -26,14 +27,14 @@ class wikiconnect:
 
 	def login(self):
 		# Login request
-		payload = {'action': 'query', 'format': 'json', 'utf8': '', 'meta': 'tokens', 'type': 'login'}
-		r1 = requests.post(self.URLapi, data=payload)
+		GETparameters = {'action': 'query', 'format': 'json', 'utf8': '', 'meta': 'tokens', 'type': 'login'}
+		r1 = requests.post(self.URLapi, data=GETparameters)
 
 		# login confirm
 		login_token = r1.json()['query']['tokens']['logintoken']
-		payload = {'action':     'login', 'format': 'json', 'utf8': '', 'lgname': self.__username,
+		GETparameters = {'action':     'login', 'format': 'json', 'utf8': '', 'lgname': self.__username,
 				   'lgpassword': self.__password, 'lgtoken': login_token}
-		r2 = requests.post(self.URLapi, data=payload, cookies=r1.cookies)
+		r2 = requests.post(self.URLapi, data=GETparameters, cookies=r1.cookies)
 
 		# get edit token2
 		params3 = '?format=json&action=query&meta=tokens&continue='
@@ -55,21 +56,22 @@ class wikiapi_works(wikiconnect):
 		self.title = title
 
 	def get_wikicode(self):
-		payload = {'action': 'raw', 'title': self.title}
-		r4 = requests.post(self.URLindex, data=payload)
+		GETparameters = {'action': 'raw', 'title': self.title}
+		r4 = requests.post(self.URLindex, data=GETparameters)
 		if not r4.text:
 			print(r4.text)
 			input('Не получен текст страницы: {}'.format(self.title))
 			return False
 		else:
+			self.wikicode = r4.text
 			return r4.text
 
-	def save(self, text, mode='', summary = ''):
+	def save(self, text, mode='', summary=''):
 		# save action
 		while True:
 			parameters = {'action':       'edit', 'title': self.title, 'summary': summary,
-					   'contentmodel': 'wikitext', 'format': 'json', 'utf8': '', 'bot': True,
-					   'assert':       'user', 'token': self.edit_token}
+						  'contentmodel': 'wikitext', 'format': 'json', 'utf8': '', 'bot': True,
+						  'assert':       'user', 'token': self.edit_token}
 
 			# Селектор: заменять текст, добавлять в начало, в конец
 			if mode == 'appendtext':
@@ -104,7 +106,7 @@ class wikiapi_works(wikiconnect):
 				return r4.text
 
 	def replace_text(self, replacetext_old, replacetext_new, summary=''):
-		text = self.get_wikicode()  # text = get_wikicodet(title)
+		text = self.get_wikicode()
 		if not text: return
 		if text.find(replacetext_old):
 			text = text.replace(replacetext_old, replacetext_new)
@@ -112,12 +114,12 @@ class wikiapi_works(wikiconnect):
 			print(result)
 
 	def replace_text_regexp(self, regexp_compiled, replace, summary=''):
-		page = self.get_wikicode()  # text = get_wikicodet(title)
-		if not page_wikicode: return
-		searched = regexp_compiled.search(page)
+		text = self.get_wikicode()
+		if not text: return
+		searched = regexp_compiled.search(text)
 		if searched:
 			print('replace_text')
-			newtext = regexp_compiled.sub(replace, page)
+			newtext = regexp_compiled.sub(replace, text)
 			result = self.save(newtext, 'replace', summary)
 			print(result)
 
@@ -146,11 +148,33 @@ class wikiapi_works(wikiconnect):
 	# 		print('ok')
 
 
+	# ALPHA VERSION   - not works
+	def remove_tpl(self, tpl_name):
+		import mwparserfromhell
+
+		if not self.wikicode:
+			self.get_wikicode()
+
+		# for template in wikicode.filter_templates():
+		# 	if template.name.matches(tpl_name) and findLink(template, link2remove):
+		#
+		# list_transcludes = readlines_file_in_set('list_uses_warningtpl.txt')
+		# listpages_for_remove = list_transcludes - err_refs
+		# remove_template(tpl_name, listpages_for_remove)
+
+	def remove_tpl_from_pages(tpl_name, list_pages):
+		for title in list_pages:
+			title.remove_tpl(tpl_name)
+
+
+# end class definition --------------
+
+
 def page_get_html(title):
 	global PYTHON_VERSION, headers, URLhtml
 	# title = self.title
 	# data = {"title": title, "action": "render"}  # html
-	payload = {"action": "render"}  # html
+	GETparameters = {"action": "render"}  # html
 	if PYTHON_VERSION == 3:
 		pageurl = URLhtml + quote(title)  # + '?action=render'  # python 3
 	else:
@@ -163,12 +187,25 @@ def page_get_html(title):
 	# return r
 	# ---
 	# r = requests.get(API_URL, urlencode(data, quote_via=quote), headers=headers_)
-	r = requests.get(pageurl, data=payload, headers=headers)  # cached_html
+	r = requests.get(pageurl, data=GETparameters, headers=headers)  # cached_html
 	return r.text
 
 
-def page_html_parsed(title):
+def page_html_parse(title):
 	from lxml import html
 	p_html = page_get_html(title)
 	p_html_parsed = html.fromstring(p_html)
 	return p_html_parsed
+
+
+def get_list_transcludes_of_tpls(sfns_like_names):
+	if isinstance(sfns_like_names, str):
+		sfns_like_names = [sfns_like_names]
+	list = set()
+	for sfntpl in sfns_like_names:
+		url = 'http://tools.wmflabs.org/ruwikisource/WDBquery_transcludes_template/?lang=ru&format=json&template=' + quote(sfntpl)
+		# GETparameters = {"action": "render"}  # html
+		GETparameters = {}
+		r = requests.get(url, data=GETparameters)
+		list = list.union(r.json())
+	return list

@@ -19,6 +19,7 @@ import re
 # from grab import Grab
 from commons import *
 import wikiapi
+from make_list_pages_with_referrors import *
 
 warning_tpl_name = 'ошибки сносок'
 
@@ -34,117 +35,22 @@ list_transcludes_of_warningtemple = 'list_uses_warningtpl.txt'
 # filename = 'sfn0.txt'
 file_listpages = 'sfn1.txt'
 
-list_pages_with_referrors = {}
-err_refs = set()
+# list_pages_with_referrors = {}
 
-# list_tpls = (['sfn', 'sfn0'])  # шаблоны
-# list_tpls = (['Вершины Каменного Пояса'])
-
-
-def remove_template(tpl, listpages):
-	pass
+# tpls_like_sfns_names = (['sfn', 'sfn0'])  # шаблоны
+tpls_like_sfns_names = 'Вершины Каменного Пояса'
 
 
-def remove_tpl_from_changed_pages(warning_tpl_name, ):
-	global err_refs
+def remove_tpl_from_changed_pages(tplname, list_with_err):
+	global list_pages_with_referrors
 	list_transcludes = readlines_file_in_set('list_uses_warningtpl.txt')
-	listpages_for_remove = list_transcludes - err_refs
-	remove_template(warning_tpl_name, listpages_for_remove)
-
-
-def collect_refs(title, parsed_html, pages_count_cur):
-	global list_pages_with_referrors, err_refs
-	list_sfns = set()
-	list_refs = set()
-	ref_calls = {}
-
-	# for li in parsed_html.cssselect('li[href*="CITEREF"]'):
-	for eref in parsed_html.cssselect('span.reference-text a[href*="CITEREF"]'):
-		href = eref.get('href')
-		pos = href.find('CITEREF')
-		if pos >= 0:
-			href_cut = href[pos:]
-			list_sfns.add(href_cut)
-			# link_to_sfn ссылка на sfn-сноску
-			link_to_sfn = parsed_html.xpath("//li[@id]/span/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(href=href, link_to_sfn='cite_note'))[0]
-			ref_calls[href_cut] = {'text': eref.text, 'link_to_sfn': str(link_to_sfn)}
-	# / parent::
-	for ref in parsed_html.xpath('//span[@class="citation"]/@id'):
-		pos = ref.find('CITEREF')
-		if pos >= 0:
-			list_refs.add(ref[pos:])
-
-		# for undefined_ref in parsed_html.cssselect('li span.mw-ext-cite-error'):
-		# for undefined_ref in parsed_html.cssselect('span.error'):
-		# for undefined_ref in parsed_html.cssselect('span').text:
-		# t = [undefined_ref for undefined_ref in parsed_html.xpath('//li[@id=cite_note-sol5_2_3-35]')]
-		# t = parsed_html.cssselect('li')
-		# t = [undefined_ref for undefined_ref in parsed_html.cssselect('li#cite_note-sol5_2_3-35')]
-		# t = [undefined_ref for undefined_ref in parsed_html.xpath('//span/text')]
-		# for undefined_ref in parsed_html.xpath('//span').text:
-		# if 'Ошибка в сносках' in undefined_ref.text
-		#
-		# pos = ref.find('CITEREF')
-		# if pos >= 0:
-		# 	list_refs.add(ref[pos:])
-
-		# < sup		id = "cite_ref-1"		class ="reference" >
-
-	# print('list_sfns:')
-	# print(list_sfns)
-	# print('list_refs:')
-	# print(list_refs)
-	err_refs = list_sfns - list_refs
-	# Если в статье есть некорректные сноски
-	if err_refs:
-		errrefs = {}
-		for citeref in err_refs:
-			errrefs[citeref] = ref_calls[citeref]
-		list_pages_with_referrors[title] = errrefs
-		print(u'Страница № {}: {}'.format(pages_count_cur, title))
-		print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(list_pages_with_referrors[title]))
-
-
-def make_list_pages_with_referrors(file_listpages):
-	arr_listpages = readlines_file_in_set(file_listpages)
-	# self.arr_listpages = ['Семёнов, Григорий Михайлович']   # тест отдельных страниц
-
-	pages_count = len(arr_listpages)
-	print('Всего страниц: {}.'.format(pages_count))
-	pages_count_cur = pages_count
-
-	for title in arr_listpages:
-		# html из url
-		# page = wikiapi.wikiapi_works(title)
-		# page_wikicode = page.html_parsed()
-		parsed_html = wikiapi.page_html_parsed(title)
-		# # connect = wikiapi.wikiconnect()
-		# page = wikiapi.wikiapi_works(self.title)
-		# parsed_html = html.fromstring(page.get_html())
-
-		# html из файла для тестов
-		# htmlpage = open('test_html.html', encoding='utf-8').read()
-		# parsed_html = html.fromstring(htmlpage)
-
-		# self.list_pages_with_referrors[title] = self.collect_refs(title, pages_count_cur)
-		collect_refs(title, parsed_html, pages_count_cur)
-		pages_count_cur = pages_count_cur - 1
-
-	# for ref in ref_calls:
-	# parsed_html.xpath('//a/@href=' + ref_call)
-	# print('Ошибочные сноски: <a href={}>{}</a>)'.format(ref[0], ref[1]))
-
-
-	# запись исходной страниц из url в файл. urlopen берёт в byte-формате, request в str-формате
-	# filename = 'pagecontent.txt'
-	# f = open(filename, 'w', encoding='utf-8')
-	# # f = open(filename, 'bw')
-	# f.write(pagecontent)
-	# f.close()
+	list_with_err = set([title for title in list_pages_with_referrors])
+	listpages_for_remove = list_transcludes - list_with_err
+	remove_tpl_from_pages(tplname, listpages_for_remove)
 
 
 
-make_list_pages_with_referrors(file_listpages)
+list_pages_with_referrors = make_list_pages_with_referrors(tpls_like_sfns_names)
 
 print('list_pages_with_referrors')
 print(list_pages_with_referrors)
