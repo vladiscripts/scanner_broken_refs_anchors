@@ -158,7 +158,7 @@ class wikiapi_works(wikiconnect):
 		# for template in wikicode.filter_templates():
 		# 	if template.name.matches(tpl_name) and findLink(template, link2remove):
 		#
-		# list_transcludes = readlines_file_in_set('list_uses_warningtpl.txt')
+		# list_transcludes = file_readlines_in_set('list_uses_warningtpl.txt')
 		# listpages_for_remove = list_transcludes - err_refs
 		# remove_template(tpl_name, listpages_for_remove)
 

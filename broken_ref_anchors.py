@@ -21,36 +21,42 @@ from commons import *
 import wikiapi
 from make_list_pages_with_referrors import *
 
-warning_tpl_name = 'ошибки сносок'
 
-"""
-получить список включений шаблонов сносок
-сделать список
-получить список включений шаблона
-удалить шаблон из разницы = список включений шаблона - новый список страниц с проблемами
-"""
+name_of_warning_tpl_ = 'ошибки сносок'
+
+names_of_tpls_like_sfns = (['sfn', 'sfn0', 'Sfn-1',
+ 'Harvard citation', 'Harv',
+'Harvard citation no brackets', 'Harvnb', 'Harvsp',
+'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol'])
+# не работает с шаблонами не создающими ссылки 'CITEREF':  '-1'
+# names_of_tpls_like_sfns = 'Вершины Каменного Пояса'
+
 list_transcludes_of_warningtemple = 'list_uses_warningtpl.txt'
 
 # filename = r"d:\home\scripts.my\4wiki\\" + filename
 # filename = 'sfn0.txt'
-file_listpages = 'sfn1.txt'
+filename_listpages_errref = 'file_listpages_errref.txt'
+filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 
 # list_pages_with_referrors = {}
-
-# tpls_like_sfns_names = (['sfn', 'sfn0'])  # шаблоны
-tpls_like_sfns_names = 'Вершины Каменного Пояса'
 
 
 def remove_tpl_from_changed_pages(tplname, list_with_err):
 	global list_pages_with_referrors
-	list_transcludes = readlines_file_in_set('list_uses_warningtpl.txt')
+	list_transcludes = file_readlines_in_set('list_uses_warningtpl.txt')
 	list_with_err = set([title for title in list_pages_with_referrors])
 	listpages_for_remove = list_transcludes - list_with_err
 	remove_tpl_from_pages(tplname, listpages_for_remove)
 
 
 
-list_pages_with_referrors = make_list_pages_with_referrors(tpls_like_sfns_names)
+referrors = make_listpage_referrors(names_of_tpls_like_sfns, filename_tpls_transcludes)
+list_transcludes = referrors.list_pages_transcludes_of_tpls
+list_pages_with_referrors = referrors.list_pages_with_referrors
+pass
+
+if len(list_pages_with_referrors) > 0:
+	file_savelines(filename_tpls_transcludes, list_pages_with_referrors)
 
 print('list_pages_with_referrors')
 print(list_pages_with_referrors)
