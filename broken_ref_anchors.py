@@ -51,12 +51,12 @@ def remove_tpl_from_changed_pages(tplname, list_with_err):
 
 
 referrors = make_listpage_referrors(names_of_tpls_like_sfns, filename_tpls_transcludes)
-list_transcludes = referrors.list_pages_transcludes_of_tpls
+list_transcludes = referrors.list_transcludes
 list_pages_with_referrors = referrors.list_pages_with_referrors
 pass
 
 if len(list_pages_with_referrors) > 0:
-	file_savelines(filename_tpls_transcludes, list_pages_with_referrors)
+	file_savelines(filename_listpages_errref, list_pages_with_referrors)
 
 print('list_pages_with_referrors')
 print(list_pages_with_referrors)
