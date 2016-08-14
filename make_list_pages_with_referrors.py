@@ -3,7 +3,9 @@
 # author: https://github.com/vladiscripts
 #
 # import wikiapi
+# from lxml import cssselect
 from config import *
+
 
 class make_listpage_referrors:
 	list_transcludes = []
@@ -67,38 +69,61 @@ class find_cites_on_page:
 		self.ref_calls.clear()
 
 	def find_sfns_on_page(self):
-		# for li in parsed_html.cssselect('li[href*="CITEREF"]'):
-		for eref in self.parsed_html.cssselect('span.reference-text a[href*="CITEREF"]'):
-			href = eref.get('href')
-			pos = href.find('CITEREF')
-			if pos >= 0:
-				href_cut = href[pos:]
-				self.list_sfns.add(href_cut)
-				# link_to_sfn ссылка на sfn-сноску
-				# print(href)
-				try:
-					link_to_sfn = self.parsed_html.xpath(
-							"//li[@id]/span/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
-									href=href, link_to_sfn='cite_note'))[0]
-				except IndexError:
-					try:
-						link_to_sfn = self.parsed_html.xpath(
-								"//li[@id]/span/cite/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
-										href=href, link_to_sfn='cite_note'))[0]
-					except IndexError:
-						link_to_sfn = '#Примечания'
+		p_ref_list = self.parsed_html.xpath("//ol[@class='references']/li")
+		for li in p_ref_list:
+			span = li.xpath("./span[@class='reference-text']")[0]
+			a_list = span.xpath("./descendant::a[contains(@href,'CITEREF')]")
+			for a in a_list:
+				href = ''
+				text = ''
+				link_to_sfn = ''
+				href = a.attrib['href']  # href = span.xpath("*/a[contains(@href,'CITEREF')]/@href")
+				text = a.text
+				link_to_sfn = li.attrib['id']  # li.xpath("./@id")
 
-				self.ref_calls[href_cut] = {'text': eref.text, 'link_to_sfn': str(link_to_sfn)}
+				href_cut = self.find_href_cut(a.attrib['href'])
+				self.list_sfns.add(href_cut)
+				self.ref_calls[href_cut] = {'text': a.text, 'link_to_sfn': str(li.attrib['id'])}
+				pass
+
+			# from lxml import cssselect
+			# # for li in parsed_html.cssselect('li[href*="CITEREF"]'):
+			# for eref in self.parsed_html.cssselect('span.reference-text a[href*="CITEREF"]'):
+			# 	href = eref.get('href')
+			# 	pos = href.find('CITEREF')
+			# 	if pos >= 0:
+			# 		href_cut = href[pos:]
+			# 		self.list_sfns.add(href_cut)
+			# 		# link_to_sfn ссылка на sfn-сноску
+			# 		# print(href)
+			# 		try:
+			# 			link_to_sfn = self.parsed_html.xpath(
+			# 					"//li[@id]/span/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
+			# 							href=href, link_to_sfn='cite_note'))[0]
+			# 		except IndexError:
+			# 			try:
+			# 				link_to_sfn = self.parsed_html.xpath(
+			# 						"//li[@id]/span/cite/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
+			# 								href=href, link_to_sfn='cite_note'))[0]
+			# 			except IndexError:
+			# 				link_to_sfn = '#Примечания'
+			#
+			# 		self.ref_calls[href_cut] = {'text': eref.text, 'link_to_sfn': str(link_to_sfn)}
+
+	def find_href_cut(self, href):
+		pos = href.find('CITEREF')
+		if pos >= 0:
+			return href[pos:]
+		return False
 
 	def find_refs_on_page(self):
 		for xpath in ['//span[@class="citation"]/@id', '//cite/@id']:
 			self.find_refs_on_page_(xpath)
 
 	def find_refs_on_page_(self, xpath):
-		for ref in self.parsed_html.xpath(xpath):
-			pos = ref.find('CITEREF')
-			if pos >= 0:
-				self.list_refs.add(ref[pos:])
+		for href in self.parsed_html.xpath(xpath):
+			href_cut = self.find_href_cut(href)
+			self.list_refs.add(href_cut)
 
 	def compare_refs(self):
 		# Отлов красных ошибок как в ст.  "Казаки" не получается

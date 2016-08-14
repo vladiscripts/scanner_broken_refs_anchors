@@ -7,11 +7,12 @@ else:
 	from urllib import urlencode, quote  # python 2.7
 	import codecs
 import requests
+from vladi_commons import *
 
 # Отладка
 edit_page_by_list = False  # Только ссканировать и сделать список, без редактирования страниц
 get_transcludes_from = 3  # 1 - брать список wiki базы данных, 2 - из файла, 3 - указ. вручную
-test_pages = ['Раскраска_графов', 'Звёздчатый_октаэдр']  # тест отдельных страниц, связано с get_transcludes_from
+test_pages = ['Участник:Vladis13/статья', 'Раскраска_графов', 'Звёздчатый_октаэдр']  #    тест отдельных страниц, связано с get_transcludes_from
 print_log = True
 
 ask_save_prompts = False  # True

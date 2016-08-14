@@ -19,11 +19,12 @@ class wikiconnect:
 	# headers = {'user-agent': 'user:textworkerBot'}
 	__username = ''
 	__password = ''
+	file_password_to_api = 'password.txt'
 	edit_token = ''
 	edit_cookie = ''
 
 	def __init__(self):
-		with open('password.txt') as __f:  # , encoding='utf-8' 'ascii'
+		with open(file_password_to_api) as __f:  # , encoding='utf-8' 'ascii'
 			self.__username = __f.readline().strip()
 			self.__password = __f.readline().strip()
 		self.login()
@@ -195,9 +196,11 @@ def page_get_html(title):
 
 
 def page_html_parse(title):
-	from lxml import html
+	# from lxml import html
+	from lxml import etree
 	p_html = page_get_html(title)
-	p_html_parsed = html.fromstring(p_html)
+	p_html_parsed = etree.HTML(p_html)
+	# p_html_parsed = html.fromstring(p_html)
 	return p_html_parsed
 
 
@@ -207,7 +210,7 @@ def get_list_transcludes_of_tpls(sfns_like_names):
 	list = set()
 	for sfntpl in sfns_like_names:
 		url = 'http://tools.wmflabs.org/ruwikisource/WDBquery_transcludes_template/?lang=ru&format=json&template=' + quote(
-			sfntpl)
+				sfntpl)
 		# GETparameters = {"action": "render"}  # html
 		GETparameters = {}
 		r = requests.get(url, data=GETparameters)
