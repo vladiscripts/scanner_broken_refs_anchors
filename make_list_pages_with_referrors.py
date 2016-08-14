@@ -38,7 +38,9 @@ class make_listpage_referrors:
 		p_count_cur = pages_count
 
 		for title in self.list_transcludes:
-			print(title)
+			global print_log
+			if print_log:
+				print(u'Страница № {}: {}'.format(p_count_cur, title))
 			page = find_cites_on_page(title, p_count_cur)
 			self.pages_with_referrors[title] = page.full_errrefs
 			# self.collect_refs(title, p_count_cur)
@@ -71,44 +73,45 @@ class find_cites_on_page:
 	def find_sfns_on_page(self):
 		p_ref_list = self.parsed_html.xpath("//ol[@class='references']/li")
 		for li in p_ref_list:
-			span = li.xpath("./span[@class='reference-text']")[0]
-			a_list = span.xpath("./descendant::a[contains(@href,'CITEREF')]")
-			for a in a_list:
-				href = ''
-				text = ''
-				link_to_sfn = ''
-				href = a.attrib['href']  # href = span.xpath("*/a[contains(@href,'CITEREF')]/@href")
-				text = a.text
-				link_to_sfn = li.attrib['id']  # li.xpath("./@id")
+			span_list = li.xpath("./span[@class='reference-text']")
+			for span in span_list:
+				a_list = span.xpath("./descendant::a[contains(@href,'CITEREF')]")
+				for a in a_list:
+					href = ''
+					text = ''
+					link_to_sfn = ''
+					href = a.attrib['href']  # href = span.xpath("*/a[contains(@href,'CITEREF')]/@href")
+					text = a.text
+					link_to_sfn = li.attrib['id']  # li.xpath("./@id")
 
-				href_cut = self.find_href_cut(a.attrib['href'])
-				self.list_sfns.add(href_cut)
-				self.ref_calls[href_cut] = {'text': a.text, 'link_to_sfn': str(li.attrib['id'])}
-				pass
+					href_cut = self.find_href_cut(a.attrib['href'])
+					self.list_sfns.add(href_cut)
+					self.ref_calls[href_cut] = {'text': a.text, 'link_to_sfn': str(li.attrib['id'])}
+					pass
 
-			# from lxml import cssselect
-			# # for li in parsed_html.cssselect('li[href*="CITEREF"]'):
-			# for eref in self.parsed_html.cssselect('span.reference-text a[href*="CITEREF"]'):
-			# 	href = eref.get('href')
-			# 	pos = href.find('CITEREF')
-			# 	if pos >= 0:
-			# 		href_cut = href[pos:]
-			# 		self.list_sfns.add(href_cut)
-			# 		# link_to_sfn ссылка на sfn-сноску
-			# 		# print(href)
-			# 		try:
-			# 			link_to_sfn = self.parsed_html.xpath(
-			# 					"//li[@id]/span/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
-			# 							href=href, link_to_sfn='cite_note'))[0]
-			# 		except IndexError:
-			# 			try:
-			# 				link_to_sfn = self.parsed_html.xpath(
-			# 						"//li[@id]/span/cite/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
-			# 								href=href, link_to_sfn='cite_note'))[0]
-			# 			except IndexError:
-			# 				link_to_sfn = '#Примечания'
-			#
-			# 		self.ref_calls[href_cut] = {'text': eref.text, 'link_to_sfn': str(link_to_sfn)}
+				# from lxml import cssselect
+				# # for li in parsed_html.cssselect('li[href*="CITEREF"]'):
+				# for eref in self.parsed_html.cssselect('span.reference-text a[href*="CITEREF"]'):
+				# 	href = eref.get('href')
+				# 	pos = href.find('CITEREF')
+				# 	if pos >= 0:
+				# 		href_cut = href[pos:]
+				# 		self.list_sfns.add(href_cut)
+				# 		# link_to_sfn ссылка на sfn-сноску
+				# 		# print(href)
+				# 		try:
+				# 			link_to_sfn = self.parsed_html.xpath(
+				# 					"//li[@id]/span/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
+				# 							href=href, link_to_sfn='cite_note'))[0]
+				# 		except IndexError:
+				# 			try:
+				# 				link_to_sfn = self.parsed_html.xpath(
+				# 						"//li[@id]/span/cite/a[@href='{href}']/ancestor::li[contains(@id,'{link_to_sfn}')][1]/@id".format(
+				# 								href=href, link_to_sfn='cite_note'))[0]
+				# 			except IndexError:
+				# 				link_to_sfn = '#Примечания'
+				#
+				# 		self.ref_calls[href_cut] = {'text': eref.text, 'link_to_sfn': str(link_to_sfn)}
 
 	def find_href_cut(self, href):
 		pos = href.find('CITEREF')
@@ -146,8 +149,8 @@ class find_cites_on_page:
 				self.full_errrefs[citeref] = self.ref_calls[citeref]
 			# self.list_pages_with_referrors[self.title] = self.full_errrefs
 
-			global print_log
-			if print_log:
+			global print_log_full
+			if print_log_full:
 				print(u'Страница № {}: {}'.format(self.pages_count_cur, self.title))
 				# print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(self.list_pages_with_referrors[self.title]))
 				print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(self.full_errrefs))

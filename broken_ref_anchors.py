@@ -13,6 +13,7 @@ import wikiapi
 from make_list_pages_with_referrors import *
 from vladi_commons import *
 
+
 def remove_tpl_from_changed_pages(tplname, list_with_err):
 	global pages_with_referrors
 	list_transcludes = file_readlines_in_set('list_uses_warningtpl.txt')
@@ -50,13 +51,13 @@ if edit_page_by_list:
 		'Участник:Vladis13/статья',
 	]
 
-	pages_with_referrors = {'Участник:Vladis13/статья': {'CITEREFKiernan2003':                 'Kiernan, 2003',
-															  'CITEREFMarks':                  'Marks',
-															  'CITEREFAditjondro1999':         'Aditjondro, 1999',
-															  'CITEREFJean_Gelman_Taylor2003': 'Jean Gelman Taylor, 2003',
-															  'CITEREFAditjondro1998':         'Aditjondro, 1998',
-															  'CITEREFHorner2001':             'Horner, 2001',
-															  'CITEREFFriend2003':             'Friend, 2003',
+	pages_with_referrors = {'Участник:Vladis13/статья': {'CITEREFKiernan2003':            'Kiernan, 2003',
+														 'CITEREFMarks':                  'Marks',
+														 'CITEREFAditjondro1999':         'Aditjondro, 1999',
+														 'CITEREFJean_Gelman_Taylor2003': 'Jean Gelman Taylor, 2003',
+														 'CITEREFAditjondro1998':         'Aditjondro, 1998',
+														 'CITEREFHorner2001':             'Horner, 2001',
+														 'CITEREFFriend2003':             'Friend, 2003',
 														 'CITEREFVickers2003':            'Vickers, 2003',
 														 'CITEREFBudiardjo_and_Liong':    'Budiardjo and Liong',
 														 'CITEREFBudiardjo1984':          'Budiardjo, 1984',
@@ -125,4 +126,3 @@ if edit_page_by_list:
 		# 	print('appendtext')
 		# 	page.add_text(repl, 'appendtext', summary)
 		print('ok')
-
