@@ -13,9 +13,11 @@ else:
 	import codecs
 # ----------
 
-def file_savelines(filename, text):
+
+def file_savelines(filename, text, append=False):
+	mode = 'a' if append else 'w'
 	text = '\n'.join(text)
-	with open(filename, 'w', encoding='utf-8') as f:
+	with open(filename, mode, encoding='utf-8') as f:
 		f.write(text)
 
 
@@ -43,20 +45,6 @@ def file_readlines_in_set(filename):
 	arr_strings = set(file_readlines_in_list(filename))
 	return arr_strings
 
-
-def pickle_store_to_file(filename, data):
-	import pickle
-	with open(filename, 'wb') as f:
-		pickle.dump(data, f)
-
-
-def pickle_data_from_file(filename):
-	import pickle
-	with open(filename, 'rb') as f:
-		data = pickle.load(f)
-	return data
-
-
 def json_store_to_file(filename, data):
 	import json
 	with open(filename, 'w', encoding='utf-8') as f:
@@ -68,4 +56,24 @@ def json_data_from_file(filename):
 	import json
 	with open(filename, 'r', encoding='utf-8') as f:
 		data = json.load(f)
+	return data
+
+
+def save_error_log(filename, text):
+	import datetime
+	now = datetime.datetime.now()
+	time = now.strftime("%d-%m-%Y %H:%M")
+	file_savelines(filename, text, True)
+
+
+def pickle_store_to_file(filename, data):
+	import pickle
+	with open(filename, 'wb') as f:
+		pickle.dump(data, f)
+
+
+def pickle_data_from_file(filename):
+	import pickle
+	with open(filename, 'rb') as f:
+		data = pickle.load(f)
 	return data

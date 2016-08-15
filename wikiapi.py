@@ -216,3 +216,24 @@ def get_list_transcludes_of_tpls(sfns_like_names):
 		r = requests.get(url, data=GETparameters)
 		list = list.union(r.json())
 	return list
+
+
+# ---------
+
+def movePagesToNewCategory(from_, to_, summary_):
+	# command = "python movepages.my -noredirect"
+	command = 'python c:\pwb\pwb.py movepages.my -pt:0 -noredirect -simulate'
+	from_ = ' -from:"' + from_ + '"'
+	to_ = ' -to:"' + to_ + '"'
+	summary_ = ' -summary:"' + summary_ + '"'
+	run = command + from_ + to_ + summary_
+	os.system(run)
+
+
+def renameCategory(from_, to_, summary_):
+	# command = "python category.py move"
+	command = 'python c:\pwb\pwb.py category.py move -pt:0 -inplace -simulate'  # -keepsortkey
+	from_ = ' -from:"' + from_ + '"'
+	to_ = ' -to:"' + to_ + '"'
+	summary_ = ' -summary:"' + summary_ + '"'
+	run = command + from_ + to_ + summary_
