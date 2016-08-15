@@ -3,51 +3,55 @@
 #
 # Добавление предупреждающего шаблона на страницы списка
 # import wikiapi
+import re
 import mwparserfromhell
 from config import *
-from wikiapi import page_get_html
+import wikiapi
 from lib_for_mwparserfromhell import *
 
 
 class Add_warning_tpl:
-
 	def __init__(self, warning_tpl_name, pages_with_referrors):
+		global do_only_1_page_by_content_from_file, filename_page_wikicontent
 		self.warning_tpl_name = warning_tpl_name
-		self.page_text = "{{tpl_name | {{sub template}} some text}} text"
+		# self.page_text = "{{tpl_name | {{sub template}} some text}} text"
+		import re
+		self.digits = re.compile(r'\d+')
+		self.empty_str = re.compile(r'^\s*$')
+		self.pages_with_referrors = pages_with_referrors
 
-		for title in pages_with_referrors:
-			self.page_err_refs = pages_with_referrors[title]
-			self.do_page(title)
+		if do_only_1_page_by_content_from_file:
+			import sys
+			if len(sys.argv) > 1:
+				title = sys.argv[1]
+				self.page_wikitext = file_readtext(filename_page_wikicontent)
+				self.do_page(title)
+				file_savetext(filename_page_wikicontent, self.page_wikitext_final)
+			else:
+				print("Не указано название статьи параметром командной строки.")
 
+		else:
+			for title in self.pages_with_referrors:
+				# self.page_html = wikiapi.page_get_html(title)
+				# self.page_htmlparsed = mwparserfromhell.parse(self.page_text)
+				self.page = wikiapi.wikiapi_works(title)
+				self.page_wikitext = self.page.get_wikicode()
+
+				self.do_page(title)
+
+			# self.save_page()
+			# self.page_wikitext_final = str(self.page_wikiparsed)
 
 	def do_page(self, title):
-		self.page_text = page_get_html(title)
-		self.page_wikiparsed = mwparserfromhell.parse(self.page_text)
-
-
+		self.page_err_refs = self.pages_with_referrors[title]
+		self.page_wikiparsed = mwparserfromhell.parse(self.page_wikitext)
 		self.update_page_tpl()
+		self.page_wikitext_final = str(self.page_wikiparsed)
+		pass
 
-		self.page_text = str(self.page_wikiparsed)
-
-
-		# # connect_properties = login_and_token(baseurl, username, password)
-		# # r4_text = edit(baseurl, title, message, summary, connect_properties)
-		# r4_text = edit(title, message, summary)
-		# print(r4_text)
-		# connect = wikiconnect()
-		# if not connect
-		#
-		# for title in list_pages_with_referrors:
-		# 	replacetext_old = '== Описание герба =='
-		# 	refs_of_page = list_pages_with_referrors[title]
-		# 	refs_str = '|'.join([refs_of_page.get(ref) for ref in refs_of_page])
-		# 	replacetext_new = '\n' + '{{' + post_tpl_name + '|' + refs_str + '}}'
-		#
-		# 	page = wikiapi.wikiapi_works(title)
-		# 	# page.replace_text_page(replacetext_old, replacetext_new, summary)
-		# 	page.save_changed_text(replacetext_old, replacetext_new, summary)
-		# 	del page
-		# 	print(page)
+	# def run(self):
+	# 	for title in pages_with_referrors:
+	# 		self.do_page(title)
 
 	def change_with_regexp(self):
 		regexp_compiled = re.compile(r'{{\s*' + warning_tpl_name + r'\s*(\|.*?)?}}', re.IGNORECASE)
@@ -94,52 +98,148 @@ class Add_warning_tpl:
 			# 	page.add_text(repl, 'appendtext', summary)
 			print('ok')
 
+	def add_tpl_if_no(self):
+		# Добавить шаблон если нет на странице
+		is_on_page = False
+		for tpl in self.page_wikiparsed.filter_templates():
+			if tpl.name.matches(self.warning_tpl_name):
+				is_on_page = True
+				break
+		if not is_on_page:
+			tpl = mwparserfromhell.nodes.template.Template(self.warning_tpl_name)
+			self.page_wikiparsed.append(str(tpl))
+
+	def delete_tpl_doubles(self):
+		# удаление шаблонов-дублей
+		is_first_found = 0
+		for tpl in self.page_wikiparsed.filter_templates():
+			if tpl.name.matches(self.warning_tpl_name):
+				is_first_found += 1
+				if is_first_found > 1:
+					self.page_wikiparsed.remove(tpl)
+
+	def delete_params_empty_and_is_not_1_wikilinks(self):
+		# удаление пустых безымянных параметров и которые не 1 викиссылка
+		p_trash = []
+		for tpl in self.page_wikiparsed.filter_templates():
+			if tpl.name.matches(self.warning_tpl_name):
+				for p in tpl.params:
+					if self.digits.search(str(p.name).strip()):  # скан безымянных параметров
+						leng = len(p.value.filter_wikilinks())
+						if self.empty_str.match(str(p.value)) or leng != 1:
+							p_trash.append(p)
+				for pt in p_trash:
+					tpl.remove(pt)
 
 	def update_page_tpl(self):
 
-		# parametersNamesList = parametersNamesList(tpl)
-
 		# список значений параметров шаблона
-		list_bad_sfn_links = set([ref['link_to_sfn'] for ref in self.page_err_refs])
+		# list_bad_sfn_links = []
+		# for ref in self.page_err_refs:
+		# 	print(ref)
+		# 	link_to_sfn = ref['link_to_sfn']
+		# 	list_bad_sfn_links.append([ref['link_to_sfn'], ref['text']])
+		list_bad_sfn_links = [[ref['link_to_sfn'], ref['text']] for ref in self.page_err_refs]
 
-		digits = re.compile(r'\d+')
 
-		for template in self.page_wikiparsed.filter_templates():
+		# Добавить шаблон если нет на странице
+		self.add_tpl_if_no()
+		# self.page_wikiparsed = mwparserfromhell.parse(self.page_text)  # репарсинг, ибо добавление шаблона сбивает паршеный текст
 
-			# Если предупреждающий шаблон уже есть на странице, то обновить его
-			for tpl in self.page_wikiparsed.filter_templates():
-				if tpl.name.matches(self.warning_tpl_name):
+		# удаление шаблонов-дублей
+		self.delete_tpl_doubles()
 
-					for p in tpl.params:
-						if digits.search(str(p.name).strip()):  # скан безымянных параметров
-							# list_tpl_paramvalues.add(p.value.strip())
-							wikilink = p.value.filter_wikilinks()  # викиссылки в параметрах
-							if len(wikilink): wikilink = wikilink[0]
+		# удаление пустых безымянных параметров и без викиссылок
+		self.delete_params_empty_and_is_not_1_wikilinks()
+
+		# self.page_wikiparsed = mwparserfromhell.parse(self.page_text)  # репарсинг, ибо добавление шаблона сбивает паршеный текст
+
+
+		# Если предупреждающий шаблон уже есть на странице, то обновить его
+		# Чистка от параметров отсутствующих в актуальном списке ошибок
+		for tpl in self.page_wikiparsed.filter_templates():
+			if tpl.name.matches(self.warning_tpl_name):
+				p_count_numeric = 0  # счётчик нумерованных (безымянных) параметрв в шаблоне
+				tpl_numeric_params = []
+
+				for p in tpl.params:
+					if self.digits.search(str(p.name).strip()):  # скан безымянных параметров
+
+						p_count_numeric += 1
+
+						# list_tpl_paramvalues.add(p.value.strip())
+						wikilinks = p.value.filter_wikilinks()  # викиссылки в параметрах
+						# обрабатывать только первую викиссылу в параметре (на случай если кто-то вручную засунет туда лищних)
+						# if len(wikilinks) == 0:
+
+						if len(wikilinks) > 0:
+							wikilink = wikilinks[0]
 							# for wikilink in p.value.filter_wikilinks():  # викиссылки в параметрах
-								wl = str(wikilink.title).strip()
-								# убрать параметр, отсутствующий в списке ошибочных
-								if wl not in list_bad_sfn_links:
-									tpl.remove(p.name)
+							# wl = set([str(wikilink.title).strip()
+							# wl_text = str(wikilink.text).strip()
+
+							wl = [str(wikilink.title).strip(), str(wikilink.text).strip()]
+							# tpl_numeric_params.append(wl)
+
+							# убрать параметр, отсутствующий в списке ошибочных
+							if wl not in list_bad_sfn_links:
+								tpl.remove(p.name)
+
+							else:
+								tpl_numeric_params.append(wl)
+
+		# добавление параметров
+		for tpl in self.page_wikiparsed.filter_templates():
+			if tpl.name.matches(self.warning_tpl_name):
+				# for p in tpl.params:
+				# 	if self.digits.search(str(p.name).strip()):  # скан безымянных параметров
+				for main_bad_ref in list_bad_sfn_links:
+					# if main_bad_ref not in tpl_numeric_params:
+					tpl_list_params = [p.value.strip() for p in tpl.params]
+					main_bad_ref = r"[[{link}|{text}]]".format(link=main_bad_ref[0], text=main_bad_ref[1])
+					if main_bad_ref not in tpl_list_params:
+						# find_free_num_for_paramname
+						n = 1
+						while tpl.has(n):
+							n += 1
+						tpl.add(n, main_bad_ref)
+					# tpl.add(n, r"[[{link}|{text}]]\n".format(link=main_bad_ref[0], text=main_bad_ref[1]))
+
+				# Удаление пустого шаблона без параметров - т.е. все проблемы ссылок были решены
+				if len(tpl.params) == 0:
+					self.page_wikiparsed.remove(tpl)
 
 
+			# Иначе добавить шаблон
+			else:
+				pass
+
+		print(str(self.page_wikiparsed))
+		pass
+
+	#
+	# def remove_tpl_from_changed_pages(tplname, list_with_err):
+	# 	global pages_with_referrors
+	# 	list_transcludes = file_readlines_in_set('list_uses_warningtpl.txt')
+	# 	list_with_err = set([title for title in pages_with_referrors])
+	# 	listpages_for_remove = list_transcludes - list_with_err
+	# 	remove_tpl_from_pages(tplname, listpages_for_remove)
 
 
+# test
+#
+# pages_with_referrors = {
+# 	"Участник:Vladis13/статья": [
+# 		{"link_to_sfn": "cite_note-2",
+# 		 "ref":         "CITEREF1_sfn_.D1.81.D0.BD.D0.BE.D1.81.D0.BA.D0.B0",
+# 		 "text":        "1 sfn сноска"
+# 		 },
+# 		{"link_to_sfn": "cite_note-2",
+# 		 "ref":         "CITEREF2_sfn_.D1.81.D0.BD.D0.BE.D1.81.D0.BA.D0.B0",
+# 		 "text":        "2 sfn сноска"
+# 		 }
+# 	]
+# }
 
-
-					# Если шаблон больше не нужен, то удалить его
-					# wikicode.remove(tpl)
-					# Удаление пустого шаблона (без параметров)
-					for tpl in wikicode.filter_templates():
-						if tpl.name.matches(tplname):
-							for p in tpl.params:
-								if digits.search(str(p.name).strip()):
-									c = + 1
-									if c == 0:
-										wikicode.remove(tpl)
-									# print('empty')
-									# print(c)
-
-
-				# Иначе добавить шаблон
-				else:
-					pass
+# pages_with_referrors = json_data_from_file(filename_listpages_errref_json)
+# test = Add_warning_tpl(name_of_warning_tpl, pages_with_referrors)

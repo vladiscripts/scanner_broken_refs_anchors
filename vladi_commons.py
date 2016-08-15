@@ -5,12 +5,15 @@
 # работа с файлами в utf-8
 #
 from sys import version_info
+
 PYTHON_VERSION = version_info.major
 if PYTHON_VERSION == 3:
 	from urllib.parse import urlencode, quote  # python 3
 else:
 	from urllib import urlencode, quote  # python 2.7
 	import codecs
+
+
 # ----------
 
 
@@ -21,7 +24,12 @@ def file_savelines(filename, text, append=False):
 		f.write(text)
 
 
-def file_textread(filename):
+def file_savetext(filename, text):
+	with open(filename, 'w', encoding='utf-8') as f:
+		text = f.write(text)
+
+
+def file_readtext(filename):
 	with open(filename, 'r', encoding='utf-8') as f:
 		text = f.read()
 	return text
@@ -44,6 +52,7 @@ def file_readlines_in_list(filename):
 def file_readlines_in_set(filename):
 	arr_strings = set(file_readlines_in_list(filename))
 	return arr_strings
+
 
 def json_store_to_file(filename, data):
 	import json

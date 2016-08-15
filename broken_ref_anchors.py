@@ -15,19 +15,12 @@ from vladi_commons import *
 
 pages_with_referrors = {}
 
-
-def remove_tpl_from_changed_pages(tplname, list_with_err):
-	global pages_with_referrors
-	list_transcludes = file_readlines_in_set('list_uses_warningtpl.txt')
-	list_with_err = set([title for title in pages_with_referrors])
-	listpages_for_remove = list_transcludes - list_with_err
-	remove_tpl_from_pages(tplname, listpages_for_remove)
-
-
 # Создание списков страниц с ошибками
-if read_ready_list_from_file_JSON:
+# Читать готовый список из файла
+if read_list_from_file_JSON:
 	pages_with_referrors = json_data_from_file(filename_listpages_errref_json)
 
+# или создать новый
 else:
 	# список включений sfn-like шаблонов
 	list_transcludes = make_list_transcludes(names_of_tpls_like_sfns, filename_tpls_transcludes)
@@ -44,4 +37,5 @@ else:
 
 # Добавление предупреждающего шаблона на страницы списка
 if edit_page_by_list:
+	test = Add_warning_tpl(name_of_warning_tpl, pages_with_referrors)
 	pass

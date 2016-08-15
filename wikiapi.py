@@ -10,34 +10,35 @@ from config import *
 
 
 class wikiconnect:
-	from config import ask_save_prompts
-	global URLapi, URLindex, URLhtml
-	# URLapi = 'https://ru.wikipedia.org/w/api.php'
-	# URLindex = 'https://ru.wikipedia.org/w/index.php'
-	# URLhtml = 'https://ru.wikipedia.org/wiki/'
-	# API_URL = 'https://ru.wikipedia.org/api/rest_v1/page/html/'  # cached_html, может быть старой
-	# headers = {'user-agent': 'user:textworkerBot'}
-	__username = ''
-	__password = ''
-	file_password_to_api = 'password.txt'
-	edit_token = ''
-	edit_cookie = ''
-
 	def __init__(self):
-		with open(file_password_to_api) as __f:  # , encoding='utf-8' 'ascii'
-			self.__username = __f.readline().strip()
-			self.__password = __f.readline().strip()
+		from config import ask_save_prompts
+		global URLapi, URLindex, URLhtml
+		self.URLapi = URLapi
+		self.URLindex = URLindex
+		self.URLhtml = URLhtml
+		# URLapi = 'https://ru.wikipedia.org/w/api.php'
+		# URLindex = 'https://ru.wikipedia.org/w/index.php'
+		# URLhtml = 'https://ru.wikipedia.org/wiki/'
+		# API_URL = 'https://ru.wikipedia.org/api/rest_v1/page/html/'  # cached_html, может быть старой
+		# headers = {'user-agent': 'user:textworkerBot'}
+		self.edit_token = ''
+		self.edit_cookie = ''
+
 		self.login()
 
 	def login(self):
+		global file_password_to_api
+		with open(file_password_to_api) as __f:  # , encoding='utf-8' 'ascii'
+			__username = __f.readline().strip()
+			__password = __f.readline().strip()
 		# Login request
 		GETparameters = {'action': 'query', 'format': 'json', 'utf8': '', 'meta': 'tokens', 'type': 'login'}
 		r1 = requests.post(self.URLapi, data=GETparameters)
 
 		# login confirm
 		login_token = r1.json()['query']['tokens']['logintoken']
-		GETparameters = {'action':     'login', 'format': 'json', 'utf8': '', 'lgname': self.__username,
-						 'lgpassword': self.__password, 'lgtoken': login_token}
+		GETparameters = {'action':     'login', 'format': 'json', 'utf8': '', 'lgname': __username,
+						 'lgpassword': __password, 'lgtoken': login_token}
 		r2 = requests.post(self.URLapi, data=GETparameters, cookies=r1.cookies)
 
 		# get edit token2
