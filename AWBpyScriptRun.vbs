@@ -1,13 +1,15 @@
-REM Для запуска скрипта из AWB
+REM Р”Р»СЏ Р·Р°РїСѓСЃРєР° СЃРєСЂРёРїС‚Р° РёР· AWB
 set WshShell = WScript.CreateObject("WScript.Shell")
 set WshArguments=WScript.Arguments
 WshShell.CurrentDirectory = "d:\home\scripts.my\wikiapi_framework\"
-command = "python add_warning_tpl.py"
+command = "c:\Python35\python.exe broken_ref_anchors.py"
 if WshArguments.count()=0 then
-	'c:\Python35\python.exe c:\Python35\ParserTempates_SlovariYandex.py
+	REM 'c:\Python35\python.exe c:\Python35\ParserTempates_SlovariYandex.py
 	WshShell.Run command,0,true
-else
-	WshShell.Run command & " " & """" & WshArguments(0) & """", 0,true
+else  
+	WshShell.Run command & " " & """" & WshArguments(0) & """", 0,true 
+	REM REM WshShell.Run command & " " & WshArguments(0), 0,true
+	REM MsgBox command & " " & """" & WshArguments(0) & """"
 end if
 
 REM Option Explicit
@@ -16,14 +18,14 @@ REM Dim WshArguments, i, list
  
 REM list=""
  
-REM 'Получаем доступ к коллекции через свойство Arguments
+REM 'РџРѕР»СѓС‡Р°РµРј РґРѕСЃС‚СѓРї Рє РєРѕР»Р»РµРєС†РёРё С‡РµСЂРµР· СЃРІРѕР№СЃС‚РІРѕ Arguments
 REM set WshArguments=WScript.Arguments
  
-REM 'Определяем, есть ли передача параметров
+REM 'РћРїСЂРµРґРµР»СЏРµРј, РµСЃС‚СЊ Р»Рё РїРµСЂРµРґР°С‡Р° РїР°СЂР°РјРµС‚СЂРѕРІ
 REM if WshArguments.count()=0 then
-    REM MsgBox "Передайте сценарию аргументы"
+    REM MsgBox command
 REM else
-    REM ' Производим перебор коллекции
+    REM ' РџСЂРѕРёР·РІРѕРґРёРј РїРµСЂРµР±РѕСЂ РєРѕР»Р»РµРєС†РёРё
     REM for i=0 to WshArguments.Count-1
         REM list = list & WshArguments(0) & vbCrLf
     REM next

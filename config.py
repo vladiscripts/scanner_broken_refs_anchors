@@ -10,9 +10,13 @@ from urllib.parse import urlencode, quote  # python 3
 import requests
 from vladi_commons import *
 
+# При запуске в Windows через AWB могут быть проблемы с кодировкой. Из-за кодовой страницы cmd.exe.
+# Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
+# Или отключить в скрипте выводы типа print("Вывод не английских символв, не кодирвки ASCII cp866").
+
 # Отладка
-read_list_from_file_JSON = False  # Взять полный список с ошибками из файла JSON, без создания нового и сканирования, или:
-filename_listpages_errref_json = 'listpages_errref_json.txt'
+read_list_from_file_JSON = True  # Взять полный список ошибок из файла JSON, без создания нового и сканирования, или (jgwbb yb;t):
+filename_listpages_errref_json = 'listpages_errref.json'
 # ---
 # 1 - брать список включений шаблонов из wiki базы данных
 # 2 - из файла (можно подставить уже отсканированный)
@@ -21,11 +25,39 @@ get_transcludes_from = 2
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_errref.txt'
 test_pages = [
+	'Африканская_мифология',
 	'Участник:Vladis13/статья',
-	'1991_год']  # , 'Гибридная_интеллектуальная_система', 'Раскраска_графов', 'Звёздчатый_октаэдр']  #    тест отдельных страниц, связано с get_transcludes_from
+	'1991_год',
+	'Гибридная_интеллектуальная_система', 'Раскраска_графов', 'Звёздчатый_октаэдр',
+	# тест отдельных страниц, связано с get_transcludes_from
+]
+
 # ---
-edit_page_by_list = False  # Не редактировать страницы, только ссканировать и сделать список
-ask_save_prompts = False  # True
+name_of_warning_tpl = 'Нет полных библиографических описаний'  # Участник:Vladis13/ошибки сносок
+exclude_regexp = '\{\{([Шш]аблон:)?[Нн]ет[ _]полных[ _]библиографических[ _]описаний'  # \{\{([Шш]аблон:)?[уУ]частник:[Vv]ladis13/[Оо]шибки[ _]сносок
+list_transcludes_of_warningtemple = 'list_uses_warningtpl.txt'
+
+summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
+
+# Создание вики-списков для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
+max_lines_per_file = 2000
+filename_part = 'wikisections'  # к имени добавляется № части и расширение '.txt'
+root_wikilists = name_of_warning_tpl + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
+marker_page_start = '{{-start-}}'
+marker_page_end = '{{-end-}}'
+header = """{{координационный список}}
+Список статей, с перечнями их сносок, в которых указаны некорректные викиссылки.
+
+Элементы списка автоподставляются в перечисленных статьях в шаблон {{t|Нет полных библиографических описаний}}.
+(Это служебная таблица даных для подстановок, поэтому с этой страницы ссылки на сноски не работают.)
+
+Список обновляется ботом.
+
+"""
+
+# ---
+edit_page_by_list = True  # Не редактировать страницы, только ссканировать и сделать список
+ask_save_prompts = True
 # ---
 filename_error_log = 'error_log.txt'
 print_log = True
@@ -41,11 +73,6 @@ names_of_tpls_like_sfns = (['sfn', 'sfn0', 'Sfn-1',
 							'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol'])
 # names_of_tpls_like_sfns = 'Вершины Каменного Пояса'  # Отладка
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
-
-name_of_warning_tpl = 'ошибки сносок'
-list_transcludes_of_warningtemple = 'list_uses_warningtpl.txt'
-
-summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
 
 # filename = r"d:\home\scripts.my\4wiki\\" + filename
 # filename = 'sfn0.txt'

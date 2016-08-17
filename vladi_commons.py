@@ -86,3 +86,8 @@ def pickle_data_from_file(filename):
 	with open(filename, 'rb') as f:
 		data = pickle.load(f)
 	return data
+
+
+# разбивка списка на части по числу строк
+def split_list_per_line_count(lst, chunk_size):
+	return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]

@@ -7,7 +7,9 @@ import re
 import mwparserfromhell
 from config import *
 import wikiapi
-from lib_for_mwparserfromhell import *
+
+
+# from lib_for_mwparserfromhell import *
 
 
 class Add_warning_tpl:
@@ -15,7 +17,6 @@ class Add_warning_tpl:
 		global do_only_1_page_by_content_from_file, filename_page_wikicontent
 		self.warning_tpl_name = warning_tpl_name
 		# self.page_text = "{{tpl_name | {{sub template}} some text}} text"
-		import re
 		self.digits = re.compile(r'\d+')
 		self.empty_str = re.compile(r'^\s*$')
 		self.pages_with_referrors = pages_with_referrors
@@ -23,27 +24,30 @@ class Add_warning_tpl:
 		if do_only_1_page_by_content_from_file:
 			import sys
 			if len(sys.argv) > 1:
-				title = sys.argv[1]
-				self.page_wikitext = file_readtext(filename_page_wikicontent)
-				self.do_page(title)
-				file_savetext(filename_page_wikicontent, self.page_wikitext_final)
+				title = sys.argv[1].replace(' ', '_')
+				try:
+					self.page_err_refs = self.pages_with_referrors[title]
+				except KeyError:
+					print("This page no in error list.")  # Статьи нет в списке ошибочных
+				else:
+					self.page_wikitext = file_readtext(filename_page_wikicontent)
+					self.do_page(title)
+					file_savetext(filename_page_wikicontent, self.page_wikitext_final)
 			else:
 				print("Не указано название статьи параметром командной строки.")
 
 		else:
 			for title in self.pages_with_referrors:
-				# self.page_html = wikiapi.page_get_html(title)
-				# self.page_htmlparsed = mwparserfromhell.parse(self.page_text)
 				self.page = wikiapi.wikiapi_works(title)
 				self.page_wikitext = self.page.get_wikicode()
 
 				self.do_page(title)
 
-			# self.save_page()
-			# self.page_wikitext_final = str(self.page_wikiparsed)
+			print("Запись страниц пока отключена.")
+		# self.save_page()
+		# self.page_wikitext_final = str(self.page_wikiparsed)
 
 	def do_page(self, title):
-		self.page_err_refs = self.pages_with_referrors[title]
 		self.page_wikiparsed = mwparserfromhell.parse(self.page_wikitext)
 		self.update_page_tpl()
 		self.page_wikitext_final = str(self.page_wikiparsed)
@@ -107,7 +111,7 @@ class Add_warning_tpl:
 				break
 		if not is_on_page:
 			tpl = mwparserfromhell.nodes.template.Template(self.warning_tpl_name)
-			self.page_wikiparsed.append(str(tpl))
+			self.page_wikiparsed.append("\n" + str(tpl))
 
 	def delete_tpl_doubles(self):
 		# удаление шаблонов-дублей
@@ -140,7 +144,6 @@ class Add_warning_tpl:
 		# 	link_to_sfn = ref['link_to_sfn']
 		# 	list_bad_sfn_links.append([ref['link_to_sfn'], ref['text']])
 		list_bad_sfn_links = [[ref['link_to_sfn'], ref['text']] for ref in self.page_err_refs]
-
 
 		# Добавить шаблон если нет на странице
 		self.add_tpl_if_no()
@@ -196,7 +199,7 @@ class Add_warning_tpl:
 				for main_bad_ref in list_bad_sfn_links:
 					# if main_bad_ref not in tpl_numeric_params:
 					tpl_list_params = [p.value.strip() for p in tpl.params]
-					main_bad_ref = r"[[{link}|{text}]]".format(link=main_bad_ref[0], text=main_bad_ref[1])
+					main_bad_ref = r"[[#{link}|{text}]]".format(link=main_bad_ref[0], text=main_bad_ref[1])
 					if main_bad_ref not in tpl_list_params:
 						# find_free_num_for_paramname
 						n = 1
@@ -214,7 +217,7 @@ class Add_warning_tpl:
 			else:
 				pass
 
-		print(str(self.page_wikiparsed))
+		# print(str(self.page_wikiparsed))
 		pass
 
 	#
@@ -224,7 +227,6 @@ class Add_warning_tpl:
 	# 	list_with_err = set([title for title in pages_with_referrors])
 	# 	listpages_for_remove = list_transcludes - list_with_err
 	# 	remove_tpl_from_pages(tplname, listpages_for_remove)
-
 
 # test
 #

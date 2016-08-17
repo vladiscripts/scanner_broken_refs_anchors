@@ -4,6 +4,7 @@
 #
 # import wikiapi
 from config import *
+import vladi_commons
 
 
 def make_list_transcludes(tpls_like_sfns_names, filename_tpls_transcludes):
@@ -11,7 +12,7 @@ def make_list_transcludes(tpls_like_sfns_names, filename_tpls_transcludes):
 	global get_transcludes_from
 	list_transcludes = []
 
-	if get_transcludes_from == 1:  # from connect
+	if get_transcludes_from == 1:  # from wikiAPI
 		list_transcludes = get_list_transcludes_of_tpls(tpls_like_sfns_names)
 		file_savelines(filename_tpls_transcludes, self.list_transcludes)
 
@@ -126,6 +127,17 @@ class FindCitesOnPage:
 			print(error_text)
 			save_error_log(filename_error_log, error_text)
 
+	# Отлов красных ошибок как в ст.  "Казаки" не получается
+	# for undefined_ref in parsed_html.cssselect('li span.mw-ext-cite-error'):
+	# for undefined_ref in parsed_html.cssselect('span.error'):
+	# for undefined_ref in parsed_html.cssselect('span').text:
+	# t = [undefined_ref for undefined_ref in parsed_html.xpath('//li[@id=cite_note-sol5_2_3-35]')]
+	# t = parsed_html.cssselect('li')
+	# t = [undefined_ref for undefined_ref in parsed_html.cssselect('li#cite_note-sol5_2_3-35')]
+	# t = [undefined_ref for undefined_ref in parsed_html.xpath('//span/text')]
+	# for undefined_ref in parsed_html.xpath('//span').text:
+	# if 'Ошибка в сносках' in undefined_ref.text
+
 	def find_href_cut(self, href):
 		pos = href.find('CITEREF')
 		if pos >= 0:
@@ -135,40 +147,27 @@ class FindCitesOnPage:
 	def find_refs_on_page(self):
 		try:
 			for xpath in ['//span[@class="citation"]/@id', '//cite/@id']:
-				self.find_refs_on_page_(xpath)
+				for href in self.parsed_html.xpath(xpath):
+					href_cut = self.find_href_cut(href)
+					self.list_refs.add(href_cut)
 
 		except Exception as error:
 			error_text = 'Ошибка {} при парсинге примечаний в статье "{}"'.format(error, self.title)
 			print(error_text)
 			save_error_log(filename_error_log, error_text)
 
-	def find_refs_on_page_(self, xpath):
-		for href in self.parsed_html.xpath(xpath):
-			href_cut = self.find_href_cut(href)
-			self.list_refs.add(href_cut)
-
 	def compare_refs(self):
-		# Отлов красных ошибок как в ст.  "Казаки" не получается
-		# for undefined_ref in parsed_html.cssselect('li span.mw-ext-cite-error'):
-		# for undefined_ref in parsed_html.cssselect('span.error'):
-		# for undefined_ref in parsed_html.cssselect('span').text:
-		# t = [undefined_ref for undefined_ref in parsed_html.xpath('//li[@id=cite_note-sol5_2_3-35]')]
-		# t = parsed_html.cssselect('li')
-		# t = [undefined_ref for undefined_ref in parsed_html.cssselect('li#cite_note-sol5_2_3-35')]
-		# t = [undefined_ref for undefined_ref in parsed_html.xpath('//span/text')]
-		# for undefined_ref in parsed_html.xpath('//span').text:
-		# if 'Ошибка в сносках' in undefined_ref.text
-
 		# список сносок с битыми ссылками, из сравнения списков сносок и примечаний
 		err_refs = self.list_sfns - self.list_refs
 		# Если в статье есть некорректные сноски без целевых примечаний
 		if err_refs:
-			# self.full_errrefs = []
+			self.full_errrefs = []
 			for citeref in err_refs:
+				it_sfn_double = False
 				for sfn in self.all_sfn_info_of_page:
-					if sfn['citeref'] == citeref:
+					if sfn['citeref'] == citeref and not it_sfn_double:
 						self.full_errrefs.append(sfn)
-			# self.list_pages_with_referrors[self.title] = self.full_errrefs
+						it_sfn_double = True
 
 			global print_log_full
 			if print_log_full:
@@ -199,3 +198,53 @@ class FindCitesOnPage:
 				if tpl.has('2'):
 					sfns.append(tpl.get('2').value.strip())
 				list_sfns.add(sfns)
+
+
+def split_list_per_line_count(lst, chunk_size):
+	return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
+
+def make_wikilists(pages_with_referrors, pwb_format=True):
+	global max_lines_per_file, filename_part, root_wikilists, header, marker_page_start, marker_page_end
+
+	# filename = 'listpages_errref_json17-1325.txt'
+	# page_err_refs_full = vladi_commons.json_data_from_file(filename_listpages_errref_json)
+
+	wikisections = []
+	for title in sorted(pages_with_referrors.keys()):
+		page_wikilinks = []
+		for ref in pages_with_referrors[title]:
+			page_wikilinks.append(r"[[#{link}|{text}]]".format(link=ref['link_to_sfn'], text=ref['text']))
+			pass
+		wikisections.append(r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
+				t=title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
+
+	parts = vladi_commons.split_list_per_line_count(wikisections, max_lines_per_file)
+
+	if pwb_format == True:
+		result_page = ''
+		save_filename = filename_part + '.txt'
+		num_part = 1
+		for part in parts:
+			pagename = root_wikilists + str(num_part)
+			part_page_text = marker_page_start \
+							 + "\n'''" + pagename + "'''\n" \
+							 + header \
+							 + '\n'.join(part) \
+							 + "\n" + marker_page_end + "\n\n"
+			num_part += 1
+			result_page += part_page_text
+		vladi_commons.file_savetext(save_filename, result_page)
+		return save_filename
+
+	else:
+		saved_filenames = []
+		num_part = 1
+		for part in parts:
+			filename_part_ = filename_part + str(num_part) + '.txt'
+			saved_filenames.append(filename_part_)
+			vladi_commons.file_savetext(filename_part_, header)  # запись шапки списка
+			vladi_commons.file_savelines(filename_part_, part, True)
+			num_part += 1
+
+		return saved_filenames
