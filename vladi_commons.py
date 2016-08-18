@@ -91,3 +91,50 @@ def pickle_data_from_file(filename):
 # разбивка списка на части по числу строк
 def split_list_per_line_count(lst, chunk_size):
 	return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
+
+def re_compile_list(re_groups):
+	"""Регулярных выражений по списку компиляция.
+
+	Список типа: letter_groups = ['[АБВГДЕЁЖЗ]', '[ИКЛМНО]', '[ПH]', '[СТУФХЦЧШЩЪЫЬЭЮЯ]', r'[.]']
+	"""
+	import re
+	groups = []
+	for g in re_groups:
+		c = re.compile(g, re.I + re.U)
+		groups.append(c)
+	return groups
+
+
+def re_compile_dict(re_groups, flags=False):
+	"""Регулярных выражений по словарю компиляция.
+
+	Принимает словарь типа:
+	{'АБВГДЕЁЖЗ': '[АБВГДЕЁЖЗ]', 'other': r'.'}
+
+	Возващает типа:
+		groups = [
+		{'name': 'АБВГДЕЁЖЗ', 're': '[АБВГДЕЁЖЗ]', 'c': re.compiled},
+		{'name': 'other', 're': r'.', 'c': re.compiled},
+	]
+	"""
+	import re
+	flags = re.I + re.U if not flags else flags
+	groups = []
+	for g in re_groups:
+		string = {}
+		string['name'] = g
+		string['re'] = re_groups[g]
+		string['c'] = re.compile(re_groups[g], flags)
+		groups.append(string)
+	return groups
+
+
+# ---
+def send_email_toollabs(subject, text, email='tools.vltools@tools.wmflabs.org'):
+	# Не работает из скрипа, из консоли - да
+	# https://wikitech.wikimedia.org/wiki/Help:Tool_Labs#Mail_from_tools
+	#
+	import subprocess
+	cmd = 'echo -e "Subject: ' + subject + r'\n\n' + text + '" | /usr/sbin/exim -odf -i ' + email
+	subprocess.call(cmd, shell=True)
