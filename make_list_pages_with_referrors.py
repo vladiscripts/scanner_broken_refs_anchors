@@ -200,51 +200,117 @@ class FindCitesOnPage:
 				list_sfns.add(sfns)
 
 
-def split_list_per_line_count(lst, chunk_size):
-	return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+class MakeWikiList:
+	def __init__(self, pages_with_referrors, pwb_format=True, alphabet_order=True):
+		self.pages_with_referrors = pages_with_referrors
+		self.wikisections = []
+		self.letter_groups = {
+			u'А':          u'[А]',
+			u'Б':          u'[Б]',
+			u'ВГ':         u'[ВГ]',
+			u'Д':          u'[Д]',
+			u'ЕЁЖЗИЙ':     u'[ЕЁЖЗИЙ]',
+			u'К':          u'[К]',
+			u'ЛМ':         u'[ЛМ]',
+			u'НО':         u'[НО]',
+			u'П':          u'[П]',
+			u'Р':          u'[Р]',
+			u'С':          u'[С]',
+			u'Т':          u'[Т]',
+			u'УФХ':        u'[УФХ]',
+			u'ЦЧШЩЪЫЬЭЮЯ': u'[ЦЧШЩЪЫЬЭЮЯ]',
+			'other':       r'[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]'
+		}
+		self.parts = {}
+		for d in self.letter_groups.keys():
+			self.parts[d] = {}
+
+		self.split_parts_per_alphabet_order()
+		self.make_wikilists()
+
+		pass
+
+	def split_list_per_line_count(self, lst, chunk_size):
+		"""Разделение списка на части по числу строк."""
+		return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
+	def list_formating2wikilink(self, dict):
+		"""Сортировка списка по алфавиту и форматирование в викиссылки."""
+		list_wikilinks = []
+		for title in sorted(dict.keys()):
+			page_wikilinks = []
+			for ref in dict[title]:
+				page_wikilinks.append(r"[[#{link}|{text}]]".format(link=ref['link_to_sfn'], text=ref['text']))
+				pass
+			list_wikilinks.append(r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
+					t=title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
+		return list_wikilinks
+
+	def split_parts_per_alphabet_order(self):
+		import re
+
+		groups_re = re_compile_dict(self.letter_groups)
+
+		for title in sorted(self.pages_with_referrors.keys()):
+			ref = self.pages_with_referrors[title]
+
+			for group_re in groups_re:
+				if group_re['c'].match(title):
+					self.parts[group_re['name']][title] = ref
+					break
+
+	def make_wikilists(self, pwb_format=True, alphabet_order=True):
+		global max_lines_per_file, filename_part, root_wikilists, header, marker_page_start, marker_page_end, bottom
+
+		# filename = 'listpages_errref_json17-1325.txt'
+		# page_err_refs_full = vladi_commons.json_data_from_file(filename_listpages_errref_json)
+
+		self.split_parts_per_alphabet_order()
+		pass
+
+		# vladi_commons.json_store_to_file(filename_part, self.parts)
+
+		# сортировка списка по алфавиту и форматирование в викиссылки
+		# self.list_formating2wikilink()
+		# parts = self.list_formating2wikilink(part)
+		# parts = self.list_formating2wikilink(parts)
+
+		# разделение списка на части по числу строк
+		# parts = vladi_commons.split_list_per_line_count(self.wikisections, max_lines_per_file)
 
 
-def make_wikilists(pages_with_referrors, pwb_format=True):
-	global max_lines_per_file, filename_part, root_wikilists, header, marker_page_start, marker_page_end
+		if pwb_format == True:
+			result_page = ''
+			save_filename = filename_part + '.txt'
+			num_part = 1
 
-	# filename = 'listpages_errref_json17-1325.txt'
-	# page_err_refs_full = vladi_commons.json_data_from_file(filename_listpages_errref_json)
+			for part in self.parts:
+				wikiformated_part = self.list_formating2wikilink(self.parts[part])
+				# pagename = root_wikilists + str(num_part)
+				# pn = 'Символы и не русские буквы' if part == 'other' else '"' + part + '"'
+				# pagename = root_wikilists + 'Начинающиеся с ' + pn
+				pn = 'Не русские буквы' if part == 'other' else part
+				pagename = 'Шаблон:' + root_wikilists + pn
+				part_page_text = marker_page_start \
+								 + "\n'''" + pagename + "'''\n" \
+								 + header \
+								 + '\n'.join(wikiformated_part) \
+								 + "\n" + bottom \
+								 + "\n" + marker_page_end + "\n\n"
+				num_part += 1
+				result_page += part_page_text
+			vladi_commons.file_savetext(save_filename, result_page)
+			return save_filename
 
-	wikisections = []
-	for title in sorted(pages_with_referrors.keys()):
-		page_wikilinks = []
-		for ref in pages_with_referrors[title]:
-			page_wikilinks.append(r"[[#{link}|{text}]]".format(link=ref['link_to_sfn'], text=ref['text']))
-			pass
-		wikisections.append(r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
-				t=title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
 
-	parts = vladi_commons.split_list_per_line_count(wikisections, max_lines_per_file)
+		else:
+			saved_filenames = []
+			num_part = 1
+			for part in parts:
+				filename_part_ = filename_part + str(num_part) + '.txt'
+				saved_filenames.append(filename_part_)
+				vladi_commons.file_savetext(filename_part_, header)  # запись шапки списка
+				vladi_commons.file_savelines(filename_part_, part, True)
+				num_part += 1
 
-	if pwb_format == True:
-		result_page = ''
-		save_filename = filename_part + '.txt'
-		num_part = 1
-		for part in parts:
-			pagename = root_wikilists + str(num_part)
-			part_page_text = marker_page_start \
-							 + "\n'''" + pagename + "'''\n" \
-							 + header \
-							 + '\n'.join(part) \
-							 + "\n" + marker_page_end + "\n\n"
-			num_part += 1
-			result_page += part_page_text
-		vladi_commons.file_savetext(save_filename, result_page)
-		return save_filename
-
-	else:
-		saved_filenames = []
-		num_part = 1
-		for part in parts:
-			filename_part_ = filename_part + str(num_part) + '.txt'
-			saved_filenames.append(filename_part_)
-			vladi_commons.file_savetext(filename_part_, header)  # запись шапки списка
-			vladi_commons.file_savelines(filename_part_, part, True)
-			num_part += 1
-
-		return saved_filenames
+			return saved_filenames
