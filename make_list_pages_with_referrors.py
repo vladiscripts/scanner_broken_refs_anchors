@@ -14,7 +14,7 @@ def make_list_transcludes(tpls_like_sfns_names, filename_tpls_transcludes):
 
 	if get_transcludes_from == 1:  # from wikiAPI
 		list_transcludes = get_list_transcludes_of_tpls(tpls_like_sfns_names)
-		file_savelines(filename_tpls_transcludes, self.list_transcludes)
+		file_savelines(filename_tpls_transcludes, list_transcludes)
 
 	# Тесты
 	elif get_transcludes_from == 2:  # from file

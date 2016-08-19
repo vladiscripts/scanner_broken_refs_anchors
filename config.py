@@ -15,13 +15,14 @@ from vladi_commons import *
 # Или отключить в скрипте выводы типа print("Вывод не английских символв, не кодирвки ASCII cp866").
 
 # Отладка
-read_list_from_file_JSON = True  # Взять полный список ошибок из файла JSON, без создания нового и сканирования, или (jgwbb yb;t):
+read_list_from_file_JSON = False  # Взять полный список ошибок из файла JSON, без создания нового и сканирования, или (jgwbb yb;t):
 filename_listpages_errref_json = 'listpages_errref.json'
 # ---
+# Иначе (read_list_from_file_JSON = False):
 # 1 - брать список включений шаблонов из wiki базы данных
 # 2 - из файла (можно подставить уже отсканированный)
 # 3 - указ. вручную
-get_transcludes_from = 2
+get_transcludes_from = 1
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_errref.txt'
 test_pages = [
@@ -31,7 +32,8 @@ test_pages = [
 	'Гибридная_интеллектуальная_система', 'Раскраска_графов', 'Звёздчатый_октаэдр',
 	# тест отдельных страниц, связано с get_transcludes_from
 ]
-
+# ---
+edit_page_by_list = False  # Не редактировать страницы, только ссканировать и сделать список
 # ---
 name_of_warning_tpl = 'Нет полных библиографических описаний'  # Участник:Vladis13/ошибки сносок
 exclude_regexp = r'\{\{([Шш]аблон:)?[Нн]ет[ _]полных[ _]библиографических[ _]описаний'  # \{\{([Шш]аблон:)?[уУ]частник:[Vv]ladis13/[Оо]шибки[ _]сносок
@@ -57,15 +59,14 @@ header = """
 bottom = '[[Категория:Википедия:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
 
 # ---
-edit_page_by_list = True  # Не редактировать страницы, только ссканировать и сделать список
-ask_save_prompts = True
+ask_save_prompts = True  # работает с wikiAPI
 # ---
 filename_error_log = 'error_log.txt'
 print_log = True
 print_log_full = False
 
 # Обрабатывать только одну страницу, беря контент из файла. Например, для работы из бота AWB.
-do_only_1_page_by_content_from_file = True
+do_only_1_page_by_content_from_file = True  # работает с вики-парсером
 filename_page_wikicontent = r'../temp/AWBfile.txt'  # страница в вики-разметке
 
 names_of_tpls_like_sfns = (['sfn', 'sfn0', 'Sfn-1',
