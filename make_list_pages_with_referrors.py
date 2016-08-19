@@ -46,7 +46,8 @@ class MakeListpageReferrors:
 			if print_log:
 				print(u'Страница № {}: {}'.format(p_count_cur, title))
 			page = FindCitesOnPage(title, p_count_cur)
-			self.pages_with_referrors[title] = page.full_errrefs
+			if len(page.full_errrefs) > 0:
+				self.pages_with_referrors[title] = page.full_errrefs
 			# self.collect_refs(title, p_count_cur)
 			p_count_cur -= 1
 
