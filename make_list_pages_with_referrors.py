@@ -163,7 +163,7 @@ class FindCitesOnPage:
 		# Если в статье есть некорректные сноски без целевых примечаний
 		if err_refs:
 			self.full_errrefs = []
-			for citeref in err_refs:
+			for citeref in sorted(err_refs):
 				it_sfn_double = False
 				for sfn in self.all_sfn_info_of_page:
 					if sfn['citeref'] == citeref and not it_sfn_double:

@@ -52,7 +52,7 @@ if edit_page_by_list:
 	# saved_filenames = make_wikilists(pages_with_referrors, pwb_format)
 	saved_filenames = MakeWikiList(pages_with_referrors, pwb_format)
 
-	import subprocess
+	# import subprocess
 	import os
 
 	python_and_path = r'python3 scripts/'

@@ -22,14 +22,16 @@ filename_listpages_errref_json = 'listpages_err_ref.json'
 # 1 - брать список включений шаблонов из wiki базы данных
 # 2 - из файла (можно подставить уже отсканированный)
 # 3 - указ. вручную
-get_transcludes_from = 1
+get_transcludes_from = 3
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_err_ref.txt'
 test_pages = [
-	'Африканская_мифология',
-	'Участник:Vladis13/статья',
-	'1991_год',
-	'Гибридная_интеллектуальная_система', 'Раскраска_графов', 'Звёздчатый_октаэдр',
+	# 'Африканская_мифология',
+	# 'Участник:Vladis13/статья',
+	# '1991_год',
+	'Гибридная_интеллектуальная_система',
+	'Раскраска_графов',
+	'Звёздчатый_октаэдр',
 	# тест отдельных страниц, связано с get_transcludes_from
 ]
 # ---
