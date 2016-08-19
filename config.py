@@ -16,7 +16,7 @@ from vladi_commons import *
 
 # Отладка
 read_list_from_file_JSON = False  # Взять полный список ошибок из файла JSON, без создания нового и сканирования, или (jgwbb yb;t):
-filename_listpages_errref_json = 'listpages_errref.json'
+filename_listpages_errref_json = 'listpages_err_ref.json'
 # ---
 # Иначе (read_list_from_file_JSON = False):
 # 1 - брать список включений шаблонов из wiki базы данных
@@ -24,7 +24,7 @@ filename_listpages_errref_json = 'listpages_errref.json'
 # 3 - указ. вручную
 get_transcludes_from = 1
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
-filename_listpages_errref = 'listpages_errref.txt'
+filename_listpages_errref = 'listpages_err_ref.txt'
 test_pages = [
 	'Африканская_мифология',
 	'Участник:Vladis13/статья',
