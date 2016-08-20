@@ -57,6 +57,6 @@ if do_post_list:
 # Простановка в статьях шаблона про ошибки
 if do_post_template:
 	sim = ' -simulate' if do_post_template_simulate else ''
-	cmd = python_and_path + 'add_text.py' + sim + ' -file:' + filename_listpages_errref + ' -text:"{{' + name_of_warning_tpl + '}}" -except:"' + exclude_regexp + '" -summary:"+шаблон: некорректные викиссылки в сносках" -maxlag:15'
+	cmd = python_and_path + 'add_text.py' + sim + ' -file:' + filename_listpages_errref + ' -text:"{{' + name_of_warning_tpl + '}}" -except:"' + exclude_regexp + '" -summary:"+шаблон: некорректные викиссылки в сносках" -pt:1 -maxlag:15'
 	# subprocess.call(cmd, shell=True)
 	os.system(cmd)

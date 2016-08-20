@@ -19,7 +19,7 @@ def make_list_transcludes(tpls_like_sfns_names, filename_tpls_transcludes):
 
 	# Тесты
 	elif get_transcludes_from == 2:  # from file
-		list_transcludes = file_readlines_in_set(filename_tpls_transcludes)
+		list_transcludes = vladi_commons.file_readlines_in_set(filename_tpls_transcludes)
 
 	elif get_transcludes_from == 3:  # from manual
 		global test_pages
@@ -129,6 +129,7 @@ class FindCitesOnPage:
 			print(error_text)
 			save_error_log(filename_error_log, error_text)
 
+
 	# Отлов красных ошибок как в ст.  "Казаки" не получается
 	# for undefined_ref in parsed_html.cssselect('li span.mw-ext-cite-error'):
 	# for undefined_ref in parsed_html.cssselect('span.error'):
@@ -177,7 +178,7 @@ class FindCitesOnPage:
 				# print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(self.list_pages_with_referrors[self.title]))
 				print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(self.full_errrefs))
 
-	def find_refs_via_wikiparser(self):
+	def find_refs_via_wikiparser(self, tpl):
 		"""
 		Поиск сносок по викикоду. Вместо него испоьзован поиск по html-тэгу "CITEREF".
 		Из-за вроде как лучшей скорости, совметимости с версией python на Tool labs,
@@ -200,6 +201,11 @@ class FindCitesOnPage:
 				if tpl.has('2'):
 					sfns.append(tpl.get('2').value.strip())
 				list_sfns.add(sfns)
+
+
+def save_error_log(filename_error_log, error_text):
+	import vladi_commons
+	vladi_commons.file_savelines(filename_error_log, error_text)
 
 
 class MakeWikiList:
