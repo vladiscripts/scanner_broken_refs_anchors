@@ -1,14 +1,11 @@
 # -*- coding: utf-8  -*-
 # from sys import version_info
 # PYTHON_VERSION = version_info.major
-from urllib.parse import urlencode, quote  # python 3
 # if PYTHON_VERSION == 3:
 # 	from urllib.parse import urlencode, quote  # python 3
 # else:
 # 	from urllib import urlencode, quote  # python 2.7
 # 	import codecs
-import requests
-from vladi_commons import *
 
 # При запуске в Windows через AWB могут быть проблемы с кодировкой. Из-за кодовой страницы cmd.exe.
 # Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
@@ -35,7 +32,14 @@ test_pages = [
 	# тест отдельных страниц, связано с get_transcludes_from
 ]
 # ---
-edit_page_by_list = False  # Не редактировать страницы, только ссканировать и сделать список
+# edit_page_by_list = True  # Не редактировать страницы, только ссканировать и сделать список
+# Внмание, включение записи в википедию
+do_post_list = False  # Запись списков
+do_post_list_simulate = True  # Симуляция записи
+
+do_post_template = False  # Запись в статьи шаблона
+do_post_template_simulate = True  # Симуляция записи
+
 # ---
 name_of_warning_tpl = 'Нет полных библиографических описаний'  # Участник:Vladis13/ошибки сносок
 exclude_regexp = r'\{\{([Шш]аблон:)?[Нн]ет[ _]полных[ _]библиографических[ _]описаний'  # \{\{([Шш]аблон:)?[уУ]частник:[Vv]ladis13/[Оо]шибки[ _]сносок
@@ -43,9 +47,13 @@ list_transcludes_of_warningtemple = 'list_uses_warningtpl.txt'
 
 summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
 
+# --- Отключено, список викиссылок делится на части по алфавиту
 # Создание вики-списков для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
 max_lines_per_file = 2000
+# ---
 filename_part = 'wikisections'  # к имени добавляется № части и расширение '.txt'
+# ---
+
 root_wikilists = name_of_warning_tpl + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
 marker_page_start = '{{-start-}}'
 marker_page_end = '{{-end-}}'

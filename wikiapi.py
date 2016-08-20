@@ -5,6 +5,13 @@
 # Содержит класс с логином к WikiAPI, методом записи текста на страницы, получения викикода страниц.
 # И несколько функций вне кдасса:  page_get_html(title),  page_html_parsed(title) - получение html статей и парсинг для обработки
 #
+from sys import version_info
+PYTHON_VERSION = version_info.major
+if PYTHON_VERSION == 3:
+	from urllib.parse import urlencode, quote  # python 3
+else:
+	from urllib import urlencode, quote  # python 2.7
+	import codecs
 import requests
 from config import *
 
@@ -211,7 +218,7 @@ def get_list_transcludes_of_tpls(sfns_like_names):
 	list = set()
 	for sfntpl in sfns_like_names:
 		url = 'http://tools.wmflabs.org/ruwikisource/WDBquery_transcludes_template/?lang=ru&format=json&template=' + quote(
-				sfntpl)
+			sfntpl)
 		# GETparameters = {"action": "render"}  # html
 		GETparameters = {}
 		r = requests.get(url, data=GETparameters)

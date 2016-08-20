@@ -2,19 +2,20 @@
 #
 # author: https://github.com/vladiscripts
 #
-# import wikiapi
 from config import *
 import vladi_commons
+import wikiapi
 
 
 def make_list_transcludes(tpls_like_sfns_names, filename_tpls_transcludes):
 	from wikiapi import get_list_transcludes_of_tpls
+	import vladi_commons
 	global get_transcludes_from
 	list_transcludes = []
 
 	if get_transcludes_from == 1:  # from wikiAPI
 		list_transcludes = get_list_transcludes_of_tpls(tpls_like_sfns_names)
-		file_savelines(filename_tpls_transcludes, list_transcludes)
+		vladi_commons.file_savelines(filename_tpls_transcludes, list_transcludes)
 
 	# Тесты
 	elif get_transcludes_from == 2:  # from file
@@ -249,8 +250,9 @@ class MakeWikiList:
 
 	def split_parts_per_alphabet_order(self):
 		import re
+		import vladi_commons
 
-		groups_re = re_compile_dict(self.letter_groups)
+		groups_re = vladi_commons.re_compile_dict(self.letter_groups)
 
 		for title in sorted(self.pages_with_referrors.keys()):
 			ref = self.pages_with_referrors[title]
@@ -262,6 +264,7 @@ class MakeWikiList:
 
 	def make_wikilists(self, pwb_format=True, alphabet_order=True):
 		global max_lines_per_file, filename_part, root_wikilists, header, marker_page_start, marker_page_end, bottom
+		import vladi_commons
 
 		# filename = 'listpages_errref_json17-1325.txt'
 		# page_err_refs_full = vladi_commons.json_data_from_file(filename_listpages_errref_json)
