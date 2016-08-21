@@ -306,14 +306,13 @@ class MakeWikiList:
 
 class MakeLists:
 	def __init__(self):
-		self.pages_with_referrors = {}
-		# self.list_transcludes = []
-		self.list_transcludes_sfntpls = set()
-		self.list_transcludes_of_warning_tpl = set()
-		self.list_to_set_warning_tpl = set()
+		self.full_err_listpages = {}
+		self.transcludes_sfntpls = set()
+		self.transcludes_of_warning_tpl = set()
+		self.to_set_warning_tpl = set()
 
-		self.sfns_like_names = [names_of_tpls_like_sfns] if isinstance(names_of_tpls_like_sfns,
-																	   str) else names_of_tpls_like_sfns
+		self.sfns_like_names = [names_sfn_templates] if isinstance(names_sfn_templates,
+																   str) else names_sfn_templates
 		self.name_of_warning_tpl = name_of_warning_tpl
 
 		self.filename = {
@@ -325,17 +324,20 @@ class MakeLists:
 		}
 
 		self.make_list_transcludes_sfns()
+		if len(self.transcludes_sfntpls) > 0:
 
-		# Создание списков страниц с ошибками
-		self.make_pages_with_referrors()
-
-		self.make_list_transcludes_of_warning_tpl()
-
-		self.make_list_to_set_warning_tpl()
-		pass
+			# Создание списков страниц с ошибками
+			self.make_pages_with_referrors()
+			if len(self.full_err_listpages) > 0:
+				self.make_list_transcludes_of_warning_tpl()
+				self.make_list_to_set_warning_tpl()
 
 	def make_pages_with_referrors(self):
-		"""Создание списков страниц с ошибками"""
+		"""Создание списков страниц с ошибками
+
+		Читать с вики-сайта список страниц с sfn-шаблонами, и сканировать их на шибки сносок.
+		Или читать готовый полный список ошибок из файла JSON
+		"""
 		if not read_list_from_file_JSON:
 			# список включений sfn-like шаблонов
 			self.make_list_transcludes()
@@ -347,33 +349,31 @@ class MakeLists:
 			# del referrors
 
 			# Запись списка в файлы
-			if len(self.pages_with_referrors) > 0:
-				file_savelines(self.filename['listpages_errref'], self.pages_with_referrors)  # просто перечень страниц
+			if len(self.full_err_listpages) > 0:
+				file_savelines(self.filename['listpages_errref'], self.full_err_listpages)  # просто перечень страниц
 				json_store_to_file(self.filename['listpages_errref_json'],
-								   self.pages_with_referrors)  # полные данные в JSON
+								   self.full_err_listpages)  # полные данные в JSON
 
-		# или читать готовый полный список ошибок из файла JSON
 		elif read_list_from_file_JSON:
-			self.pages_with_referrors = vladi_commons.json_data_from_file(self.filename['listpages_errref_json'])
+			self.full_err_listpages = vladi_commons.json_data_from_file(self.filename['listpages_errref_json'])
 
 	def make_list_to_set_warning_tpl(self):
-		# Список куда предупреждение ещё не поставлено
-		listpages_with_referrors = set([title for title in self.pages_with_referrors])
-		self.list_to_set_warning_tpl = listpages_with_referrors - self.list_transcludes_of_warning_tpl
+		"""Список куда предупреждение ещё не поставлено."""
+		listpages_with_referrors = set([title for title in self.full_err_listpages])
+		self.to_set_warning_tpl = listpages_with_referrors - self.transcludes_of_warning_tpl
 		vladi_commons.file_savelines(self.filename['listpages_errref_where_not_set_warning_tpl'],
-					   self.list_to_set_warning_tpl)  # сохранение списка
-		pass
+									 self.to_set_warning_tpl)  # сохранение списка
 
 	def make_list_transcludes_of_warning_tpl(self):
 		"""Список страниц где шаблон уже установлен."""
 		# Взять с сайта - True, или из файла - False.
 		if transcludes_of_warning_tpl_get_from_site:
 			# from wikiapi import get_list_transcludes_of_tpls
-			self.list_transcludes_of_warning_tpl = self.get_list_transcludes_of_tpls_from_site(self.name_of_warning_tpl)
+			self.transcludes_of_warning_tpl = self.get_list_transcludes_of_tpls_from_site(self.name_of_warning_tpl)
 			vladi_commons.file_savelines(self.filename['list_transcludes_of_warning_tpl'],
-										 self.list_transcludes_of_warning_tpl)
+										 self.transcludes_of_warning_tpl)
 		else:
-			self.list_transcludes_of_warning_tpl = vladi_commons.file_readlines_in_set(
+			self.transcludes_of_warning_tpl = vladi_commons.file_readlines_in_set(
 					self.filename['list_transcludes_of_warning_tpl'])
 
 	def make_list_transcludes_sfns(self):
@@ -382,17 +382,16 @@ class MakeLists:
 		global get_transcludes_from
 
 		if get_transcludes_from == 1:  # from wikiAPI
-			self.list_transcludes_sfntpls = self.get_list_transcludes_of_tpls_from_site(self.sfns_like_names)
-			vladi_commons.file_savelines(self.filename['tpls_transcludes'], self.list_transcludes_sfntpls)
+			self.transcludes_sfntpls = self.get_list_transcludes_of_tpls_from_site(self.sfns_like_names)
+			vladi_commons.file_savelines(self.filename['tpls_transcludes'], self.transcludes_sfntpls)
 
 		# Тесты
 		elif get_transcludes_from == 2:  # from file
-			self.list_transcludes_sfntpls = vladi_commons.file_readlines_in_set(self.filename['tpls_transcludes'])
+			self.transcludes_sfntpls = vladi_commons.file_readlines_in_set(self.filename['tpls_transcludes'])
 
 		elif get_transcludes_from == 3:  # from manual
 			global test_pages
-			self.list_transcludes_sfntpls = test_pages
-		pass
+			self.transcludes_sfntpls = test_pages
 
 	def get_list_transcludes_of_tpls_from_site(self, list_tempates):
 		# list = set()
@@ -406,16 +405,16 @@ class MakeLists:
 		return list
 
 	def make_listpages_with_referrors(self):
-		pages_count = len(self.list_transcludes_sfntpls)
+		pages_count = len(self.transcludes_sfntpls)
 		print('Всего страниц: {}.'.format(pages_count))
 		p_count_cur = pages_count
 
-		for title in self.list_transcludes_sfntpls:
+		for title in self.transcludes_sfntpls:
 			global print_log
 			if print_log:
 				print(u'Страница № {}: {}'.format(p_count_cur, title))
 			page = ScanRefsOfPage(title, p_count_cur)
 			if len(page.full_errrefs) > 0:
-				self.pages_with_referrors[title] = page.full_errrefs
+				self.full_err_listpages[title] = page.full_errrefs
 			# self.collect_refs(title, p_count_cur)
 			p_count_cur -= 1

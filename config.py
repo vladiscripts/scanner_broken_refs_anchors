@@ -19,7 +19,7 @@ filename_listpages_errref_json = 'listpages_err_ref.json'
 # 1 - брать список включений шаблонов из wiki базы данных
 # 2 - из файла (можно подставить уже отсканированный)
 # 3 - указ. вручную
-get_transcludes_from = 3
+get_transcludes_from = 2
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_err_ref.txt'
 test_pages = [
@@ -82,7 +82,7 @@ print_log_full = False
 do_only_1_page_by_content_from_file = True  # работает с вики-парсером
 filename_page_wikicontent = r'../temp/AWBfile.txt'  # страница в вики-разметке
 
-names_of_tpls_like_sfns = (['sfn', 'sfn0', 'Sfn-1',
+names_sfn_templates = (['sfn', 'sfn0', 'Sfn-1',
 							'Harvard citation', 'Harv',
 							'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 							'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol'])

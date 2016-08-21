@@ -4,6 +4,7 @@
 #
 from config import *
 from make_list_pages_with_referrors import *
+
 # from vladi_commons import *
 # import add_warning_tpl
 
@@ -63,17 +64,13 @@ from make_list_pages_with_referrors import *
 
 
 lists = MakeLists()
-pass
 
 pwb_format = True
-saved_filenames = MakeWikiList(lists.pages_with_referrors, pwb_format)
+saved_filenames = MakeWikiList(lists.full_err_listpages, pwb_format)
 
-pass
-
-# import subprocess
 import os
+
 # from vladi_commons import *
-# from config import do_post_list, do_post_list_simulate, do_post_template, do_post_template_simulate, 	filename_part, filename_listpages_errref_where_not_set_warning_tpl, 	name_of_warning_tpl, exclude_regexp
 
 python_and_path = r'python3 scripts/'
 
@@ -81,12 +78,10 @@ python_and_path = r'python3 scripts/'
 if do_post_list:
 	sim = ' -simulate' if do_post_list_simulate else ''  # "-simulate" параметр для тестирования записи pwb
 	cmd = python_and_path + 'pagefromfile.py -force' + sim + ' -file:' + filename_part + '.txt' + ' -start:"{{-start-}}" -end:"{{-end-}}" -notitle -summary:"обновление списка" -maxlag:15'
-	# subprocess.call(cmd, shell=True)
 	os.system(cmd)
 
 # Простановка в статьях шаблона про ошибки
 if do_post_template:
 	sim = ' -simulate' if do_post_template_simulate else ''
 	cmd = python_and_path + 'add_text.py' + sim + ' -file:' + filename_listpages_errref_where_not_set_warning_tpl + ' -text:"{{' + name_of_warning_tpl + '}}" -except:"' + exclude_regexp + '" -summary:"+шаблон: некорректные викиссылки в сносках" -pt:1 -maxlag:15'
-	# subprocess.call(cmd, shell=True)
 	os.system(cmd)
