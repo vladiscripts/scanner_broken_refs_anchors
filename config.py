@@ -12,14 +12,14 @@
 # Или отключить в скрипте выводы типа print("Вывод не английских символв, не кодирвки ASCII cp866").
 
 # Отладка
-read_list_from_file_JSON = False  # Взять полный список ошибок из файла JSON, без создания нового и сканирования, или (jgwbb yb;t):
+read_list_from_file_JSON = True  # Взять полный список ошибок из файла JSON, без создания нового и сканирования, или (jgwbb yb;t):
 filename_listpages_errref_json = 'listpages_err_ref.json'
 # ---
 # Иначе (read_list_from_file_JSON = False):
 # 1 - брать список включений шаблонов из wiki базы данных
 # 2 - из файла (можно подставить уже отсканированный)
 # 3 - указ. вручную
-get_transcludes_from = 3
+get_transcludes_from = 2
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_err_ref.txt'
 test_pages = [
@@ -43,8 +43,11 @@ do_post_template_simulate = True  # Симуляция записи
 # ---
 name_of_warning_tpl = 'Нет полных библиографических описаний'  # Участник:Vladis13/ошибки сносок
 exclude_regexp = r'\{\{([Шш]аблон:)?[Нн]ет[ _]полных[ _]библиографических[ _]описаний'  # \{\{([Шш]аблон:)?[уУ]частник:[Vv]ladis13/[Оо]шибки[ _]сносок
-list_transcludes_of_warningtemple = 'list_uses_warningtpl.txt'
+filename_list_transcludes_of_warning_tpl = 'list_uses_warningtpl.txt'
+filename_listpages_errref_where_not_set_warning_tpl = 'listpages_without_warning_tpl.txt'
+transcludes_of_warning_tpl_get_from_site = False  # Список страниц где шаблон уже установлен. Взять с сайта - True, или из файла - False.
 
+#---
 summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
 
 # --- Отключено, список викиссылок делится на части по алфавиту
@@ -79,7 +82,7 @@ print_log_full = False
 do_only_1_page_by_content_from_file = True  # работает с вики-парсером
 filename_page_wikicontent = r'../temp/AWBfile.txt'  # страница в вики-разметке
 
-names_of_tpls_like_sfns = (['sfn', 'sfn0', 'Sfn-1',
+names_sfn_templates = (['sfn', 'sfn0', 'Sfn-1',
 							'Harvard citation', 'Harv',
 							'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 							'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol'])
