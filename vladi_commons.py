@@ -88,8 +88,13 @@ def pickle_data_from_file(filename):
 	return data
 
 
-# разбивка списка на части по числу строк
+def str2list(string):
+	"""Строку в список"""
+	return [string] if isinstance(string, str) else string
+
+
 def split_list_per_line_count(lst, chunk_size):
+	"""Разделение списка на части по числу строк."""
 	return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 

@@ -16,6 +16,16 @@ import requests
 from config import *
 
 
+URLapi = 'https://ru.wikipedia.org/w/api.php'
+URLindex = 'https://ru.wikipedia.org/w/index.php'
+URLhtml = 'https://ru.wikipedia.org/wiki/'
+headers = {'user-agent': 'user:textworkerBot'}
+file_password_to_api = 'password.txt'  # 2 string: 1 - user, 2 -
+
+# ---
+ask_save_prompts = True  # работает с wikiAPI
+
+
 class wikiconnect:
 	def __init__(self):
 		from config import ask_save_prompts
@@ -216,9 +226,9 @@ def get_list_transcludes_of_tpls(sfns_like_names):
 	if isinstance(sfns_like_names, str):
 		sfns_like_names = [sfns_like_names]
 	list = set()
-	for sfntpl in sfns_like_names:
+	for tpl in sfns_like_names:
 		url = 'http://tools.wmflabs.org/ruwikisource/WDBquery_transcludes_template/?lang=ru&format=json&template=' + quote(
-			sfntpl)
+			tpl)
 		# GETparameters = {"action": "render"}  # html
 		GETparameters = {}
 		r = requests.get(url, data=GETparameters)
