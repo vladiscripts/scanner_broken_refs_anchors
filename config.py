@@ -9,7 +9,7 @@
 
 # При запуске в Windows через AWB могут быть проблемы с кодировкой. Из-за кодовой страницы cmd.exe.
 # Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
-# Или отключить в скрипте выводы типа print("Вывод не английских символв, не кодирвки ASCII cp866").
+# Или отключить в скрипте выводы типа print("не английские символы").
 
 # Отладка
 
@@ -48,7 +48,7 @@ do_remove_template_simulate = True  # Симуляция записи
 
 # ---
 warning_tpl_name = 'Нет полных библиографических описаний'
-warning_tpl_regexp = r'{{([Шш]аблон:)?[Нн]ет[ _]полных[ _]библиографических[ _]описаний'  # \{\{([Шш]аблон:)?[уУ]частник:[Vv]ladis13/[Оо]шибки[ _]сносок
+warning_tpl_regexp = r'{{([Шш]аблон:)?([Нн]ет[ _]полных[ _]библиографических[ _]описаний|НПБО)'
 filename_list_transcludes_of_warning_tpl = 'list_uses_warningtpl.txt'
 filename_listpages_errref_where_no_yet_warning_tpl = 'listpages_without_warning_tpl.txt'
 filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
@@ -84,9 +84,11 @@ filename_error_log = 'error_log.txt'
 print_log = True
 print_log_full = False
 
-names_sfn_templates = (['sfn', 'sfn0', 'Sfn-1',
-						'Harvard citation', 'Harv',
-						'Harvard citation no brackets', 'Harvnb', 'Harvsp',
-						'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol'])
-# names_of_tpls_like_sfns = 'Вершины Каменного Пояса'  # Отладка
+names_sfn_templates = ([
+	'sfn', 'sfn0', 'Sfn-1',
+	'Harvard citation', 'Harv',
+	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
+	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
+	# 'Вершины Каменного Пояса'  # Отладка
+])
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
