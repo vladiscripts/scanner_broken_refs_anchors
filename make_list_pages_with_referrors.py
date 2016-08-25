@@ -2,9 +2,12 @@
 #
 # author: https://github.com/vladiscripts
 #
+from urllib.parse import quote  # python 3
 from config import *
 import vladi_commons
-import wikiapi
+
+
+# import wikiapi
 
 
 #
@@ -105,20 +108,18 @@ class ScanRefsOfPage:
 					# 		self.ref_calls[href_cut] = {'text': eref.text, 'link_to_sfn': str(link_to_sfn)}
 
 		except Exception as error:
-			error_text = 'Ошибка {} при парсинге тэгов типа sfn в статье "{}"'.format(error, self.title)
-			print(error_text)
-			save_error_log(filename_error_log, error_text)
+			self.error_print(error)
 
-	# Отлов красных ошибок как в ст.  "Казаки" не получается
-	# for undefined_ref in parsed_html.cssselect('li span.mw-ext-cite-error'):
-	# for undefined_ref in parsed_html.cssselect('span.error'):
-	# for undefined_ref in parsed_html.cssselect('span').text:
-	# t = [undefined_ref for undefined_ref in parsed_html.xpath('//li[@id=cite_note-sol5_2_3-35]')]
-	# t = parsed_html.cssselect('li')
-	# t = [undefined_ref for undefined_ref in parsed_html.cssselect('li#cite_note-sol5_2_3-35')]
-	# t = [undefined_ref for undefined_ref in parsed_html.xpath('//span/text')]
-	# for undefined_ref in parsed_html.xpath('//span').text:
-	# if 'Ошибка в сносках' in undefined_ref.text
+		# Отлов красных ошибок как в ст.  "Казаки" не получается
+		# for undefined_ref in parsed_html.cssselect('li span.mw-ext-cite-error'):
+		# for undefined_ref in parsed_html.cssselect('span.error'):
+		# for undefined_ref in parsed_html.cssselect('span').text:
+		# t = [undefined_ref for undefined_ref in parsed_html.xpath('//li[@id=cite_note-sol5_2_3-35]')]
+		# t = parsed_html.cssselect('li')
+		# t = [undefined_ref for undefined_ref in parsed_html.cssselect('li#cite_note-sol5_2_3-35')]
+		# t = [undefined_ref for undefined_ref in parsed_html.xpath('//span/text')]
+		# for undefined_ref in parsed_html.xpath('//span').text:
+		# if 'Ошибка в сносках' in undefined_ref.text
 
 	def cut_href(self, href):
 		pos = href.find('CITEREF')
@@ -133,9 +134,7 @@ class ScanRefsOfPage:
 					self.list_refs.add(self.cut_href(href))
 
 		except Exception as error:
-			error_text = 'Ошибка {} при парсинге примечаний в статье "{}"'.format(error, self.title)
-			print(error_text)
-			save_error_log(filename_error_log, error_text)
+			self.error_print(error)
 
 	def compare_refs(self):
 		# список сносок с битыми ссылками, из сравнения списков сносок и примечаний
@@ -152,9 +151,9 @@ class ScanRefsOfPage:
 
 			global print_log_full
 			if print_log_full:
-				print(u'Страница № {}: {}'.format(self.pages_count_cur, self.title))
+				print('Page # {}: {}'.format(self.pages_count_cur, self.title))
 				# print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(self.list_pages_with_referrors[self.title]))
-				print(u'Ошибочные сноски типа sfn без связи с ref: {}'.format(self.full_errrefs))
+				print('Errorious sfn-like links without anchors in refs: {}'.format(self.full_errrefs))
 
 	def find_refs_via_wikiparser(self, tpl):
 		"""
@@ -166,9 +165,13 @@ class ScanRefsOfPage:
 		У "CITEREF" тоже есть нюансы, но вроде пороще.
 		@return:
 		"""
+		list_tpls = set()
+		list_refs = set()
+		list_sfns = set()
+
 		if tpl.has('ref'):
 			refs = [tpl.get('ref').value.strip()]
-			for year in ['год', 'year']:
+			for year in [u'год', 'year']:
 				if tpl.has(year):
 					refs.append(tpl.get(year).value.strip())
 			list_refs.add(refs)
@@ -179,6 +182,11 @@ class ScanRefsOfPage:
 				if tpl.has('2'):
 					sfns.append(tpl.get('2').value.strip())
 				list_sfns.add(sfns)
+
+	def error_print(self, error):
+		error_text = 'Error "{}" on parsing footnotes of page "{}"'.format(error, self.title)
+		print(error_text)
+		save_error_log(filename_error_log, error_text)
 
 
 def save_error_log(filename_error_log, error_text):
@@ -216,10 +224,6 @@ class MakeWikiList:
 
 		pass
 
-	def split_list_per_line_count(self, lst, chunk_size):
-		"""Разделение списка на части по числу строк."""
-		return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
-
 	def list_formating2wikilink(self, dict):
 		"""Сортировка списка по алфавиту и форматирование в викиссылки."""
 		list_wikilinks = []
@@ -233,7 +237,7 @@ class MakeWikiList:
 		return list_wikilinks
 
 	def split_parts_per_alphabet_order(self):
-		import re
+		# import re
 		import vladi_commons
 
 		groups_re = vladi_commons.re_compile_dict(self.letter_groups)
@@ -274,11 +278,8 @@ class MakeWikiList:
 
 			for part in self.parts:
 				wikiformated_part = self.list_formating2wikilink(self.parts[part])
-				# pagename = root_wikilists + str(num_part)
-				# pn = 'Символы и не русские буквы' if part == 'other' else '"' + part + '"'
-				# pagename = root_wikilists + 'Начинающиеся с ' + pn
-				pn = 'Не русские буквы' if part == 'other' else part
-				pagename = 'Шаблон:' + root_wikilists + pn
+				pn = u'Не русские буквы' if part == 'other' else part
+				pagename = u'Шаблон:' + root_wikilists + pn
 				part_page_text = marker_page_start \
 								 + "\n'''" + pagename + "'''\n" \
 								 + header \
@@ -294,7 +295,7 @@ class MakeWikiList:
 		else:
 			saved_filenames = []
 			num_part = 1
-			for part in parts:
+			for part in self.parts:
 				filename_part_ = filename_part + str(num_part) + '.txt'
 				saved_filenames.append(filename_part_)
 				vladi_commons.file_savetext(filename_part_, header)  # запись шапки списка
@@ -309,28 +310,30 @@ class MakeLists:
 		self.full_err_listpages = {}
 		self.transcludes_sfntpls = set()
 		self.transcludes_of_warning_tpl = set()
-		self.to_set_warning_tpl = set()
+		self.listpages_with_referrors_without_warning_tpl = set()
+		self.list_to_remove_warning_tpl = set()
 
-		self.sfns_like_names = [names_sfn_templates] if isinstance(names_sfn_templates,
-																   str) else names_sfn_templates
-		self.name_of_warning_tpl = name_of_warning_tpl
+		self.sfns_like_names = vladi_commons.str2list(names_sfn_templates)
+		self.name_of_warning_tpl = warning_tpl_name
 
-		self.filename = {
-			'tpls_transcludes':                           filename_tpls_transcludes,
-			'listpages_errref':                           filename_listpages_errref,
-			'listpages_errref_json':                      filename_listpages_errref_json,
-			'list_transcludes_of_warning_tpl':            filename_list_transcludes_of_warning_tpl,
-			'listpages_errref_where_not_set_warning_tpl': filename_listpages_errref_where_not_set_warning_tpl,
-		}
+		self.filename_tpls_transcludes = filename_tpls_transcludes
+		self.filename_listpages_errref = filename_listpages_errref
+		self.filename_listpages_errref_json = filename_listpages_errref_json
+		self.filename_list_transcludes_of_warning_tpl = filename_list_transcludes_of_warning_tpl
+		self.filename_listpages_errref_where_no_yet_warning_tpl = filename_listpages_errref_where_no_yet_warning_tpl
+		self.filename_list_to_remove_warning_tpl = filename_list_to_remove_warning_tpl
 
 		self.make_list_transcludes_sfns()
-		if len(self.transcludes_sfntpls) > 0:
+		print(len(self.transcludes_sfntpls))
 
+		if len(self.transcludes_sfntpls) > 0:
 			# Создание списков страниц с ошибками
 			self.make_pages_with_referrors()
 			if len(self.full_err_listpages) > 0:
 				self.make_list_transcludes_of_warning_tpl()
-				self.make_list_to_set_warning_tpl()
+				self.make_list_to_remove_warning_tpl()
+				self.make_list_to_add_warning_tpl()
+			# remove_tpl_from_pages(tplname, listpages_for_remove)
 
 	def make_pages_with_referrors(self):
 		"""Создание списков страниц с ошибками
@@ -339,10 +342,8 @@ class MakeLists:
 		Или читать готовый полный список ошибок из файла JSON
 		"""
 		if not read_list_from_file_JSON:
-			# список включений sfn-like шаблонов
-			self.make_list_transcludes()
-
 			# сканирование на ошибки
+			print('start scan pages')
 			self.make_listpages_with_referrors()
 			# referrors = MakeListpageReferrors(self.list_transcludes)
 			# pages_with_referrors = referrors.pages_with_referrors
@@ -350,19 +351,21 @@ class MakeLists:
 
 			# Запись списка в файлы
 			if len(self.full_err_listpages) > 0:
-				file_savelines(self.filename['listpages_errref'], self.full_err_listpages)  # просто перечень страниц
-				json_store_to_file(self.filename['listpages_errref_json'],
-								   self.full_err_listpages)  # полные данные в JSON
+				pass
+			# vladi_commons.file_savelines(self.filename_listpages_errref,
+			# 							 self.full_err_listpages.keys())  # просто перечень страниц
+			# vladi_commons.json_store_to_file(self.filename_listpages_errref_json,
+			# 								 self.full_err_listpages)  # полные данные в JSON
 
 		elif read_list_from_file_JSON:
-			self.full_err_listpages = vladi_commons.json_data_from_file(self.filename['listpages_errref_json'])
+			self.full_err_listpages = vladi_commons.json_data_from_file(self.filename_listpages_errref_json)
 
-	def make_list_to_set_warning_tpl(self):
+	def make_list_to_add_warning_tpl(self):
 		"""Список куда предупреждение ещё не поставлено."""
 		listpages_with_referrors = set([title for title in self.full_err_listpages])
-		self.to_set_warning_tpl = listpages_with_referrors - self.transcludes_of_warning_tpl
-		vladi_commons.file_savelines(self.filename['listpages_errref_where_not_set_warning_tpl'],
-									 self.to_set_warning_tpl)  # сохранение списка
+		self.listpages_with_referrors_without_warning_tpl = listpages_with_referrors - self.transcludes_of_warning_tpl - self.list_to_remove_warning_tpl
+		vladi_commons.file_savelines(self.filename_listpages_errref_where_no_yet_warning_tpl,
+									 sorted(self.listpages_with_referrors_without_warning_tpl))  # сохранение списка
 
 	def make_list_transcludes_of_warning_tpl(self):
 		"""Список страниц где шаблон уже установлен."""
@@ -370,11 +373,11 @@ class MakeLists:
 		if transcludes_of_warning_tpl_get_from_site:
 			# from wikiapi import get_list_transcludes_of_tpls
 			self.transcludes_of_warning_tpl = self.get_list_transcludes_of_tpls_from_site(self.name_of_warning_tpl)
-			vladi_commons.file_savelines(self.filename['list_transcludes_of_warning_tpl'],
-										 self.transcludes_of_warning_tpl)
+			vladi_commons.file_savelines(self.filename_list_transcludes_of_warning_tpl,
+										 sorted(self.transcludes_of_warning_tpl))
 		else:
 			self.transcludes_of_warning_tpl = vladi_commons.file_readlines_in_set(
-					self.filename['list_transcludes_of_warning_tpl'])
+					self.filename_list_transcludes_of_warning_tpl)
 
 	def make_list_transcludes_sfns(self):
 		"""Список включений sfn-шаблонов. С сайта, из файла, или указанные вручную."""
@@ -383,21 +386,22 @@ class MakeLists:
 
 		if get_transcludes_from == 1:  # from wikiAPI
 			self.transcludes_sfntpls = self.get_list_transcludes_of_tpls_from_site(self.sfns_like_names)
-			vladi_commons.file_savelines(self.filename['tpls_transcludes'], self.transcludes_sfntpls)
+			vladi_commons.file_savelines(self.filename_tpls_transcludes, self.transcludes_sfntpls)
 
 		# Тесты
 		elif get_transcludes_from == 2:  # from file
-			self.transcludes_sfntpls = vladi_commons.file_readlines_in_set(self.filename['tpls_transcludes'])
+			self.transcludes_sfntpls = vladi_commons.file_readlines_in_set(self.filename_tpls_transcludes)
 
 		elif get_transcludes_from == 3:  # from manual
 			global test_pages
 			self.transcludes_sfntpls = test_pages
 
 	def get_list_transcludes_of_tpls_from_site(self, list_tempates):
-		# list = set()
-		for sfntpl in list_tempates:
+		import requests
+		list = set()
+		for tpl in vladi_commons.str2list(list_tempates):
 			url = 'http://tools.wmflabs.org/ruwikisource/WDBquery_transcludes_template/?lang=ru&format=json&template=' + quote(
-					sfntpl)
+					tpl)
 			# GETparameters = {"action": "render"}  # html
 			GETparameters = {}
 			r = requests.get(url, data=GETparameters)
@@ -406,15 +410,22 @@ class MakeLists:
 
 	def make_listpages_with_referrors(self):
 		pages_count = len(self.transcludes_sfntpls)
-		print('Всего страниц: {}.'.format(pages_count))
+		print(u'All pages: {}.'.format(pages_count))
 		p_count_cur = pages_count
 
 		for title in self.transcludes_sfntpls:
 			global print_log
 			if print_log:
-				print(u'Страница № {}: {}'.format(p_count_cur, title))
+				print(u'Page # {}: {}'.format(p_count_cur, title))
 			page = ScanRefsOfPage(title, p_count_cur)
 			if len(page.full_errrefs) > 0:
 				self.full_err_listpages[title] = page.full_errrefs
 			# self.collect_refs(title, p_count_cur)
 			p_count_cur -= 1
+
+	def make_list_to_remove_warning_tpl(self):
+		self.list_to_remove_warning_tpl = self.transcludes_of_warning_tpl - set(
+				[title for title in self.full_err_listpages])
+		vladi_commons.file_savelines(self.filename_list_to_remove_warning_tpl, sorted(self.list_to_remove_warning_tpl))
+
+	# def remove_tpl_from_changed_pages(self):

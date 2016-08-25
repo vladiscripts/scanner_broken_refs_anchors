@@ -8,8 +8,12 @@ import mwparserfromhell
 from config import *
 import wikiapi
 
-
 # from lib_for_mwparserfromhell import *
+
+# Обрабатывать только одну страницу, беря контент из файла. Например, для работы из бота AWB.
+# do_only_1_page_by_content_from_file = True  # работает с вики-парсером
+# filename_page_wikicontent = r'../temp/AWBfile.txt'  # страница в вики-разметке
+
 
 
 class Add_warning_tpl:
