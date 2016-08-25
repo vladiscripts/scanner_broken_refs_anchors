@@ -49,12 +49,12 @@ do_remove_template_simulate = True  # Симуляция записи
 # ---
 warning_tpl_name = 'Нет полных библиографических описаний'
 warning_tpl_regexp = r'{{([Шш]аблон:)?([Нн]ет[ _]полных[ _]библиографических[ _]описаний|НПБО)'
-filename_list_transcludes_of_warning_tpl = 'list_uses_warningtpl.txt'
-filename_listpages_errref_where_no_yet_warning_tpl = 'listpages_without_warning_tpl.txt'
-filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
 
 # Список страниц где шаблон уже установлен. Взять с сайта - True, из файла - False.
 transcludes_of_warning_tpl_get_from_site = True
+filename_list_transcludes_of_warning_tpl = 'list_uses_warningtpl.txt'
+filename_listpages_errref_where_no_yet_warning_tpl = 'listpages_without_warning_tpl.txt'
+filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
 
 # ---
 # summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
