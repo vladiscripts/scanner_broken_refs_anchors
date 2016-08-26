@@ -1,4 +1,4 @@
-# -*- coding: utf-8  -*-
+# coding: utf8
 # from sys import version_info
 # PYTHON_VERSION = version_info.major
 # if PYTHON_VERSION == 3:
@@ -11,7 +11,6 @@
 # Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
 # Или отключить в скрипте выводы типа print("не английские символы").
 
-# Отладка
 
 # Список включений sfn-шаблонов
 # Иначе (read_list_from_file_JSON = False):
@@ -36,6 +35,7 @@ filename_listpages_errref_json = 'listpages_err_ref.json'
 
 # ---
 # edit_page_by_list = True  # Не редактировать страницы, только ссканировать и сделать список
+
 # Внмание, включение записи в википедию
 do_post_list = False  # Запись списков
 do_post_list_simulate = True  # Симуляция записи

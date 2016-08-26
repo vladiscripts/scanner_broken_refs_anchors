@@ -1,65 +1,26 @@
-# -*- coding: utf-8  -*-
+# coding: utf8
 #
 # author: https://github.com/vladiscripts
 #
-from urllib.parse import quote  # python 3
+from urllib.parse import quote
 from config import *
 import vladi_commons
-
-
-# import wikiapi
-
-
-#
-# class MakeListpageReferrors:
-# 	list_transcludes = []
-# 	pages_with_referrors = {}
-#
-# 	def __init__(self, list_transcludes):
-# 		self.list_transcludes = list_transcludes
-# 		self.make_listpages_with_referrors()
-# 		pass
-#
-# 	def make_listpages_with_referrors(self):
-# 		pages_count = len(self.list_transcludes)
-# 		print('Всего страниц: {}.'.format(pages_count))
-# 		p_count_cur = pages_count
-#
-# 		for title in self.list_transcludes:
-# 			global print_log
-# 			if print_log:
-# 				print(u'Страница № {}: {}'.format(p_count_cur, title))
-# 			page = FindCitesOnPage(title, p_count_cur)
-# 			if len(page.full_errrefs) > 0:
-# 				self.pages_with_referrors[title] = page.full_errrefs
-# 			# self.collect_refs(title, p_count_cur)
-# 			p_count_cur -= 1
 
 
 class ScanRefsOfPage:
 	def __init__(self, title, pages_count_cur):
 		from wikiapi import page_html_parse, page_get_html
-		# self.title = ''
-		# self.parsed_html = ''
-		# self.pages_count_cur = 0
 		self.list_sfns = set()
 		self.list_refs = set()
 		self.all_sfn_info_of_page = []
-		# ref_calls = dict()
 		self.full_errrefs = []
 
-		# self.full_errrefs.clear()
 		self.title = title
 		self.pages_count_cur = pages_count_cur
 		self.parsed_html = page_html_parse(self.title)  # html из url
-		# parsed_html = html.fromstring(file_textread('test_html.html'))  # html из файла для тестов
 		self.find_sfns_on_page()
 		self.find_refs_on_page()
 		self.compare_refs()
-
-	# self.list_sfns.clear()
-	# self.list_refs.clear()
-	# self.all_sfn_info_of_page.clear()
 
 	def find_sfns_on_page(self):
 		try:
@@ -157,7 +118,7 @@ class ScanRefsOfPage:
 
 	def find_refs_via_wikiparser(self, tpl):
 		"""
-		Поиск сносок по викикоду. Вместо него испоьзован поиск по html-тэгу "CITEREF".
+		Поиск сносок по викикоду. Вместо него использован поиск по html-тэгу "CITEREF".
 		Из-за вроде как лучшей скорости, совметимости с версией python на Tool labs,
 		и обнаруженных нюансов, что шаблоны используются по разному.
 		(Например, якоря ставятся не параметром "|ref=" шаблонов,

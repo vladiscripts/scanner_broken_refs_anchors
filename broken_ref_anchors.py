@@ -22,10 +22,6 @@ pwb_format = True
 saved_filenames = MakeWikiList(lists.full_err_listpages, pwb_format)
 
 import os
-
-# from vladi_commons import *
-# test: python3 scripts/add_text.py -simulate -file:list4add.txt -text:"{{test}}" -summary:"test" -pt:1 -maxlag:15 -dir:~/
-
 python_and_path = r'python3 scripts/'
 
 # Запись списков
