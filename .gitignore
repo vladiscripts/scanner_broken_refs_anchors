@@ -1,7 +1,0 @@
-__pycache__
-.idea/
-vendor/
-.vs/
-.vscode
-composer.phar
-composer.lock
