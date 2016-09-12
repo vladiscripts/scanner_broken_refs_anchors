@@ -285,7 +285,6 @@ class MakeLists:
 		self.filename_list_to_remove_warning_tpl = filename_list_to_remove_warning_tpl
 
 		self.make_list_transcludes_sfns()
-		print(len(self.transcludes_sfntpls))
 
 		if len(self.transcludes_sfntpls) > 0:
 			# Создание списков страниц с ошибками

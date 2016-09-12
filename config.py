@@ -33,10 +33,7 @@ test_pages = [
 read_list_from_file_JSON = True
 filename_listpages_errref_json = 'listpages_err_ref.json'
 
-# ---
-# edit_page_by_list = True  # Не редактировать страницы, только ссканировать и сделать список
-
-# Внмание, включение записи в википедию
+# --- Внмание, включение записи в википедию
 do_post_list = False  # Запись списков
 do_post_list_simulate = True  # Симуляция записи
 
