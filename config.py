@@ -17,7 +17,7 @@
 # 1 - взять из wikiAPI
 # 2 - из файла (можно подставить уже отсканированный)
 # 3 - указ. вручную
-get_transcludes_from = 1
+get_transcludes_from = 3
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_err_ref.txt'
 test_pages = [
@@ -29,9 +29,14 @@ test_pages = [
 	'Звёздчатый_октаэдр',
 ]  # тест отдельных страниц, связано с get_transcludes_from
 
-# Взять полный список ошибок из файла JSON, без создания нового и сканирования
+# --- без создания нового и сканирования
+# только запись списков в файлы, без генерации новых
+only_save_lists_no_generation = False
+
+# генерировать новые списки ошибок из файла JSON; или скачать из WDB и генерировать.
+# отключено при only_save_lists_no_generation = True
 read_list_from_file_JSON = True
-filename_listpages_errref_json = 'listpages_err_ref.json'
+# filename_listpages_errref_json = 'listpages_err_ref.json'
 
 # --- Внмание, включение записи в википедию
 do_post_list = False  # Запись списков
@@ -40,7 +45,7 @@ do_post_list_simulate = True  # Симуляция записи
 do_post_template = False  # Запись в статьи шаблона
 do_post_template_simulate = True  # Симуляция записи
 
-do_remove_template = True  # Удаление из статей ненужного шаблона
+do_remove_template = False  # Удаление из статей ненужного шаблона
 do_remove_template_simulate = True  # Симуляция записи
 
 # ---
@@ -77,9 +82,11 @@ header = """
 bottom = '[[Категория:Википедия:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
 
 # ---
-filename_error_log = 'error_log.txt'
 print_log = True
-print_log_full = False
+
+# filename_error_log = 'error_log.txt'
+# print_log = True
+# print_log_full = False
 
 names_sfn_templates = ([
 	'sfn', 'sfn0', 'Sfn-1',
