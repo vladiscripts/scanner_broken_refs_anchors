@@ -5,16 +5,23 @@
 from urllib.parse import quote
 from config import *
 import vladi_commons
+# from db import *
+import db
+import time
 
 
 class ScanRefsOfPage:
-	def __init__(self, title, pages_count_cur):
+	def __init__(self,
+				 # session,
+				 page_id, title, pages_count_cur):
 		from wikiapi import page_html_parse, page_get_html
+		# self.session = session
 		self.list_sfns = set()
 		self.list_refs = set()
 		self.all_sfn_info_of_page = []
 		self.full_errrefs = []
 
+		self.page_id = page_id
 		self.title = title
 		self.pages_count_cur = pages_count_cur
 		self.parsed_html = page_html_parse(self.title)  # html из url
@@ -102,13 +109,16 @@ class ScanRefsOfPage:
 		err_refs = self.list_sfns - self.list_refs
 		# Если в статье есть некорректные сноски без целевых примечаний
 		if err_refs:
+			db.session.query(db.Ref).filter(db.Ref.page_id == self.page_id).delete()
 			self.full_errrefs = []
-			for citeref in sorted(err_refs):
+			for citeref_bad in sorted(err_refs):
 				it_sfn_double = False
 				for sfn in self.all_sfn_info_of_page:
-					if sfn['citeref'] == citeref and not it_sfn_double:
-						self.full_errrefs.append(sfn)
+					if citeref_bad == sfn['citeref'] and not it_sfn_double:
+						# self.full_errrefs.append(sfn)
+						db.session.merge(db.Ref(self.page_id, sfn['citeref'], sfn['link_to_sfn'], sfn['text']))
 						it_sfn_double = True
+			db.session.commit()
 
 			global print_log_full
 			if print_log_full:
@@ -156,8 +166,11 @@ def save_error_log(filename_error_log, error_text):
 
 
 class MakeWikiList:
-	def __init__(self, pages_with_referrors, pwb_format=True, alphabet_order=True):
-		self.pages_with_referrors = pages_with_referrors
+	def __init__(self,
+				 # session,
+				 pwb_format=True, alphabet_order=True):
+		# self.pages_with_referrors = pages_with_referrors
+		# self.session = session
 		self.wikisections = []
 		self.letter_groups = {
 			u'А':          u'[А]',
@@ -177,13 +190,40 @@ class MakeWikiList:
 			'other':       r'[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]'
 		}
 		self.parts = {}
-		for d in self.letter_groups.keys():
-			self.parts[d] = {}
+		# for d in self.letter_groups.keys():
+		# 	self.parts[d] = {}
+
+
+
+		self.letter_groups2 = {
+			u'А':          u'А',
+			u'Б':          u'Б',
+			u'ВГ':         u'ВГ',
+			u'Д':          u'Д',
+			u'ЕЁЖЗИЙ':     u'ЕЁЖЗИЙ',
+			u'К':          u'К',
+			u'ЛМ':         u'ЛМ',
+			u'НО':         u'НО',
+			u'П':          u'П',
+			u'Р':          u'Р',
+			u'С':          u'С',
+			u'Т':          u'Т',
+			u'УФХ':        u'УФХ',
+			u'ЦЧШЩЪЫЬЭЮЯ': u'ЦЧШЩЪЫЬЭЮЯ',
+			# 'other':       r'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+		}
+		for d in self.letter_groups2:
+			self.parts[d] = [i for i in d]
+		# temp_d =
+		# self.parts['other']= [d. for d in self.parts.values()]
+		dict2 = []
+		for d in self.parts.values():
+			dict2 += d
+		self.parts['other'] = dict2
+		# [d. for d in self.parts.values()]
 
 		self.split_parts_per_alphabet_order()
 		self.make_wikilists()
-
-		pass
 
 	def list_formating2wikilink(self, dict):
 		"""Сортировка списка по алфавиту и форматирование в викиссылки."""
@@ -197,19 +237,68 @@ class MakeWikiList:
 					t=title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
 		return list_wikilinks
 
+	def formating_sql2wikilink(self, part):
+		"""Сортировка sql refs по алфавиту и форматирование в викиссылки."""
+		from sqlalchemy.sql import func
+
+
+		part_list_wikilinks = []
+		q = db.session.query(db.Page.id, db.Page.title) \
+			.filter(func.substr(db.Page.title, 1, 1).in_(part))
+
+		if wikilink not then 'other'
+
+		for p in db.session.execute(q).fetchall():
+			# page_wikilinks = []
+			# q = db.session.query(func.substr(p.pages_title, 1, 1).in_(self.parts[part]))
+			# y = db.session.execute(q).fetchall()
+			# db.Ref.text.op('REGEXP')('[i]'),
+			q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
+				.filter(db.Ref.page_id == p.pages_page_id) \
+				.order_by(db.Ref.citeref)					# func.substr(p.pages_title, 1, 1).in_(self.parts[part])
+			# for ref in db.session.execute(q).fetchall():
+			# 	page_wikilinks.append(r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text))
+			# l = [ref for ref in db.session.execute(q).fetchall()]
+			# page_wikilinks = []
+			# for ref in db.session.execute(q).fetchall():
+			# 	page_wikilinks = page_wikilinks + r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text)
+			page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text)
+							  for ref in db.session.execute(q).fetchall()]
+			part_list_wikilinks.append(
+					r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
+							t=p.pages_title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
+
+		return part_list_wikilinks
+
+
 	def split_parts_per_alphabet_order(self):
 		# import re
+		from sqlalchemy.sql import join, select
 		import vladi_commons
+		import db
 
 		groups_re = vladi_commons.re_compile_dict(self.letter_groups)
 
-		for title in sorted(self.pages_with_referrors.keys()):
-			ref = self.pages_with_referrors[title]
+		# for title in sorted(self.pages_with_referrors.keys()):
+		# 	ref = self.pages_with_referrors[title]
+		# 	for group_re in groups_re:
+		# 		if group_re['c'].match(title):
+		# 			self.parts[group_re['name']][title] = ref
+		# 			break
 
-			for group_re in groups_re:
-				if group_re['c'].match(title):
-					self.parts[group_re['name']][title] = ref
-					break
+		query = db.session.query(db.Page.title, db.Ref.citeref, db.Ref.link_to_sfn, db.Ref.text) \
+			.select_from(db.Page).join(db.Ref) \
+			.group_by(db.Ref.page_id) \
+			.order_by(db.Ref.citeref)
+
+
+	# for ref in db.session.execute(query).fetchall():
+	#
+	# 	for group_re in groups_re:
+	# 		print(ref['pages_title'])
+	# 		if group_re['c'].match(ref['pages_title']):
+	# 			self.parts[group_re['name']][ref['pages_title']] = ref
+	# 			break
 
 	def make_wikilists(self, pwb_format=True, alphabet_order=True):
 		global max_lines_per_file, filename_part, root_wikilists, header, marker_page_start, marker_page_end, bottom
@@ -238,7 +327,8 @@ class MakeWikiList:
 			num_part = 1
 
 			for part in self.parts:
-				wikiformated_part = self.list_formating2wikilink(self.parts[part])
+				# wikiformated_part = self.list_formating2wikilink(self.parts[part])
+				wikiformated_part = self.formating_sql2wikilink(self.parts[part])
 				pn = u'Не русские буквы' if part == 'other' else part
 				pagename = u'Шаблон:' + root_wikilists + pn
 				part_page_text = marker_page_start \
@@ -249,8 +339,50 @@ class MakeWikiList:
 								 + "\n" + marker_page_end + "\n\n"
 				num_part += 1
 				result_page += part_page_text
-			vladi_commons.file_savetext(save_filename, result_page)
+			# vladi_commons.file_savetext(save_filename, result_page)
 			return save_filename
+
+		# for part in self.parts:
+		# 		# wikiformated_part = self.list_formating2wikilink(self.parts[part])
+		# 		wikiformated_part = self.formating_sql2wikilink(self.parts[part])
+		# 		pn = u'Не русские буквы' if part == 'other' else part
+		# 		pagename = u'Шаблон:' + root_wikilists + pn
+		# 		part_page_text = marker_page_start \
+		# 						 + "\n'''" + pagename + "'''\n" \
+		# 						 + header \
+		# 						 + '\n'.join(wikiformated_part) \
+		# 						 + "\n" + bottom \
+		# 						 + "\n" + marker_page_end + "\n\n"
+		# 		num_part += 1
+		# 		result_page += part_page_text
+		# 	# vladi_commons.file_savetext(save_filename, result_page)
+		# 	return save_filename
+		#
+		# 	# def formating_sql2wikilink(self, dict):
+		# 	"""Сортировка sql refs по алфавиту и форматирование в викиссылки."""
+		# 	list_wikilinks = []
+		# 	q = db.session.query(db.Page.page_id, db.Page.title)
+		# 	for p in db.session.execute(q).fetchall():
+		# 		# page_wikilinks = []
+		# 		q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
+		# 			.filter(db.Ref.page_id == p.pages_page_id).order_by(db.Ref.citeref)
+		# 		# for ref in db.session.execute(q).fetchall():
+		# 		# 	page_wikilinks.append(r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text))
+		# 		page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text)
+		# 						  for ref in db.session.execute(q).fetchall()]
+		# 		list_wikilinks.append(
+		# 				r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
+		# 						t=p.pages_title.replace('_', ' '), all_wikilinks=', '.join(_formating_sql2wikilink(p.pages_page_id))))
+		# 	return list_wikilinks
+		#
+		# def _formating_sql2wikilink(self, page_id):
+		# 	q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
+		# 		.filter(db.Ref.page_id == page_id).order_by(db.Ref.citeref)
+		# 	page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text)
+		# 					  for ref in db.session.execute(q).fetchall()]
+		# 	return page_wikilinks
+
+
 
 
 		else:
@@ -266,8 +398,11 @@ class MakeWikiList:
 			return saved_filenames
 
 
-class MakeLists:
-	def __init__(self):
+class MakeLists():
+	def __init__(self,
+				 # session
+				 ):
+		# self.session = session
 		self.full_err_listpages = {}
 		self.transcludes_sfntpls = set()
 		self.transcludes_of_warning_tpl = set()
@@ -284,21 +419,32 @@ class MakeLists:
 		self.filename_listpages_errref_where_no_yet_warning_tpl = filename_listpages_errref_where_no_yet_warning_tpl
 		self.filename_list_to_remove_warning_tpl = filename_list_to_remove_warning_tpl
 
-		self.make_list_transcludes_sfns()
+		# self.make_list_transcludes_sfns()
+		db.make_list_transcludes_from_wdb_to_sqlite()
 
-		if len(self.transcludes_sfntpls) > 0:
-			# Создание списков страниц с ошибками
-			self.make_pages_with_referrors()
-			if len(self.full_err_listpages) > 0:
-				self.make_list_transcludes_of_warning_tpl()
-				self.make_list_to_remove_warning_tpl()
-				self.make_list_to_add_warning_tpl()
-			# remove_tpl_from_pages(tplname, listpages_for_remove)
+		# if len(self.transcludes_sfntpls) > 0:
+		# 	# Создание списков страниц с ошибками
+		# 	self.make_pages_with_referrors()
+		# 	if len(self.full_err_listpages) > 0:
+		# 		# self.make_list_transcludes_of_warning_tpl()
+		# 		self.make_list_to_remove_warning_tpl()
+		# 		self.make_list_to_add_warning_tpl()
+		# 	# remove_tpl_from_pages(tplname, listpages_for_remove)
+
+
+		# Создание списков страниц с ошибками
+		# self.make_pages_with_referrors()
+		print('start scan pages')
+		self.make_listpages_with_referrors()
+		self.make_list_to_remove_warning_tpl()
+		self.make_list_to_add_warning_tpl()
+
+	# remove_tpl_from_pages(tplname, listpages_for_remove)
 
 	def make_pages_with_referrors(self):
 		"""Создание списков страниц с ошибками
 
-		Читать с вики-сайта список страниц с sfn-шаблонами, и сканировать их на шибки сносок.
+		Читать с вики-сайта список страниц с sfn-шаблонами, и сканировать их на ошибки сносок.
 		Или читать готовый полный список ошибок из файла JSON
 		"""
 		if not read_list_from_file_JSON:
@@ -331,8 +477,8 @@ class MakeLists:
 		"""Список страниц где шаблон уже установлен."""
 		# Взять с сайта - True, или из файла - False.
 		if transcludes_of_warning_tpl_get_from_site:
-			# from wikiapi import get_list_transcludes_of_tpls
-			self.transcludes_of_warning_tpl = self.get_list_transcludes_of_tpls_from_site(self.name_of_warning_tpl)
+			db.make_list_transcludes_from_wdb_to_sqlite()
+			# self.transcludes_of_warning_tpl = self.get_list_transcludes_of_tpls_from_site(self.name_of_warning_tpl)
 			vladi_commons.file_savelines(self.filename_list_transcludes_of_warning_tpl,
 										 sorted(self.transcludes_of_warning_tpl))
 		else:
@@ -345,6 +491,7 @@ class MakeLists:
 		global get_transcludes_from
 
 		if get_transcludes_from == 1:  # from wikiAPI
+			# self.make_list_to_remove_warning_tpl()
 			self.transcludes_sfntpls = self.get_list_transcludes_of_tpls_from_site(self.sfns_like_names)
 			vladi_commons.file_savelines(self.filename_tpls_transcludes, self.transcludes_sfntpls)
 
@@ -368,24 +515,53 @@ class MakeLists:
 			list = list.union(r.json())
 		return list
 
+	def get_list_transcludes_of_tpls_from_wdb(self):
+		tpls = vladi_commons.str2list(self.warning_tpl_name) + vladi_commons.str2list(self.names_sfn_templates)
+		tpls = ['Любкер']
+		tpls = ','.join(['"' + t + '"' for t in tpls])
+		time_lastcheck = 20160910000000
+		sql = """SELECT
+				  page.page_id,
+				  page.page_title,
+				  MAX(revision.rev_timestamp) AS timestamp
+				FROM page
+				  INNER JOIN templatelinks
+					ON page.page_id = templatelinks.tl_from
+				  INNER JOIN revision
+					ON page.page_id = revision.rev_page
+				WHERE templatelinks.tl_namespace = 10
+				AND page.page_namespace = 0
+				AND templatelinks.tl_title IN (%s)
+				AND revision.rev_timestamp > %d
+				GROUP BY page.page_title
+				ORDER BY page.page_title""" % (tpls, time_lastcheck)
+		from wikiapi import wdb_query  # contents parameters: api_user, api_pw, wdb_user, wdb_pw
+		result = wdb_query(sql)
+
+		return result
+
 	def make_listpages_with_referrors(self):
-		pages_count = len(self.transcludes_sfntpls)
+		from sqlalchemy.sql import join, select
+		# pages_count = len(self.transcludes_sfntpls)
+		pages_count = db.session.query(db.Page).count()
 		print(u'All pages: {}.'.format(pages_count))
 		p_count_cur = pages_count
 
-		for title in self.transcludes_sfntpls:
+		# for title in self.transcludes_sfntpls:
+		for p in db.session.query(select(db.Page).select_from(db.Page).filter(db.Page.timecheck < db.Page.timeedit)):
 			global print_log
 			if print_log:
-				print(u'Page # {}: {}'.format(p_count_cur, title))
-			page = ScanRefsOfPage(title, p_count_cur)
-			if len(page.full_errrefs) > 0:
-				self.full_err_listpages[title] = page.full_errrefs
-			# self.collect_refs(title, p_count_cur)
+				print(u'Page # {}: {}'.format(p_count_cur, p.title))
+			page = ScanRefsOfPage(db.session, p.page_id, p.title, p_count_cur)
+			# self.session.add(db.Page())
+			p.timecheck = time.strftime('%Y%m%d%H%M%S')
+			# if len(page.full_errrefs) > 0:
+			# 	self.full_err_listpages[p.title] = page.full_errrefs
+			# # self.collect_refs(title, p_count_cur)
 			p_count_cur -= 1
 
 	def make_list_to_remove_warning_tpl(self):
-		self.list_to_remove_warning_tpl = self.transcludes_of_warning_tpl - set(
-				[title for title in self.full_err_listpages])
+		# self.list_to_remove_warning_tpl = self.transcludes_of_warning_tpl - set([title for title in self.full_err_listpages])
+		query = db.session.query(db.Page.title).outerjoin(db.WarningTps).filter(db.WarningTps.id == None)
+		self.list_to_remove_warning_tpl = db.session.execute(query).fetchall()
 		vladi_commons.file_savelines(self.filename_list_to_remove_warning_tpl, sorted(self.list_to_remove_warning_tpl))
-
-	# def remove_tpl_from_changed_pages(self):
