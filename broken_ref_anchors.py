@@ -65,6 +65,7 @@ import db
 
 # test = add_warning_tpl.Add_warning_tpl(name_of_warning_tpl, pages_with_referrors)
 
+<<<<<<< HEAD
 if not only_save_lists_no_generation:
 	# session = db.create_session('sqlite:///:memory:')
 	lists = MakeLists()
@@ -73,6 +74,14 @@ if not only_save_lists_no_generation:
 
 	saved_filenames = MakeWikiList(db.session, pwb_format)
 
+=======
+session = db.create_session('sqlite:///:memory:')
+# lists = MakeLists(db.session)
+pwb_format = True
+# saved_filenames = MakeWikiList(lists.full_err_listpages, pwb_format)
+saved_filenames = MakeWikiList(db.session, pwb_format)
+
+>>>>>>> 0cb7892a20958ecee7ee48efde79c81139ddedc2
 
 # print(len(lists.full_err_listpages))
 # if len(lists.full_err_listpages) > 0:
@@ -92,7 +101,11 @@ if do_post_list:
 	sim = ' -simulate' if do_post_list_simulate else ''  # "-simulate" параметр для тестирования записи pwb
 	params = [
 		'-file:' + filename_part + '.txt',
+<<<<<<< HEAD
 		'-begin:"' + marker_page_start + '"', '-end:"' + marker_page_end + '"', '-notitle',
+=======
+		'-start:"' + marker_page_start + '"', '-end:"' + marker_page_end + '"', '-notitle',
+>>>>>>> 0cb7892a20958ecee7ee48efde79c81139ddedc2
 		'-summary:"обновление списка"',
 		'-pt:1 -maxlag:15 -dir:~/',
 		'-force', sim,
@@ -105,8 +118,12 @@ if do_post_template:
 	sim = ' -simulate' if do_post_template_simulate else ''
 	params = [
 		'-file:' + filename_listpages_errref_where_no_yet_warning_tpl,
+<<<<<<< HEAD
 		'-text:"{{' + warning_tpl_name + '}}"',
 		# '-except:"' + warning_tpl_regexp + '"',
+=======
+		'-text:"{{' + warning_tpl_name + '}}"', '-except:"' + warning_tpl_regexp + '"',
+>>>>>>> 0cb7892a20958ecee7ee48efde79c81139ddedc2
 		u'-summary:"+шаблон: некорректные викиссылки в сносках"',
 		'-pt:1 -maxlag:15 -dir:~/',
 		'-always', sim,
