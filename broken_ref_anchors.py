@@ -69,9 +69,10 @@ if not only_save_lists_no_generation:
 	# session = db.create_session('sqlite:///:memory:')
 	lists = MakeLists()
 	pwb_format = True
-	# saved_filenames = MakeWikiList(lists.full_err_listpages, pwb_format)
-
-	saved_filenames = MakeWikiList(db.session, pwb_format)
+	if make_wikilist:
+		saved_filenames = MakeWikiList(
+				# db.session, pwb_format
+		)
 
 
 # print(len(lists.full_err_listpages))

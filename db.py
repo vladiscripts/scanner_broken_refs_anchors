@@ -95,28 +95,29 @@ class Wikilists(Base):
 
 session = create_session('sqlite:///pagesrefs.sqlite')  # ('sqlite:///:memory:')
 
-wikilists = [
-	['А', 'А'],
-	['Б', 'Б'],
-	['В', 'ВГ'], ['Г', 'ВГ'],
-	['Д', 'Д'],
-	['Е', 'ЕЁЖЗИЙ'], ['Ё', 'ЕЁЖЗИЙ'], ['Ж', 'ЕЁЖЗИЙ'], ['З', 'ЕЁЖЗИЙ'], ['И', 'ЕЁЖЗИЙ'], ['Й', 'ЕЁЖЗИЙ'],
-	['К', 'К'],
-	['Л', 'ЛМ'], ['М', 'ЛМ'],
-	['Н', 'НО'], ['О', 'НО'],
-	['П', 'П'],
-	['Р', 'Р'],
-	['С', 'С'],
-	['Т', 'Т'],
-	['У', 'УФХ'], ['Ф', 'УФХ'], ['Х', 'УФХ'],
-	['Ц', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ч', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ш', 'ЦЧШЩЪЫЬЭЮЯ'], ['Щ', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ъ', 'ЦЧШЩЪЫЬЭЮЯ'],
-	['Ы', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ь', 'ЦЧШЩЪЫЬЭЮЯ'], ['Э', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ю', 'ЦЧШЩЪЫЬЭЮЯ'], ['Я', 'ЦЧШЩЪЫЬЭЮЯ'],
-	['*', 'Не русские буквы'],
-	# ['*', 'other'],
-]
-for r in wikilists:
-	session.merge(Wikilists(r[0], r[1]))
-session.commit()
+def make_wikilist_titles():
+	wikilists = [
+		['А', 'А'],
+		['Б', 'Б'],
+		['В', 'ВГ'], ['Г', 'ВГ'],
+		['Д', 'Д'],
+		['Е', 'ЕЁЖЗИЙ'], ['Ё', 'ЕЁЖЗИЙ'], ['Ж', 'ЕЁЖЗИЙ'], ['З', 'ЕЁЖЗИЙ'], ['И', 'ЕЁЖЗИЙ'], ['Й', 'ЕЁЖЗИЙ'],
+		['К', 'К'],
+		['Л', 'ЛМ'], ['М', 'ЛМ'],
+		['Н', 'НО'], ['О', 'НО'],
+		['П', 'П'],
+		['Р', 'Р'],
+		['С', 'С'],
+		['Т', 'Т'],
+		['У', 'УФХ'], ['Ф', 'УФХ'], ['Х', 'УФХ'],
+		['Ц', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ч', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ш', 'ЦЧШЩЪЫЬЭЮЯ'], ['Щ', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ъ', 'ЦЧШЩЪЫЬЭЮЯ'],
+		['Ы', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ь', 'ЦЧШЩЪЫЬЭЮЯ'], ['Э', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ю', 'ЦЧШЩЪЫЬЭЮЯ'], ['Я', 'ЦЧШЩЪЫЬЭЮЯ'],
+		['*', 'Не русские буквы'],
+		# ['*', 'other'],
+	]
+	for r in wikilists:
+		session.merge(Wikilists(r[0], r[1]))
+	session.commit()
 
 
 def make_list_transcludes_from_wdb_to_sqlite():
@@ -256,4 +257,21 @@ GROUP BY refs.page_id
 -- WHERE refs.page_id IS NULL
 -- GROUP BY refs.page_id
 -- )
+
+
+SELECT * FROM pages JOIN refs USING (page_id) JOIN timecheck USING (page_id) WHERE title LIKE 'Росянка'
+-- SELECT refs.page_id FROM refs LEFT OUTER JOIN pages WHERE  pages.page_id IS NULL
+
+-- удаление timecheck у страниц с warnings
+-- DELETE FROM timecheck WHERE timecheck.page_id IN (
+-- SELECT page_id FROM warnings
+--  )
+
+-- удаление timecheck у страниц с refs
+-- DELETE FROM timecheck WHERE timecheck.page_id IN (SELECT page_id FROM refs GROUP BY page_id  )
+
+
+-- SELECT * FROM pages JOIN refs USING (page_id) JOIN timecheck USING (page_id)
+-- WHERE title LIKE 'Росянка'
+
 """
