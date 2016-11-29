@@ -137,8 +137,8 @@ def make_list_transcludes_from_wdb_to_sqlite():
 	# 	[10, b'\xd0\x9c\xd0\xbe'],
 	# ]
 
-	session.query(WarningTps).delete()
 	result = wikiapi.wdb_query(sql)
+	session.query(WarningTps).delete()
 	for r in result:
 		row = WarningTps(r[0], vladi_commons.byte2utf(r[1]))
 		session.add(row)
@@ -179,6 +179,14 @@ def make_list_transcludes_from_wdb_to_sqlite():
 		session.add(row)
 	session.commit()
 
+	# удаление метки проверки у страниц имеющих warning-шаблон
+	if clear_check_pages_with_warnings:
+		drop_check_pages_with_warnings()
+	
+	# сброс всех меток проверки
+	if clear_all_check_pages:
+		drop_all_check_pages()
+	
 	# чистка PageTimecheck от записей которых нет в pages
 	q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(Page.page_id == None)
 	for r in session.execute(q).fetchall():
@@ -191,16 +199,20 @@ def make_list_transcludes_from_wdb_to_sqlite():
 		session.query(Ref).filter(Ref.page_id == r[0]).delete()
 	session.commit()
 
-
+	
 # make_list_transcludes_from_wdb_to_sqlite()
 
 
+def drop_check_pages_with_warnings():
+	# удаление метки проверки у страниц имеющих warning-шаблон
+	for r in session.execute(session.query(WarningTps.page_id)).fetchall():
+		session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+	session.commit()
 
-
-
-
-
-
+def drop_all_check_pages():
+	# удаление метки проверки у страниц имеющих warning-шаблон
+	session.query(Timecheck).delete()
+	
 
 """
 -- SELECT * FROM warning_tpls_transcludes

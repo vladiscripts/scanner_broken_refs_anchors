@@ -3,11 +3,13 @@
 # author: https://github.com/vladiscripts
 #
 from urllib.parse import quote
+import re
+from lxml import etree, html
+import time
 from config import *
 import vladi_commons, wikiapi
 # from db import *
 import db
-import time
 
 
 class ScanRefsOfPage:
@@ -41,12 +43,13 @@ class ScanRefsOfPage:
 						# link_to_sfn = ''
 						# href = a.attrib['href']  # href = span.xpath("*/a[contains(@href,'CITEREF')]/@href")
 						# text = a.text
-						# link_to_sfn = li.attrib['id']  # li.xpath("./@id")
-
+						# link_to_sfn = li.attrib['id']  # li.xpath("./@id")						
+						a_text = re.search(r'<a [^>]*>(.*?)</a>', str(etree.tostring(a, encoding='unicode')), re.DOTALL).group(1)
+			
 						href_cut = self.cut_href(a.attrib['href'])
 						self.list_sfns.add(href_cut)
 						self.all_sfn_info_of_page.append(
-								{'citeref': href_cut, 'text': a.text, 'link_to_sfn': str(li.attrib['id'])})
+								{'citeref': href_cut, 'text': a_text, 'link_to_sfn': str(li.attrib['id'])})
 						# self.ref_calls[href_cut] = {'text': a.text, 'link_to_sfn': str(li.attrib['id'])}
 						pass
 
