@@ -1,11 +1,4 @@
 # coding: utf8
-# from sys import version_info
-# PYTHON_VERSION = version_info.major
-# if PYTHON_VERSION == 3:
-# 	from urllib.parse import urlencode, quote  # python 3
-# else:
-# 	from urllib import urlencode, quote  # python 2.7
-# 	import codecs
 
 # При запуске в Windows через AWB могут быть проблемы с кодировкой. Из-за кодовой страницы cmd.exe.
 # Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
@@ -23,7 +16,6 @@ only_save_lists_no_generation = False
 # отключено при only_save_lists_no_generation = True
 read_from_local_db = False
 make_wikilist = True
-# filename_listpages_errref_json = 'listpages_err_ref.json'
 
 # --- Внмание, включение записи в википедию
 do_post_list = False  # Запись списков
@@ -51,8 +43,6 @@ filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
 # ---
 # Создание вики-списков для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
 filename_part = 'wikisections'  # к имени добавляется № части и расширение '.txt'
-
-# max_lines_per_file = 2000  # Отключено, список викиссылок делится на части по алфавиту
 
 root_wikilists = warning_tpl_name + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
 marker_page_start = '{{-start-}}'

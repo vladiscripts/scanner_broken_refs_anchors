@@ -15,12 +15,7 @@ Base = declarative_base()
 def create_session(config):
 	from sqlalchemy import create_engine
 	from sqlalchemy.orm import sessionmaker
-	db_engine = create_engine(config, echo=print_log,
-							  # encoding = 'utf8', convert_unicode = True
-							  )
-	# from sqlalchemy import MetaData
-	# metadata = MetaData()
-	# metadata.create_all(db_engine)
+	db_engine = create_engine(config, echo=print_log)
 	Base.metadata.create_all(db_engine)
 	# начинаем новую сессию работы с БД
 	Session = sessionmaker(bind=db_engine)
@@ -31,11 +26,9 @@ def create_session(config):
 class Page(Base):
 	__tablename__ = 'pages'
 	page_id = Column(Integer, primary_key=True, unique=True)
-	title = Column(String, unique=True)  # index=True
+	title = Column(String, unique=True)
 	timeedit = Column(Integer)
 	wikilist = Column(String, index=True)
-
-	# refs = relationship("Ref")
 
 	def __init__(self, page_id, title, timeedit):
 		import re
@@ -58,9 +51,7 @@ class Timecheck(Base):
 
 class Ref(Base):
 	__tablename__ = 'refs'
-	id = Column(Integer, primary_key=True,
-				# autoincrement=True
-				)
+	id = Column(Integer, primary_key=True)
 	page_id = Column(Integer, ForeignKey('pages.page_id'), index=True)
 	citeref = Column(String)
 	link_to_sfn = Column(String)
@@ -113,7 +104,6 @@ def make_wikilist_titles():
 		['Ц', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ч', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ш', 'ЦЧШЩЪЫЬЭЮЯ'], ['Щ', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ъ', 'ЦЧШЩЪЫЬЭЮЯ'],
 		['Ы', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ь', 'ЦЧШЩЪЫЬЭЮЯ'], ['Э', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ю', 'ЦЧШЩЪЫЬЭЮЯ'], ['Я', 'ЦЧШЩЪЫЬЭЮЯ'],
 		['*', 'Не русские буквы'],
-		# ['*', 'other'],
 	]
 	for r in wikilists:
 		session.merge(Wikilists(r[0], r[1]))
@@ -131,12 +121,6 @@ def make_list_transcludes_from_wdb_to_sqlite():
 				%s
 				AND page_namespace = 0""" % tpls_str
 
-	# result = [
-	# 	[2, b'\xd0\x9c\xd0\xbe\xd0\xb9\xd1\x80\xd1\x8b'],
-	# 	[3, b'\xd0\x9c\xd0\xbe\x20\xd0\xb9\xd1\x80\xd1\x8b'],
-	# 	[10, b'\xd0\x9c\xd0\xbe'],
-	# ]
-
 	result = wikiapi.wdb_query(sql)
 	session.query(WarningTps).delete()
 	for r in result:
@@ -146,7 +130,6 @@ def make_list_transcludes_from_wdb_to_sqlite():
 
 	# включения sfn-likes
 	tpls = names_sfn_templates
-	# tpls = ['sfn0']
 	tpls_str = 'AND ' + ' OR '.join(['templatelinks.tl_title LIKE "' + wikiapi.normalization_pagename(t) + '"'
 									  for t in vladi_commons.str2list(tpls)])
 	sql = """SELECT
@@ -164,13 +147,6 @@ def make_list_transcludes_from_wdb_to_sqlite():
 			GROUP BY page.page_title
 			ORDER BY page.page_title""" % (tpls_str)
 
-	# result = [
-	# 	[1, b'\xd0\x98\xd1\x82', b'20160915124831'],
-	# 	[2, b'\xd0\x9c\xd0\xbe\xd0\xb9\xd1\x80\xd1\x8b', b'20160915124831'],
-	# 	[3, b'\xd0\x9c\xd0\xbe\x20\xd0\xb9\xd1\x80\xd1\x8b', b'20160915124831'],
-	# 	[4, b'\x5f\xd0\x9c\xd0\xbe\xd0\xb9', b'20160915124831'],
-	# ]
-
 	result = wikiapi.wdb_query(sql)
 	session.query(Page).delete()
 	for r in result:
@@ -182,11 +158,11 @@ def make_list_transcludes_from_wdb_to_sqlite():
 	# удаление метки проверки у страниц имеющих warning-шаблон
 	if clear_check_pages_with_warnings:
 		drop_check_pages_with_warnings()
-	
+
 	# сброс всех меток проверки
 	if clear_all_check_pages:
 		drop_all_check_pages()
-	
+
 	# чистка PageTimecheck от записей которых нет в pages
 	q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(Page.page_id == None)
 	for r in session.execute(q).fetchall():
@@ -199,10 +175,6 @@ def make_list_transcludes_from_wdb_to_sqlite():
 		session.query(Ref).filter(Ref.page_id == r[0]).delete()
 	session.commit()
 
-	
-# make_list_transcludes_from_wdb_to_sqlite()
-
-
 def drop_check_pages_with_warnings():
 	# удаление метки проверки у страниц имеющих warning-шаблон
 	for r in session.execute(session.query(WarningTps.page_id)).fetchall():
@@ -212,7 +184,7 @@ def drop_check_pages_with_warnings():
 def drop_all_check_pages():
 	# удаление метки проверки у страниц имеющих warning-шаблон
 	session.query(Timecheck).delete()
-	
+
 
 """
 -- SELECT * FROM warning_tpls_transcludes
