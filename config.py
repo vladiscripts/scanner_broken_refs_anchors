@@ -1,5 +1,4 @@
-# coding: utf8
-
+# coding: utf-8
 # При запуске в Windows через AWB могут быть проблемы с кодировкой. Из-за кодовой страницы cmd.exe.
 # Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
 # Или отключить в скрипте выводы типа print("не английские символы").
@@ -8,16 +7,19 @@
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_err_ref.txt'
 
-# --- без создания нового и сканирования
-# только запись списков в файлы, без генерации новых
-only_save_lists_no_generation = False
+# ---
+# True - сканировать и генерировать новые списки.
+# False - только запись списков в файлы и постинг в wiki
+do_generation_lists = True
 
-# генерировать новые списки ошибок из файла JSON; или скачать из WDB и генерировать.
-# отключено при only_save_lists_no_generation = True
-read_from_local_db = False
+# скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
+# отключено при do_generation_else_only_save_lists = False
+do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
+disable_all_post_to_wiki = True  # Отключает все опции ниже в этой секции
+
 do_post_list = False  # Запись списков
 do_post_list_simulate = True  # Симуляция записи
 
@@ -42,7 +44,7 @@ filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
 
 # ---
 # Создание вики-списков для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
-filename_part = 'wikisections'  # к имени добавляется № части и расширение '.txt'
+filename_wikilists = 'wikisections'  # к имени добавляется № части и расширение '.txt'
 
 root_wikilists = warning_tpl_name + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
 marker_page_start = '{{-start-}}'
@@ -56,20 +58,20 @@ header = """
 Список обновляется ботом.
 
 """  # в шапку шаблон {{координационный список}} не нужен, ибо это не список, а подстраница данных скрипта
-bottom = '[[Категория:Википедия:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
+footer = '[[Категория:Википедия:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
 
 # ---
 print_log = True
-
+filename_error_log = 'errors_log.txt'
 
 # удаление метки проверки у страниц имеющих warning-шаблон
 clear_check_pages_with_warnings = False
 clear_all_check_pages = False
 
-names_sfn_templates = ([
+names_sfn_templates = ((
 	'sfn', 'sfn0', 'Sfn-1',
 	'Harvard citation', 'Harv',
 	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
-])
+))
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
