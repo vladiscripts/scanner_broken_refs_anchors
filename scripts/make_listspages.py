@@ -2,11 +2,10 @@
 #
 # author: https://github.com/vladiscripts
 #
+from scripts.db import session, Page, Ref, WarningTps, Timecheck
 import time
 from config import *
-from vladi_commons import file_savelines
 from scripts import scan_refs_of_page
-from scripts.db import session, Page, Ref, WarningTps, Timecheck
 
 
 class MakeLists:
@@ -20,16 +19,12 @@ class MakeLists:
 
 	def scan_pages_with_referrors(self):
 		"""Сканирование страниц на ошибки"""
-		q = session.query(Page.page_id, Page.title) \
-			.select_from(Page) \
-			.outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
-			.filter(
-			(Timecheck.timecheck.is_(None)) |
-			(Page.timeedit > Timecheck.timecheck)
-		)
-		for p in session.execute(q).fetchall():
+		for p in self.db_get_list_pages_for_scan():
 			page_id = p[0]
 			page_title = p[1]
+
+			if page_id == '7018585':
+				pass
 
 			# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
 			session.query(Ref).filter(Ref.page_id == page_id).delete()
@@ -43,6 +38,18 @@ class MakeLists:
 			time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
 			session.add(Timecheck(page_id, time_current))
 			session.commit()
+
+	def db_get_list_pages_for_scan(self):
+		q = session.query(Page.page_id, Page.title) \
+			.select_from(Page) \
+			.outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
+			.filter(
+			(Timecheck.timecheck.is_(None)) |
+			(Page.timeedit > Timecheck.timecheck)
+		)
+		l = session.execute(q).fetchall()
+		return l
+		# return session.execute(q).fetchall()
 
 	def save_listpages_to_remove_warning_tpl(self):
 		query = session.query(WarningTps.title) \

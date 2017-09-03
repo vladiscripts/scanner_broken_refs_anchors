@@ -1,10 +1,14 @@
 # coding: utf-8
 # author: https://github.com/vladiscripts
 #
+import pymysql.cursors
 from config import *
-from vladi_commons import byte2utf, str2list
-from wikiapi import normalization_pagename, wdb_query
 from scripts.db import session, Page, Ref, WarningTps, Timecheck
+# from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
+import passwords
+
+
+# import vladi_commons.passwords as pw  # contents parameters: api_user, api_pw, wdb_user, wdb_pw
 
 
 class UpdateDB:
@@ -30,27 +34,27 @@ class UpdateDB:
 	def update_listpages_has_WarningTpl(self):
 		"""Обновить список страниц имеющих установленный шаблон."""
 		tpls_str = 'AND ' + ' OR '.join(
-			['tl_title LIKE "' + normalization_pagename(t) + '"'
-			 for t in str2list(warning_tpl_name)])
+			['tl_title LIKE "' + self.normalization_pagename(t) + '"'
+			 for t in self.str2list(warning_tpl_name)])
 		sql = """SELECT page_id, page_title
 				FROM page
 				JOIN templatelinks ON templatelinks.tl_from = page.page_id
 					WHERE tl_namespace = 10
 					%s
-					AND page_namespace = 0""" % tpls_str
+					AND page_namespace = 0;""" % tpls_str
 
-		result = wdb_query(sql)
+		result = self.wdb_query(sql)
 		session.query(WarningTps).delete()
 		for r in result:
-			row = WarningTps(r[0], byte2utf(r[1]))
+			row = WarningTps(r[0], self.byte2utf(r[1]))
 			session.add(row)
 		session.commit()
 
 	def update_transcludes_sfn_tempates(self):
 		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
 		tpls = names_sfn_templates
-		tpls_str = 'AND ' + ' OR '.join(['templatelinks.tl_title LIKE "' + normalization_pagename(t) + '"'
-										 for t in str2list(tpls)])
+		tpls_str = 'AND ' + ' OR '.join(['templatelinks.tl_title LIKE "' + self.normalization_pagename(t) + '"'
+										 for t in self.str2list(tpls)])
 		sql = """SELECT
 				  page.page_id,
 				  page.page_title,
@@ -64,40 +68,87 @@ class UpdateDB:
 				AND page.page_namespace = 0
 				%s
 				GROUP BY page.page_title
-				ORDER BY page.page_title""" % (tpls_str)
+				ORDER BY page.page_title;""" % (tpls_str)
 
-		result = wdb_query(sql)
+		result = self.wdb_query(sql)
 		session.query(Page).delete()
 		for r in result:
-			title = byte2utf(r[1])
+			title = self.byte2utf(r[1])
 			row = Page(r[0], title, int(r[2]))  # time_lastcheck
 			session.add(row)
 		session.commit()
 
-	def drop_depricated_by_timecheck(self):
+	@staticmethod
+	def drop_depricated_by_timecheck():
 		q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
 			Page.page_id.is_(None))
 		for r in session.execute(q).fetchall():
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
 		session.commit()
 
-	def drop_ref(self):
+	@staticmethod
+	def drop_ref():
 		q = session.query(Ref.page_id).select_from(Ref).outerjoin(Page).filter(Page.page_id.is_(None))
 		for r in session.execute(q).fetchall():
 			session.query(Ref).filter(Ref.page_id == r[0]).delete()
 		session.commit()
 
 	# Helpers
-	def drop_check_pages_with_warnings(self):
+	@staticmethod
+	def drop_check_pages_with_warnings():
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
 		for r in session.execute(session.query(WarningTps.page_id)).fetchall():
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
 		session.commit()
 
-	def drop_all_check_pages(self):
+	@staticmethod
+	def drop_all_check_pages():
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
 		session.query(Timecheck).delete()
 		session.commit()
+
+	@staticmethod
+	def str2list(string):
+		"""Строку в список"""
+		return [string] if isinstance(string, str) else string
+
+	@staticmethod
+	def byte2utf(string):
+		import urllib.parse
+		string = urllib.parse.quote_from_bytes(string)
+		string = urllib.parse.unquote(string, encoding='utf8')
+		return string
+
+	@staticmethod
+	def normalization_pagename(t):
+		""" Первая буква в верхний регистр, ' ' → '_' """
+		t = t.strip()
+		return t[0:1].upper() + t[1:].replace(' ', '_')
+
+	@staticmethod
+	def wdb_query(sql):
+		connection = pymysql.connect(
+			# Для доступа к wiki-БД с ПК необходим ssh-тунель с перебросом порта с localhost
+			# ssh -L 4711:ruwiki.labsdb:3306 <username>@login.tools.wmflabs.org -i "<path/to/key>"
+			# см. https://wikitech.wikimedia.org/wiki/Help:Tool_Labs/Database#Connecting_to_the_database_replicas_from_your_own_computer
+			# host='127.0.0.1', port=4711,
+			# или для доступа из скриптов на tools.wmflabs.org напрямую:
+			# host='ruwiki.labsdb', port=3306,
+			host='127.0.0.1' if run_local_not_from_wmlabs else 'ruwiki.labsdb',
+			port=4711 if run_local_not_from_wmlabs else 3306,
+			db='ruwiki_p',
+			# user=passwords.__wdb_user,
+			# password=passwords.__wdb_pw,
+			user=passwords.wdb_user,
+			password=passwords.wdb_pw,
+			use_unicode=True, charset="utf8")
+		try:
+			with connection.cursor() as cursor:
+				cursor.execute(sql)
+			result = cursor.fetchall()
+		finally:
+			connection.close()
+		return result
 
 
 """

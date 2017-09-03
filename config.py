@@ -14,19 +14,21 @@ do_generation_lists = True
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_else_only_save_lists = False
-do_update_db_from_wiki = True
-make_wikilist = True
+do_update_db_from_wiki = False
+# переключатель доступа к базе данных
+run_local_not_from_wmlabs = True
+make_wikilist = False
 
 # --- Внмание, включение записи в википедию
-disable_all_post_to_wiki = True  # Отключает все опции ниже в этой секции
+do_all_post_to_wiki = True  # Отключение всех опции ниже в этой секции
 
-do_post_list = False  # Запись списков
+do_post_list = True  # Запись списков
 do_post_list_simulate = True  # Симуляция записи
 
-do_post_template = False  # Запись в статьи шаблона
+do_post_template = True  # Запись в статьи шаблона
 do_post_template_simulate = True  # Симуляция записи
 
-do_remove_template = False  # Удаление из статей ненужного шаблона
+do_remove_template = True  # Удаление из статей ненужного шаблона
 do_remove_template_simulate = True  # Симуляция записи
 
 # ---
@@ -75,3 +77,16 @@ names_sfn_templates = ((
 	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
 ))
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
+
+
+# --- Общие функции
+
+def file_savelines(filename, strlist, append=False):
+	mode = 'a' if append else 'w'
+	text = '\n'.join(strlist)
+	with open(filename, mode, encoding='utf-8') as f:
+		f.write(text)
+
+def file_savetext(filename, text):
+	with open(filename, 'w', encoding='utf-8') as f:
+		f.write(text)

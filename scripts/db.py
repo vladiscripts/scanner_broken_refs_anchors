@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-# from sqlalchemy.orm import mapper, relationship
-# from sqlalchemy.sql import join, select
-# from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from config import *
@@ -58,7 +55,9 @@ class Ref(Base):
 	link_to_sfn = Column(String)
 	text = Column(String)
 
-	def __init__(self, page_id, citeref, link_to_sfn, text):
+	def __init__(self, page_id,
+				 citeref,
+				 link_to_sfn, text):
 		self.page_id = page_id
 		self.citeref = citeref
 		self.link_to_sfn = link_to_sfn

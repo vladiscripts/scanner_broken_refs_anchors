@@ -3,7 +3,6 @@
 #
 from config import *
 from scripts.db import session, Page, Ref, Wikilists
-from vladi_commons import file_savetext
 
 
 class MakeWikiLists:
