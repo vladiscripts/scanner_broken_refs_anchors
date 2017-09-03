@@ -45,7 +45,7 @@ def posting_template():
 	os.system('%s add_text %s' % (python_and_path, ' '.join(params)))
 
 
-def posting_template():
+def remove_template():
 	"""Удаление шаблона из статей"""
 	sim = '-simulate' if do_remove_template_simulate else ''
 	params = [

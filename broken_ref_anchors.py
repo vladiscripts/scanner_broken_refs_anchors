@@ -44,4 +44,4 @@ if __name__ == '__main__':
 	if do_post_template:
 		post_to_wiki.posting_template()
 	if do_remove_template:
-		post_to_wiki.posting_template()
+		post_to_wiki.remove_template()
