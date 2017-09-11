@@ -23,7 +23,7 @@ def posting_list():
 		'-summary:"обновление списка"',
 		'-pt:1', pwb_cfg, '-family:' + family,
 		'-force', sim,
-	]	
+	]
 	os.system('%s pagefromfile %s' % (python_and_path, ' '.join(params)))
 
 
@@ -56,7 +56,3 @@ def remove_template():
 		'-always', sim,
 	]
 	os.system('%s replace %s' % (python_and_path, ' '.join(params)))
-
-
-def bot_login_check():	
-	os.system(python_and_path + ' login ' + pwb_cfg)
