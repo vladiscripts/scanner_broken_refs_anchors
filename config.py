@@ -20,7 +20,7 @@ run_local_not_from_wmlabs = True
 make_wikilist = False
 
 # --- Внмание, включение записи в википедию
-do_all_post_to_wiki = True  # Отключение всех опции ниже в этой секции
+do_all_post_to_wiki = False  # Отключение всех опции ниже в этой секции
 
 do_post_list = True  # Запись списков
 do_post_list_simulate = True  # Симуляция записи

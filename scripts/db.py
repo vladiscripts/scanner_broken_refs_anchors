@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey
+import re
 from config import *
 
 
@@ -25,26 +26,27 @@ class Page(Base):
 	__tablename__ = 'pages'
 	page_id = Column(Integer, primary_key=True, unique=True)
 	title = Column(String, unique=True)
+	timecheck = Column(Integer)
 	timeedit = Column(Integer)
 	wikilist = Column(String, index=True)
 
-	def __init__(self, page_id, title, timeedit):
-		import re
+	def __init__(self, page_id, title, timecheck, timeedit, wikilist):
 		self.page_id = page_id
 		self.title = title
+		self.timecheck = timecheck
 		self.timeedit = timeedit
 		fl = title[0:1].upper()
 		self.wikilist = '*' if re.match(r'[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]', fl) else fl
 
 
-class Timecheck(Base):
-	__tablename__ = 'timecheck'
-	page_id = Column(Integer, ForeignKey('pages.page_id'), primary_key=True, unique=True)
-	timecheck = Column(Integer)
-
-	def __init__(self, page_id, timecheck):
-		self.page_id = page_id
-		self.timecheck = timecheck
+# class Timecheck(Base):
+# 	__tablename__ = 'timecheck'
+# 	page_id = Column(Integer, ForeignKey('pages.page_id'), primary_key=True, unique=True)
+# 	timecheck = Column(Integer)
+#
+# 	def __init__(self, page_id, timecheck):
+# 		self.page_id = page_id
+# 		self.timecheck = timecheck
 
 
 class Ref(Base):
