@@ -4,9 +4,21 @@
 #
 from sqlalchemy.sql import update
 from scripts.db import session, Page, Ref, WarningTps  # , Timecheck
+import asyncio
+import aiohttp
+# from time import sleep
+from aiohttp import ClientSession
+import socket
 import time
+from urllib.parse import quote
 from config import *
-from scripts import scan_refs_of_page
+from scripts.scan_refs_of_page import ScanRefsOfPage, page_html_parse_a
+import scripts.asyncio_exeptions
+# from vladi_commons.vladi_commons import file_readlines
+from vladi_commons import file_readlines
+from lxml.html import tostring, fromstring
+from sqlalchemy.sql import null
+
 
 
 class MakeLists:
@@ -18,24 +30,240 @@ class MakeLists:
 
 	# self.sfns_like_names = vladi_commons.str2list(names_sfn_templates)
 
-	def scan_pages_with_referrors(self):
+	# def scan_pages_with_referrors_old(self):
+	# 	"""Сканирование страниц на ошибки"""
+	# 	for p in self.db_get_list_pages_for_scan():
+	# 		page_id = p[0]
+	# 		page_title = p[1]
+	#
+	# 		# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
+	# 		session.query(Ref).filter(Ref.page_id == page_id).delete()
+	# 		# session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+	#
+	# 		# сканирование страниц на ошибки
+	# 		page = ScanRefsOfPage(page_id, page_title)
+	# 		for ref in page.full_errrefs:
+	# 			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+	# 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+	# 		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+	# 		# session.add(Timecheck(page_id, time_current))
+	# 		session.commit()
+
+	def scan_pages_for_referrors(self):
 		"""Сканирование страниц на ошибки"""
-		for p in self.db_get_list_pages_for_scan():
+
+		# # удаление старых ошибок в любом случае: если не обнаружены, или есть новые
+		# session.query(Ref).filter(Ref.page_id == page_id).delete()
+		# # session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+		#
+
+		# сканирование страниц на ошибки
+		list_pages_for_scan = self.db_get_list_pages_for_scan()
+		# futures_htmls = [page_html_parse_a(p[1]) for p in list_pages_for_scan]
+		# futures = [self.scan_page_for_referrors(p) for p in list_pages_for_scan]
+		# list_pages_for_scan = []
+		# for p in file_readlines('/tmp/refs-warning-pages.txt')[:10]:
+		# 	i = p.partition(',')
+		# 	list_pages_for_scan.append((i[0], i[2].strip('"')))
+
+		event_loop = asyncio.get_event_loop()
+		event_loop.run_until_complete(self.asynchronous(list_pages_for_scan))
+		event_loop.close()
+
+	# page = ScanRefsOfPage(page_id, page_title)
+	# # for ref in page.full_errrefs:
+	# # 	session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+	# # errs = [(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']) for ref in page.full_errrefs]
+	# # session.add(Ref).values(errs)
+
+	#
+	# errs = [(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']) for ref in page.full_errrefs]
+	# session.Refs.add_all(errs)
+
+	# time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+	# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+	# # session.add(Timecheck(page_id, time_current))
+	# session.commit()
+	# return
+
+
+	async def asynchronous(self, list_pages):
+		headers = {'user-agent': 'user:textworkerBot'}
+		sem = asyncio.Semaphore(500)
+		conn = aiohttp.TCPConnector(
+			family=socket.AF_INET,
+			verify_ssl=False,
+		)
+		async with ClientSession(headers=headers, connector=conn) as session:
+			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in					 list_pages]
+			responses = asyncio.gather(*tasks)
+			await responses
+			pass
+		# await self.db_works(responses)
+
+
+
+	async def db_works(self, p):
+		try:
 			page_id = p[0]
-			page_title = p[1]
+		except:
+			pass
+		# page_title = p[1]
+		errrefs = p[2]
 
-			# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
-			session.query(Ref).filter(Ref.page_id == page_id).delete()
-			# session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+		# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
+		# session.query(Ref).filter(Ref.page_id == page_id).delete()
+		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: null()})
+		for refs in errrefs:
+			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
 
-			# сканирование страниц на ошибки
-			page = scan_refs_of_page.ScanRefsOfPage(page_id, page_title)
-			for ref in page.full_errrefs:
-				session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-			time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-			session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
-			# session.add(Timecheck(page_id, time_current))
-			session.commit()
+		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+		session.commit()
+
+
+
+
+	# async def db_works(self, all_errefs):
+	# 	for p in all_errefs:
+	# 		try:
+	# 			page_id = p[0]
+	# 		except:
+	# 		    pass
+	#
+	# 		# page_title = p[1]
+	# 		page_errefs = p[2]
+	#
+	# 		# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
+	# 		# session.query(Ref).filter(Ref.page_id == page_id).delete()
+	# 		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: null()})
+	#
+	# 		for refs in page_errefs:
+	# 			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
+	#
+	# 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+	# 		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+	# 		session.commit()
+
+	async def scan_pagehtml_for_referrors(self, sem, p, session):
+		"""Сканирование страницы на ошибки"""
+		page_id = p[0]
+		page_title = p[1]
+		url = 'http://ru.wikipedia.org/wiki/' + quote(page_title)
+
+		if page_title == 'None' or page_title is None:
+			print('!!!!!!!!!!!!!')
+
+
+		# print(page_title)
+		# response_text = await fetch(url, session)
+		# try:
+		# 	r = await aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+		# # r = requests.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+		# except:
+		# 	return '{}: http error'.format(page_title)
+		# r.close()
+		# text = await response.text
+
+		async with sem:
+			# async with session.get(url, params={"action": "render"}) as response:
+			# 	if response and response.status == 200:
+			# 		# assert response.status == 200
+			# 		response_text = await response.text()
+			# 		parsed_html = fromstring(response_text)
+			# 		page = ScanRefsOfPage(page_id, page_title, parsed_html)
+			# 		errrefs = [page_id, page_title, page.full_errrefs]
+			# 		del page
+			# 		return errrefs
+
+			# 	async with session.get(url, params={"action": "render"}) as response:
+			# 		try:
+			# 			if response.status == 200:
+			# 				assert response.status == 200
+			# 				response_text = await response.text()
+			# 				parsed_html = fromstring(response_text)
+			# 				# print(page_title)
+			# 				page = ScanRefsOfPage(page_id, page_title, parsed_html)
+			# 				errrefs = [page_id, page_title, page.full_errrefs]
+			# 				del page
+			# 				return errrefs
+			# 			if response.status != 200:
+			# 				print(page_title + ' response.status != 200:')
+			# 		except Exception as e:
+			# 			print(page_title)
+			# 			# print(e)
+			# 			# Блокируем все таски на 30 секунд в случае ошибки 429.
+			# 			# time.sleep(30)
+
+			try:
+				response = await session.request('get', url, params={"action": "render"})
+				# response = await scripts.asyncio_exeptions.send_http(session, 'get', url,
+				# 													 retries=3,
+				# 													 interval=0.9,
+				# 													 backoff=3,
+				# 													 read_timeout=30.9, )
+				# await asyncio.sleep(0.9)
+				# print(response)
+				pass
+			except aiohttp.ClientOSError as e:
+				print(page_title + ' aiohttp.ClientOSError as e')
+				print(e)
+				# Блокируем все таски на 30 секунд в случае ошибки 429.
+				# time.sleep(30)
+			except aiohttp.ServerDisconnectedError as e:
+				print(page_title + ' ServerDisconnectedError as e')
+				print(e)
+				# Блокируем все таски на 30 секунд в случае ошибки 429.
+				# time.sleep(30)
+				# time.sleep(1)
+			except Exception as e:
+				print(page_title + ' Exception as e !!!!!!!')
+				print(e)
+			# 	# Блокируем все таски на 30 секунд в случае ошибки 429.
+			# 	time.sleep(30)
+			else:
+				if response.status == 200:
+					response_text = await response.text()
+					response.close()
+					parsed_html = fromstring(response_text)
+					print(page_title)
+					page = ScanRefsOfPage(page_id, page_title, parsed_html)
+					errrefs = [page_id, page_title, page.full_errrefs]
+
+					try:
+						errrefs
+					except:
+						pass
+
+
+					await self.db_works(errrefs)
+
+					del page
+					# try:
+					# 	errrefs[0]
+					# except:
+					# 	pass
+					# return errrefs
+				else:
+					response.close()
+					print(page_title + ' response.status != 200')
+
+	async def async_request(self, sem, url):
+		async with sem:
+			try:
+				response = await session.request('get', url, params={"action": "render"})
+			except aiohttp.ClientOSError as e:
+				print(url + ' aiohttp.ClientOSError as e')
+				print(e)
+				# Блокируем все таски на 30 секунд в случае ошибки 429.
+				time.sleep(30)
+			except Exception as e:
+				print(url + ' Exception as e')
+				print(e)
+				# Блокируем все таски на 30 секунд в случае ошибки 429.
+				time.sleep(30)
+			else:
+				return response
 
 	def db_get_list_pages_for_scan(self):
 		# 	"""	может праильней так?

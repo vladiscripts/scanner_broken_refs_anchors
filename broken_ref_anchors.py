@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
 		# Создание списков страниц с ошибками
 		print('start scan pages')
-		m.scan_pages_with_referrors()
+		m.scan_pages_for_referrors()
 		m.save_listpages_to_remove_warning_tpl()
 		m.save_listpages_to_add_warning_tpl()
 

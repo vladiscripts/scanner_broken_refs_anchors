@@ -3,11 +3,24 @@
 # author: https://github.com/vladiscripts
 #
 import requests
+import asyncio
+import aiohttp
 from urllib.parse import quote
 from lxml.html import tostring, fromstring
 import re
 from config import *
-from scripts.db import session, Ref
+# from scripts.db import session, Ref
+# from vladi_commons import file_readlines
+
+
+async def page_html_parse_a(title):
+	try:
+		r = await aiohttp.request('GET', 'https://ru.wikipedia.org/wiki/' + quote(title),
+								  params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+	except:
+		return '{}: http error'.format(title)
+	parsed_html = await fromstring(r.text)
+	return parsed_html
 
 
 def page_html_parse(title):
@@ -20,15 +33,17 @@ tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 
 
 class ScanRefsOfPage:
-	def __init__(self, page_id, title):
+	def __init__(self, page_id, title, parsed_html):
 		self.list_sfns = set()
 		self.list_citations = set()
 		self.all_sfn_info_of_page = []
 		self.full_errrefs = []
 
-		self.page_id = page_id
+		# self.page_id = page_id
 		self.title = title
-		self.parsed_html = page_html_parse(self.title)
+		# self.parsed_html = page_html_parse(self.title)
+		# self.parsed_html = await page_html_parse_a(self.title)
+		self.parsed_html = parsed_html
 		self.find_sfns_on_page()
 		self.find_citations_on_page()
 		self.compare_refs()
@@ -83,7 +98,7 @@ class ScanRefsOfPage:
 				for sfn in self.all_sfn_info_of_page:
 					if citeref_bad == sfn['citeref'] and not it_sfn_double:
 						self.full_errrefs.append(sfn)
-						session.add(Ref(self.page_id, sfn['citeref'], sfn['link_to_sfn'], sfn['text']))
+						# session.add(Ref(self.page_id, sfn['citeref'], sfn['link_to_sfn'], sfn['text']))
 						it_sfn_double = True
 
 	def error_print(self, error):
@@ -91,6 +106,105 @@ class ScanRefsOfPage:
 		print(error_text)
 		file_savelines(filename_error_log, error_text)
 
+
 # for test
-# page = ScanRefsOfPage('2416978', 'Ячменное')
+# import traceback
+# from time import sleep
+# from aiohttp import ClientSession
+#
+#
+# # page = ScanRefsOfPage('2416978', 'Ячменное')
+#
+# async def fetch(url, session):
+# 	async with session.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'}, ) \
+# 			as response:
+# 		return await response.text()
+#
+#
+# async def db_work(data):
+# 	for i in data:
+# 		print('{}: data'.format(i))
+#
+#
+# async def scan_pagehtml_for_referrors(sem, p, session):
+# 	"""Сканирование страницы на ошибки"""
+# 	page_id = p[0]
+# 	page_title = p[2].strip('"')
+# 	url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
+# 	# response_text = await fetch(url, session)
+# 	# try:
+# 	# 	r = await aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+# 	# # r = requests.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+# 	# except:
+# 	# 	return '{}: http error'.format(page_title)
+# 	# r.close()
+# 	# text = await response.text
+# 	async with sem:
+# 		async with session.get(url, params={"action": "render"}) as response:
+# 			try:
+# 				if response.status != 200:
+# 					pass
+# 				assert response.status == 200
+# 				response_text = await response.text()
+# 				parsed_html = fromstring(response_text)
+# 				print(page_title)
+# 				page = ScanRefsOfPage(page_id, page_title, parsed_html)
+# 				errrefs = [page_id, page_title, page.full_errrefs]
+# 				del page
+# 				return errrefs
+# 			except Exception as e:
+# 				# print(e)
+# 				# Блокируем все таски на 30 секунд в случае ошибки 429.
+# 				sleep(30)
+#
+#
+# async def asynchronous():
+# 	headers = {'user-agent': 'user:textworkerBot'}
+# 	listpages = file_readlines('/tmp/refs-warning-pages.txt')    # [:10]
+# 	sem = asyncio.Semaphore(500)
+# 	async with ClientSession(headers=headers) as session:
+# 		tasks = [asyncio.ensure_future(scan_pagehtml_for_referrors(sem, p.partition(','), session)) for p in listpages]
+# 		# tasks.extend(asyncio.ensure_future(db_work(data))
+# 		# tasks = [scan_pagehtml_for_referrors(p.partition(','), session) for p in listpages]
+# 		responses = await asyncio.gather(*tasks)
+# 		# await responses
+# 		pass
+# 		# print(responses)
+# 	await db_work(responses)
+# 		# asyncio.ensure_future(db_work(data))
+#
+# 		# # done, pending = await asyncio.wait(futures_htmls, return_when=FIRST_COMPLETED)
+# 		# done, pending = await asyncio.wait(tasks)
+# 		# # print(done.pop().result())
+# 		# # for future in pending:
+# 		# # 	future.cancel()
+# 		# for future in done:
+# 		# 	try:
+# 		# 		print(future.result())
+# 		# 	except:
+# 		# 		print("Unexpected error: {}".format(traceback.format_exc()))
+# 		# 	# for i, future in enumerate(asyncio.as_completed(futures_htmls)):
+# 		# 	# 	result = await future
+# 		# 	# 	print('{} {}'.format(">>" * (i + 1), result))
+#
+#
+# def scan_pages_for_referrors():
+# 	# listpages = file_readlines('/tmp/refs-warning-pages.txt')
+# 	# list_pages_for_scan = self.db_get_list_pages_for_scan()
+# 	# futures_htmls = [page_html_parse_a(p[1]) for p in listpages]
+# 	# futures = [self.scan_page_for_referrors(p) for p in list_pages_for_scan]
+# 	event_loop = asyncio.get_event_loop()
+# 		# event_loop.run_until_complete(asyncio.wait(asynchronous))
+# 		# event_loop.run_until_complete(asyncio.wait(futures))
+# 		# tasks = [event_loop.create_task(scan_pagehtml_for_referrors()), event_loop.create_task(bar())]
+# 	event_loop.run_until_complete(asynchronous())
+# 	event_loop.close()
+#
+#
+# import timeit
+#
+# # без asyncio эти ~3500 requests занимают ~1.5 часа
+# # print(timeit.timeit('scan_pages_for_referrors()', number=1000))
+# # print(timeit.timeit('scan_pages_for_referrors()', number=1))
+# scan_pages_for_referrors()
 # pass
