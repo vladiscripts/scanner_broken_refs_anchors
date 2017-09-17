@@ -34,14 +34,14 @@ class UpdateDB:
 
 	def update_listpages_has_WarningTpl(self):
 		"""Обновить список страниц имеющих установленный шаблон."""
-		tpls_str = 'AND ' + ' OR '.join(
-			['tl_title LIKE "' + self.normalization_pagename(t) + '"'
+		tpls_str = ' OR '.join(
+			['tl_title LIKE "%s"' % self.normalization_pagename(t)
 			 for t in self.str2list(warning_tpl_name)])
 		sql = """SELECT page_id, page_title
 				FROM page
 				JOIN templatelinks ON templatelinks.tl_from = page.page_id
 					WHERE tl_namespace = 10
-					%s
+					AND (%s)
 					AND page_namespace = 0;""" % tpls_str
 
 		result = self.wdb_query(sql)
@@ -52,10 +52,9 @@ class UpdateDB:
 		session.commit()
 
 	def update_transcludes_sfn_tempates(self):
-		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
-		tpls = names_sfn_templates
-		tpls_str = 'AND ' + ' OR '.join(['templatelinks.tl_title LIKE "' + self.normalization_pagename(t) + '"'
-										 for t in self.str2list(tpls)])
+		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""		
+		tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
+						for t in self.str2list(names_sfn_templates)])
 		sql = """SELECT
 				  page.page_id,
 				  page.page_title,
@@ -67,16 +66,18 @@ class UpdateDB:
 					ON page.page_id = revision.rev_page
 				WHERE templatelinks.tl_namespace = 10
 				AND page.page_namespace = 0
-				%s
+				AND (%s)
 				GROUP BY page.page_title
 				ORDER BY page.page_title;""" % (tpls_str)
 
 		result = self.wdb_query(sql)
 		session.query(Page).delete()
 		for r in result:
+			page_id = r[0]
 			title = self.byte2utf(r[1])
-			row = Page(r[0], title, null(), int(r[2]), null())  # time_lastcheck
-			session.add(row)
+			time_lastcheck = null()
+			time_lastedit = int(r[2])
+			session.add(Page(page_id, title, time_lastcheck, time_lastedit))
 		session.commit()
 
 	# @staticmethod
