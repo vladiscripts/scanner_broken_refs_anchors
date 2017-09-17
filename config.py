@@ -14,13 +14,13 @@ do_generation_lists = True
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_else_only_save_lists = False
-do_update_db_from_wiki = False
+do_update_db_from_wiki = True
 # переключатель доступа к базе данных
 run_local_not_from_wmlabs = True
-make_wikilist = False
+make_wikilist = True
 
 # --- Внмание, включение записи в википедию
-do_all_post_to_wiki = False  # Отключение всех опции ниже в этой секции
+do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
 
 do_post_list = True  # Запись списков
 do_post_list_simulate = True  # Симуляция записи
@@ -67,7 +67,7 @@ print_log = True
 filename_error_log = 'errors_log.txt'
 
 # удаление метки проверки у страниц имеющих warning-шаблон
-clear_check_pages_with_warnings = False
+clear_check_pages_with_warnings = True
 clear_all_check_pages = False
 
 names_sfn_templates = ((

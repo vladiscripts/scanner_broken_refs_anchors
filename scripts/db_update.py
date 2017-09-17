@@ -20,7 +20,7 @@ class UpdateDB:
 		# обновить список страниц, имеющих шаблоны типа {{sfn}}
 		self.update_transcludes_sfn_tempates()
 
-		# Опциональные чистки, проще удалить и пересоздать файл базы данных
+		# Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
 		if clear_check_pages_with_warnings:
 			# удаление метки проверки у страниц имеющих warning-шаблон
 			self.drop_check_pages_with_warnings()
@@ -29,19 +29,19 @@ class UpdateDB:
 			self.drop_all_check_pages()
 
 		# чистка PageTimecheck и Ref от записей которых нет в pages
-		self.drop_depricated_by_timecheck()
+		# self.drop_depricated_by_timecheck()
 		self.drop_ref()
 
 	def update_listpages_has_WarningTpl(self):
 		"""Обновить список страниц имеющих установленный шаблон."""
-		tpls_str = 'AND ' + ' OR '.join(
-			['tl_title LIKE "' + self.normalization_pagename(t) + '"'
+		tpls_str = ' OR '.join(
+			['tl_title LIKE "%s"' % self.normalization_pagename(t)
 			 for t in self.str2list(warning_tpl_name)])
 		sql = """SELECT page_id, page_title
 				FROM page
 				JOIN templatelinks ON templatelinks.tl_from = page.page_id
 					WHERE tl_namespace = 10
-					%s
+					AND (%s)
 					AND page_namespace = 0;""" % tpls_str
 
 		result = self.wdb_query(sql)
@@ -52,10 +52,9 @@ class UpdateDB:
 		session.commit()
 
 	def update_transcludes_sfn_tempates(self):
-		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
-		tpls = names_sfn_templates
-		tpls_str = 'AND ' + ' OR '.join(['templatelinks.tl_title LIKE "' + self.normalization_pagename(t) + '"'
-										 for t in self.str2list(tpls)])
+		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""		
+		tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
+						for t in self.str2list(names_sfn_templates)])
 		sql = """SELECT
 				  page.page_id,
 				  page.page_title,
@@ -67,17 +66,18 @@ class UpdateDB:
 					ON page.page_id = revision.rev_page
 				WHERE templatelinks.tl_namespace = 10
 				AND page.page_namespace = 0
-				%s
+				AND (%s)
 				GROUP BY page.page_title
 				ORDER BY page.page_title;""" % (tpls_str)
 
 		result = self.wdb_query(sql)
 		session.query(Page).delete()
 		for r in result:
+			page_id = r[0]
 			title = self.byte2utf(r[1])
-			u = r
-			row = Page(r[0], title, int(r[2]))  # time_lastcheck
-			session.add(row)
+			time_lastcheck = null()
+			time_lastedit = int(r[2])
+			session.add(Page(page_id, title, time_lastcheck, time_lastedit))
 		session.commit()
 
 	# @staticmethod
@@ -113,8 +113,9 @@ class UpdateDB:
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
 		for r in session.execute(session.query(WarningTps.page_id)).fetchall():
 			# session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-			session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
+			session.query(Page).filter(Page.page_id == r[0]).update({Page.timecheck: null()})
 		session.commit()
+		pass
 
 	@staticmethod
 	def drop_all_check_pages():

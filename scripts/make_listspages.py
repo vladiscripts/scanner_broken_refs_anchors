@@ -6,8 +6,9 @@ from sqlalchemy.sql import update
 from scripts.db import session, Page, Ref, WarningTps  # , Timecheck
 import asyncio
 import aiohttp
-# from time import sleep
 from aiohttp import ClientSession
+import async_timeout
+# from time import
 import socket
 import time
 from urllib.parse import quote
@@ -15,10 +16,9 @@ from config import *
 from scripts.scan_refs_of_page import ScanRefsOfPage, page_html_parse_a
 import scripts.asyncio_exeptions
 # from vladi_commons.vladi_commons import file_readlines
-from vladi_commons import file_readlines
+# from vladi_commons import file_readlines
 from lxml.html import tostring, fromstring
 from sqlalchemy.sql import null
-
 
 
 class MakeLists:
@@ -66,9 +66,9 @@ class MakeLists:
 		# 	i = p.partition(',')
 		# 	list_pages_for_scan.append((i[0], i[2].strip('"')))
 
-		event_loop = asyncio.get_event_loop()
-		event_loop.run_until_complete(self.asynchronous(list_pages_for_scan))
-		event_loop.close()
+		loop = asyncio.get_event_loop()
+		loop.run_until_complete(self.asynchronous(list_pages_for_scan, loop))
+		loop.close()
 
 	# page = ScanRefsOfPage(page_id, page_title)
 	# # for ref in page.full_errrefs:
@@ -87,32 +87,37 @@ class MakeLists:
 	# return
 
 
-	async def asynchronous(self, list_pages):
+	async def asynchronous(self, list_pages, loop):
 		headers = {'user-agent': 'user:textworkerBot'}
-		sem = asyncio.Semaphore(500)
+		sem = asyncio.Semaphore(100)
 		conn = aiohttp.TCPConnector(
 			family=socket.AF_INET,
 			verify_ssl=False,
 		)
-		async with ClientSession(headers=headers, connector=conn) as session:
-			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in					 list_pages]
-			responses = asyncio.gather(*tasks)
-			await responses
+		async with ClientSession(headers=headers, connector=conn, loop=loop) as session:
+			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
+			# finished, unfinished = event_loop.run_until_complete(asyncio.wait(tasks))
+			finished, unfinished = await asyncio.wait(tasks)
+			for task in finished:
+				print(task.result())
+			print("unfinished2:", len(unfinished))
+
+			# responses = asyncio.gather(*tasks)
+			# await responses
 			pass
-		# await self.db_works(responses)
-
-
+			# await self.db_works(responses)
 
 	async def db_works(self, p):
 		try:
-			page_id = p[0]
+			p[0]
 		except:
 			pass
+		page_id = p[0]
 		# page_title = p[1]
 		errrefs = p[2]
 
 		# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
-		# session.query(Ref).filter(Ref.page_id == page_id).delete()
+		session.query(Ref).filter(Ref.page_id == page_id).delete()
 		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: null()})
 		for refs in errrefs:
 			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
@@ -120,9 +125,6 @@ class MakeLists:
 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
 		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
 		session.commit()
-
-
-
 
 	# async def db_works(self, all_errefs):
 	# 	for p in all_errefs:
@@ -154,7 +156,6 @@ class MakeLists:
 		if page_title == 'None' or page_title is None:
 			print('!!!!!!!!!!!!!')
 
-
 		# print(page_title)
 		# response_text = await fetch(url, session)
 		# try:
@@ -165,7 +166,7 @@ class MakeLists:
 		# r.close()
 		# text = await response.text
 
-		async with sem:
+		# async with sem:
 			# async with session.get(url, params={"action": "render"}) as response:
 			# 	if response and response.status == 200:
 			# 		# assert response.status == 200
@@ -195,58 +196,80 @@ class MakeLists:
 			# 			# Блокируем все таски на 30 секунд в случае ошибки 429.
 			# 			# time.sleep(30)
 
-			try:
-				response = await session.request('get', url, params={"action": "render"})
-				# response = await scripts.asyncio_exeptions.send_http(session, 'get', url,
-				# 													 retries=3,
-				# 													 interval=0.9,
-				# 													 backoff=3,
-				# 													 read_timeout=30.9, )
-				# await asyncio.sleep(0.9)
-				# print(response)
-				pass
-			except aiohttp.ClientOSError as e:
-				print(page_title + ' aiohttp.ClientOSError as e')
-				print(e)
-				# Блокируем все таски на 30 секунд в случае ошибки 429.
-				# time.sleep(30)
-			except aiohttp.ServerDisconnectedError as e:
-				print(page_title + ' ServerDisconnectedError as e')
-				print(e)
-				# Блокируем все таски на 30 секунд в случае ошибки 429.
-				# time.sleep(30)
-				# time.sleep(1)
-			except Exception as e:
-				print(page_title + ' Exception as e !!!!!!!')
-				print(e)
-			# 	# Блокируем все таски на 30 секунд в случае ошибки 429.
-			# 	time.sleep(30)
-			else:
-				if response.status == 200:
-					response_text = await response.text()
+		async with sem:
+			# with async_timeout.timeout(5):
+			retries = 0
+			while retries <= 5:
+				try:
+					response = await session.request('get', url, params={"action": "render"},) # timeout=30
+					# response = await scripts.asyncio_exeptions.send_http(session, 'get', url,
+					# 													 retries=3,
+					# 													 interval=0.9,
+					# 													 backoff=3,
+					# 													 read_timeout=30.9, )
+					# await asyncio.sleep(1)
+					# print(response)
+					pass
+					if response.status == 200:
+						response_text = await response.text()
+						# response.close()
+						parsed_html = fromstring(response_text)
+						print(page_title)
+						page = ScanRefsOfPage(page_id, page_title, parsed_html)
+						errrefs = page.full_errrefs
+						try:
+							errrefs
+						except:
+							pass
+						del page
+						errrefs = [page_id, page_title, errrefs]
+						# await self.db_works(errrefs)
+
+						# del page
+
+						# try:
+						# 	errrefs[0]
+						# except:
+						# 	pass
+						# return errrefs
+					elif response.status == 429:
+						# Too many requests
+						retries += 1
+						await asyncio.sleep(1)
+					else:
+						# response.close()
+						print(page_title + ' response.status != 200')
 					response.close()
-					parsed_html = fromstring(response_text)
-					print(page_title)
-					page = ScanRefsOfPage(page_id, page_title, parsed_html)
-					errrefs = [page_id, page_title, page.full_errrefs]
+					break
 
-					try:
-						errrefs
-					except:
-						pass
-
-
-					await self.db_works(errrefs)
-
-					del page
-					# try:
-					# 	errrefs[0]
-					# except:
-					# 	pass
-					# return errrefs
-				else:
-					response.close()
-					print(page_title + ' response.status != 200')
+				except (aiohttp.errors.ClientOSError, aiohttp.errors.ClientResponseError,
+				aiohttp.errors.ServerDisconnectedError, asyncio.TimeoutError,
+				NoProxyError) as e:
+					print('!!! Error. url: %s; error: %r', url, e)
+					retries += 1
+					await asyncio.sleep(1)
+				# except aiohttp.ClientOSError as e:
+				# 	print(page_title + ' !!!!!!! ClientOSError')
+				# 	retries += 1
+				# 	await asyncio.sleep(1)
+				# # Блокируем все таски на 30 секунд в случае ошибки 429.
+				# # time.sleep(30)
+				# except aiohttp.ServerDisconnectedError as e:
+				# 	print(page_title + ' !!!!!!! ServerDisconnectedError')
+				# 	retries += 1
+				# 	await asyncio.sleep(1)
+				# 	# await asyncio.sleep(1)
+				# 	# await self.scan_pagehtml_for_referrors(sem, p, session)
+				# # Блокируем все таски на 30 секунд в случае ошибки 429.
+				# # time.sleep(30)
+				# # time.sleep(1)
+				# except Exception as e:
+				# 	print(page_title + ' !!!!!!! Exception')
+				# 	retries += 1
+				# 	await asyncio.sleep(1)
+				# # # Блокируем все таски на 30 секунд в случае ошибки 429.
+				# # 	time.sleep(30)
+				# # else:
 
 	async def async_request(self, sem, url):
 		async with sem:
