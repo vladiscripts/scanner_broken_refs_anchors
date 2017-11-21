@@ -17,26 +17,24 @@ if __name__ == '__main__':
 	if clear_all_check_pages:
 		UpdateDB.drop_all_check_pages()
 
+	m = MakeLists()
 	# Сканирование и обновление базы данных
 	if do_generation_lists:
-		m = MakeLists()
-
 		if do_update_db_from_wiki:
 			# Обновление списка страниц имеющих warning-шаблон, шаблоны сносок,
 			# и очистка базы от устарелых данных
 			db_update = UpdateDB()
-
-		# Создание списков страниц с ошибками
 		print('start scan pages')
-		m.scan_pages_for_referrors()
-		m.save_listpages_to_remove_warning_tpl()
-		m.save_listpages_to_add_warning_tpl()
+		m.scan_pages_with_referrors()
 
-		if make_wikilist:
-			w = MakeWikiLists()
-			w.save_wikilist()
+	# Запись списков
+	m.save_listpages_to_remove_warning_tpl()
+	m.save_listpages_to_add_warning_tpl()
+	if make_wikilist:
+		w = MakeWikiLists()
+		w.save_wikilist()
 
-	# Запись списков и установка шаблонов в wiki
+	# Постинг списков и установка шаблонов в wiki
 	if not do_all_post_to_wiki:
 		do_post_list = do_post_template = do_remove_template = False
 	if do_post_list:

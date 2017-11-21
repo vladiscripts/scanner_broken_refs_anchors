@@ -29,14 +29,14 @@ class UpdateDB:
 			self.drop_all_check_pages()
 
 		# чистка PageTimecheck и Ref от записей которых нет в pages
-		self.drop_depricated_by_timecheck()
+		# self.drop_depricated_by_timecheck()
 		self.drop_ref()
 
 	def update_listpages_has_WarningTpl(self):
 		"""Обновить список страниц имеющих установленный шаблон."""
-		tpls_str = ' OR '.join(
-			['tl_title LIKE "%s"' % self.normalization_pagename(t)
-			 for t in self.str2list(warning_tpl_name)])
+		# tpls_str = ' OR '.join(['tl_title LIKE "%s"' % self.normalization_pagename(t)
+		# 	 for t in self.str2list(warning_tpl_name)])
+		tpls_str = self.list_to_str_params('tl_title', map(self.normalization_pagename, self.str2list(warning_tpl_name)))
 		sql = """SELECT page_id, page_title
 				FROM page
 				JOIN templatelinks ON templatelinks.tl_from = page.page_id
@@ -53,8 +53,10 @@ class UpdateDB:
 
 	def update_transcludes_sfn_tempates(self):
 		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""		
-		tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
-						for t in self.str2list(names_sfn_templates)])
+		# tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
+		# 	 for t in self.str2list(names_sfn_templates)])
+		tpls_str = self.list_to_str_params('templatelinks.tl_title',
+										   map(self.normalization_pagename, self.str2list(warning_tpl_name)))
 		sql = """SELECT
 				  page.page_id,
 				  page.page_title,
@@ -68,7 +70,7 @@ class UpdateDB:
 				AND page.page_namespace = 0
 				AND (%s)
 				GROUP BY page.page_title
-				ORDER BY page.page_title;""" % (tpls_str)
+				ORDER BY page.page_title;""" % tpls_str
 
 		result = self.wdb_query(sql)
 		session.query(Page).delete()
@@ -97,8 +99,6 @@ class UpdateDB:
 	# 	при объединении таблицы timecheck
 	# 	SELECT * FROM  pages WHERE timecheck is null
 	# 	"""
-
-
 
 	@staticmethod
 	def drop_ref():
@@ -140,9 +140,14 @@ class UpdateDB:
 
 	@staticmethod
 	def normalization_pagename(t):
-		""" Первая буква в верхний регистр, ' ' → '_' """
+		"""Первая буква в верхний регистр, ' ' → '_'"""
 		t = t.strip()
 		return t[0:1].upper() + t[1:].replace(' ', '_')
+
+	@staticmethod
+	def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin='OR'):
+		"""Return string like:  string LIKE string1 OR string LIKE string2"""
+		return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
 
 	@staticmethod
 	def wdb_query(sql):
@@ -153,8 +158,8 @@ class UpdateDB:
 			# host='127.0.0.1', port=4711,
 			# или для доступа из скриптов на tools.wmflabs.org напрямую:
 			# host='ruwiki.labsdb', port=3306,
-			host='127.0.0.1' if run_local_not_from_wmlabs else 'ruwiki.labsdb',
-			port=4711 if run_local_not_from_wmlabs else 3306,
+			host='127.0.0.1' if run_local_not_from_wmflabs else 'ruwiki.labsdb',
+			port=4711 if run_local_not_from_wmflabs else 3306,
 			db='ruwiki_p',
 			# user=passwords.__wdb_user,
 			# password=passwords.__wdb_pw,

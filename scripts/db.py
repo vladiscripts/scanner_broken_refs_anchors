@@ -31,7 +31,7 @@ class Page(Base):
 	timeedit = Column(Integer)
 	wikilist = Column(String, index=True)
 
-	def __init__(self, page_id, title, timecheck, timeedit, wikilist):
+	def __init__(self, page_id, title, timecheck, timeedit):  # , wikilist
 		self.page_id = page_id
 		self.title = title
 		self.timecheck = timecheck
