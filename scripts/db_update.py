@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from sqlalchemy.sql import null
-import pymysql.cursors
+import pymysql
 from config import *
 from scripts.db import session, Page, Ref, WarningTps  # , Timecheck
 # from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
