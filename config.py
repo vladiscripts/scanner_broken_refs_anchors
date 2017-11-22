@@ -16,7 +16,7 @@ do_generation_lists = True
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_lists = False
-do_update_db_from_wiki = False
+do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
@@ -67,7 +67,7 @@ print_log = True
 filename_error_log = 'errors_log.txt'
 
 # удаление метки проверки у страниц имеющих warning-шаблон
-clear_check_pages_with_warnings = True
+clear_check_pages_with_warnings = False
 clear_all_check_pages = False
 
 names_sfn_templates = ((

@@ -98,30 +98,29 @@ class MakeLists:
 			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
 			# finished, unfinished = event_loop.run_until_complete(asyncio.wait(tasks))
 			finished, unfinished = await asyncio.wait(tasks)
-			for task in finished:
-				print(task.result())
+			# for task in finished:
+				# if task.result() != 'None' or task.result() is not None:
+				# 	print('!!!!!!!!!!!!!')
+				# print(task.result())  # returns only None
+				# pass
 			print("unfinished2:", len(unfinished))
 
 			# responses = asyncio.gather(*tasks)
 			# await responses
 			pass
-			# await self.db_works(responses)
 
 	async def db_works(self, p):
-		try:
-			p[0]
-		except:
-			pass
 		page_id = p[0]
 		# page_title = p[1]
 		errrefs = p[2]
 
-		# удаление старых ошибок в любом случае: если не обнаружены, или есть новые
+		# удаление записей о старых ошибках
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
 		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: null()})
+		# обновление таблицы Refs
 		for refs in errrefs:
 			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
-
+		# обновление таблицы Pages
 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
 		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
 		session.commit()
@@ -151,7 +150,7 @@ class MakeLists:
 		"""Сканирование страницы на ошибки"""
 		page_id = p[0]
 		page_title = p[1]
-		url = 'http://ru.wikipedia.org/wiki/' + quote(page_title)
+		url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
 
 		if page_title == 'None' or page_title is None:
 			print('!!!!!!!!!!!!!')
@@ -221,11 +220,10 @@ class MakeLists:
 							errrefs
 						except:
 							pass
-						del page
 						errrefs = [page_id, page_title, errrefs]
-						# await self.db_works(errrefs)
+						await self.db_works(errrefs)
 
-						# del page
+						del page
 
 						# try:
 						# 	errrefs[0]
@@ -242,9 +240,8 @@ class MakeLists:
 					response.close()
 					break
 
-				except (aiohttp.errors.ClientOSError, aiohttp.errors.ClientResponseError,
-				aiohttp.errors.ServerDisconnectedError, asyncio.TimeoutError,
-				NoProxyError) as e:
+				except (aiohttp.ClientOSError, aiohttp.ClientResponseError,
+				aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
 					print('!!! Error. url: %s; error: %r', url, e)
 					retries += 1
 					await asyncio.sleep(1)
@@ -298,8 +295,7 @@ class MakeLists:
 		# 	SELECT * FROM  pages WHERE timecheck is null
 		# 	"""
 		q = session.query(Page.page_id, Page.title).select_from(Page).filter(
-			(Page.timecheck.is_(None)) |
-			(Page.timeedit > Page.timecheck))
+			(Page.timecheck.is_(None)) | (Page.timeedit > Page.timecheck))
 		# q = session.query(Page.page_id, Page.title) \
 		# 	.select_from(Page) \
 		# 	.outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
