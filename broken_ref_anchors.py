@@ -39,11 +39,10 @@ if __name__ == '__main__':
 			w.save_wikilist()
 
 	# Постинг списков и установка шаблонов в wiki
-	if not do_all_post_to_wiki:
-		do_post_list = do_post_template = do_remove_template = False
-	if do_post_list:
-		post_to_wiki.posting_list()
-	if do_post_template:
-		post_to_wiki.posting_template()
-	if do_remove_template:
-		post_to_wiki.remove_template()
+	if do_all_post_to_wiki:
+		if do_post_wikilist:
+			post_to_wiki.posting_list()
+		if do_post_template:
+			post_to_wiki.posting_template()
+		if do_remove_template:
+			post_to_wiki.remove_template()

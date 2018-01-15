@@ -4,7 +4,7 @@
 from sqlalchemy.sql import null
 import pymysql
 from config import *
-from scripts.db import session, Page, Ref, WarningTps  # , Timecheck
+from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 # from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
 import passwords
 
@@ -45,9 +45,9 @@ class UpdateDB:
 					AND page_namespace = 0;""" % tpls_str
 
 		result = self.wdb_query(sql)
-		session.query(WarningTps).delete()
+		session.query(WarningTpls).delete()
 		for r in result:
-			row = WarningTps(r[0], self.byte2utf(r[1]))
+			row = WarningTpls(r[0], self.byte2utf(r[1]))
 			session.add(row)
 		session.commit()
 
@@ -114,7 +114,7 @@ class UpdateDB:
 		# for r in session.execute(session.query(WarningTps.page_id)).fetchall():
 		# 	# session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
 		# 	session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
-		wp = session.query(WarningTps.page_id).subquery()
+		wp = session.query(WarningTpls.page_id).subquery()
 		session.query(Page).filter(Page.page_id.in_(wp)). \
 			update({Page.timecheck: null()}, synchronize_session="fetch")
 		session.commit()

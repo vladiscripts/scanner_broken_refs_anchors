@@ -6,7 +6,7 @@
 
 filename_tpls_transcludes = 'list_tpls_transcludes.txt'
 filename_listpages_errref = 'listpages_err_ref.txt'
-# переключатель доступа к базе данных, запускается на ПК или сервере wmflabs
+# переключатель доступа к базе данных. True если скрипт запускается на ПК, False если на сервере wmflabs
 run_local_not_from_wmflabs = True
 
 # ---
@@ -16,14 +16,14 @@ do_generation_lists = True
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_lists = False
-do_update_db_from_wiki = False
+do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
 do_all_post_to_wiki = False  # Отключение всех опции ниже в этой секции
 
-do_post_list = True  # Запись списков
-do_post_list_simulate = True  # Симуляция записи
+do_post_wikilist = True  # Запись списков
+do_post_wikilist_simulate = True  # Симуляция записи
 
 do_post_template = True  # Запись в статьи шаблона
 do_post_template_simulate = True  # Симуляция записи
@@ -76,6 +76,8 @@ names_sfn_templates = ((
 	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
 ))
+
+
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
 
 
@@ -86,6 +88,7 @@ def file_savelines(filename, strlist, append=False):
 	text = '\n'.join(strlist)
 	with open(filename, mode, encoding='utf-8') as f:
 		f.write(text)
+
 
 def file_savetext(filename, text):
 	with open(filename, 'w', encoding='utf-8') as f:

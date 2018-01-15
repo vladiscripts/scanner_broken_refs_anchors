@@ -3,7 +3,7 @@
 # author: https://github.com/vladiscripts
 #
 from sqlalchemy.sql import update
-from scripts.db import session, Page, Ref, WarningTps  # , Timecheck
+from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 from config import *
 # from scripts import scan_refs_of_page
 
@@ -18,9 +18,9 @@ from config import *
 	# self.sfns_like_names = vladi_commons.str2list(names_sfn_templates)
 
 def save_listpages_to_remove_warning_tpl():
-	query = session.query(WarningTps.title) \
-		.select_from(WarningTps) \
-		.outerjoin(Ref, WarningTps.page_id == Ref.page_id) \
+	query = session.query(WarningTpls.title) \
+		.select_from(WarningTpls) \
+		.outerjoin(Ref, WarningTpls.page_id == Ref.page_id) \
 		.filter(Ref.page_id.is_(None))
 
 	list_to_remove_warning_tpl = (str(title[0]) for title in session.execute(query).fetchall())
@@ -30,9 +30,9 @@ def save_listpages_to_remove_warning_tpl():
 def save_listpages_to_add_warning_tpl():
 	"""Список куда предупреждение ещё не поставлено."""
 	query = session.query(Page.title).select_from(Page) \
-		.outerjoin(WarningTps) \
+		.outerjoin(WarningTpls) \
 		.join(Ref, Page.page_id == Ref.page_id) \
-		.filter(WarningTps.page_id.is_(None), Ref.page_id.isnot(None)) \
+		.filter(WarningTpls.page_id.is_(None), Ref.page_id.isnot(None)) \
 		.group_by(Page.title)
 
 	errpages_without_warning_tpl = (str(title[0]) for title in session.execute(query).fetchall())

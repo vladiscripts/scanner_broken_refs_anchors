@@ -8,7 +8,7 @@ from lxml.html import tostring, fromstring
 import re
 import time
 from config import *
-from scripts.db import session, Page, Ref, WarningTps  # , Timecheck
+from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 
 
 def page_html_parse(title):
