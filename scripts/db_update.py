@@ -56,7 +56,7 @@ class UpdateDB:
 		# tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
 		# 	 for t in self.str2list(names_sfn_templates)])
 		tpls_str = self.list_to_str_params('templatelinks.tl_title',
-										   map(self.normalization_pagename, self.str2list(warning_tpl_name)))
+										   map(self.normalization_pagename, self.str2list(names_sfn_templates)))
 		sql = """SELECT
 				  page.page_id,
 				  page.page_title,
@@ -145,7 +145,7 @@ class UpdateDB:
 		return t[0:1].upper() + t[1:].replace(' ', '_')
 
 	@staticmethod
-	def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin='OR'):
+	def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin=' OR '):
 		"""Return string like:  string LIKE string1 OR string LIKE string2"""
 		return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
 
