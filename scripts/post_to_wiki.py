@@ -16,7 +16,7 @@ family = 'wikipedia'
 
 def posting_list():
 	"""Постинг списков с ошибками, из них сниппеты включаются (transcluding) в страницы."""
-	sim = '-simulate' if do_post_list_simulate else ''  # "-simulate" параметр для тестирования записи pwb
+	sim = '-simulate' if do_post_wikilist_simulate else ''  # "-simulate" параметр для тестирования записи pwb
 	params = [
 		'-file:' + filename_wikilists + '.txt',
 		'-begin:"' + marker_page_start + '"', '-end:"' + marker_page_end + '"', '-notitle',
