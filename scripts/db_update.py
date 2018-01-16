@@ -4,7 +4,7 @@
 from sqlalchemy.sql import null
 import pymysql
 from config import *
-from scripts.db import session, Page, Ref, WarningTps   # , Timecheck
+from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 # from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
 import passwords
 
@@ -36,7 +36,8 @@ class UpdateDB:
 		"""Обновить список страниц имеющих установленный шаблон."""
 		# tpls_str = ' OR '.join(['tl_title LIKE "%s"' % self.normalization_pagename(t)
 		# 	 for t in self.str2list(warning_tpl_name)])
-		tpls_str = self.list_to_str_params('tl_title', map(self.normalization_pagename, self.str2list(warning_tpl_name)))
+		tpls_str = self.list_to_str_params('tl_title',
+										   map(self.normalization_pagename, self.str2list(warning_tpl_name)))
 		sql = """SELECT page_id, page_title
 				FROM page
 				JOIN templatelinks ON templatelinks.tl_from = page.page_id
@@ -45,41 +46,53 @@ class UpdateDB:
 					AND page_namespace = 0;""" % tpls_str
 
 		result = self.wdb_query(sql)
-		session.query(WarningTps).delete()
+		session.query(WarningTpls).delete()
 		for r in result:
-			row = WarningTps(r[0], self.byte2utf(r[1]))
+			row = WarningTpls(r[0], self.byte2utf(r[1]))
 			session.add(row)
 		session.commit()
 
 	def update_transcludes_sfn_tempates(self):
-		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""		
+		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
 		# tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
 		# 	 for t in self.str2list(names_sfn_templates)])
 		tpls_str = self.list_to_str_params('templatelinks.tl_title',
-										   map(self.normalization_pagename, self.str2list(warning_tpl_name)))
+										   map(self.normalization_pagename, self.str2list(names_sfn_templates)))
 		sql = """SELECT
 				  page.page_id,
 				  page.page_title,
 				  MAX(revision.rev_timestamp) AS timestamp
 				FROM page
-				  INNER JOIN templatelinks
-					ON page.page_id = templatelinks.tl_from
-				  INNER JOIN revision
-					ON page.page_id = revision.rev_page
-				WHERE templatelinks.tl_namespace = 10
-				AND page.page_namespace = 0
+				  INNER JOIN templatelinks ON page.page_id = templatelinks.tl_from
+				  INNER JOIN revision ON page.page_id = revision.rev_page
+				WHERE templatelinks.tl_namespace = 10 AND page.page_namespace = 0
 				AND (%s)
 				GROUP BY page.page_title
-				ORDER BY page.page_title;""" % tpls_str
+				ORDER BY page.page_id ASC;""" % tpls_str
+		transcludes_new = self.wdb_query(sql)
 
-		result = self.wdb_query(sql)
-		session.query(Page).delete()
-		for r in result:
+		transcludes = session.execute(session.query(Page.page_id, Page.title, Page.timeedit)).fetchall()
+
+		# очистка
+		ids_new = set(p[0] for p in transcludes_new)
+		ids_old = set(p[0] for p in transcludes)
+		if len(transcludes_new) > 10000:  # иногда возвращается обрезанный результат
+			session.query(Page).filter(Page.page_id in (ids_old.difference(ids_new))).delete()
+
+		for r in transcludes_new:
 			page_id = r[0]
 			title = self.byte2utf(r[1])
 			time_lastcheck = null()
 			time_lastedit = int(r[2])
-			session.add(Page(page_id, title, time_lastcheck, time_lastedit))
+			if page_id in ids_old:
+				for p in transcludes:
+					if p[0] == page_id:
+						if p[1] != title or p[2] != time_lastedit:
+							session.query(Page).filter(Page.page_id == page_id).update(
+								{Page.title: title, Page.timeedit: time_lastedit})
+						break
+			else:
+				session.add(Page(page_id, title, time_lastcheck, time_lastedit))
 		session.commit()
 
 	# @staticmethod
@@ -111,9 +124,12 @@ class UpdateDB:
 	@staticmethod
 	def drop_check_pages_with_warnings():
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
-		for r in session.execute(session.query(WarningTps.page_id)).fetchall():
-			# session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-			session.query(Page).filter(Page.page_id == r[0]).update({Page.timecheck: null()})
+		# for r in session.execute(session.query(WarningTps.page_id)).fetchall():
+		# 	# session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+		# 	session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
+		wp = session.query(WarningTpls.page_id).subquery()
+		session.query(Page).filter(Page.page_id.in_(wp)). \
+			update({Page.timecheck: null()}, synchronize_session="fetch")
 		session.commit()
 		pass
 
@@ -143,7 +159,7 @@ class UpdateDB:
 		return t[0:1].upper() + t[1:].replace(' ', '_')
 
 	@staticmethod
-	def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin='OR'):
+	def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin=' OR '):
 		"""Return string like:  string LIKE string1 OR string LIKE string2"""
 		return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
 

@@ -21,12 +21,12 @@ from lxml.html import tostring, fromstring
 from sqlalchemy.sql import null
 
 
-class MakeLists:
-	full_err_listpages = {}
-	transcludes_sfntpls = set()
-	transcludes_of_warning_tpl = set()
-	errpages_without_warning_tpl = set()
-	list_to_remove_warning_tpl = set()
+# class MakeLists:
+	# full_err_listpages = {}
+	# transcludes_sfntpls = set()
+	# transcludes_of_warning_tpl = set()
+	# errpages_without_warning_tpl = set()
+	# list_to_remove_warning_tpl = set()
 
 	# self.sfns_like_names = vladi_commons.str2list(names_sfn_templates)
 

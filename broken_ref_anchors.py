@@ -6,8 +6,10 @@
 from config import *
 from scripts import post_to_wiki
 from scripts.db_update import UpdateDB
-from scripts.make_listspages import MakeLists
+# from scripts.make_listspages import MakeLists
+from scripts.make_listspages import save_listpages_to_add_warning_tpl, save_listpages_to_remove_warning_tpl
 from scripts.make_wikilists import MakeWikiLists
+from scripts import scan_refs_of_page
 
 if __name__ == '__main__':
 
@@ -19,29 +21,28 @@ if __name__ == '__main__':
 
 	# Сканирование и обновление базы данных
 	if do_generation_lists:
-		m = MakeLists()
-
+		# m = MakeLists()
 		if do_update_db_from_wiki:
 			# Обновление списка страниц имеющих warning-шаблон, шаблоны сносок,
 			# и очистка базы от устарелых данных
 			db_update = UpdateDB()
 
-		# Создание списков страниц с ошибками
+		# старт сканирования
 		print('start scan pages')
-		m.scan_pages_for_referrors()
-		m.save_listpages_to_remove_warning_tpl()
-		m.save_listpages_to_add_warning_tpl()
+		scan_refs_of_page.do_scan()
 
+		# Запись списков
+		save_listpages_to_remove_warning_tpl()
+		save_listpages_to_add_warning_tpl()
 		if make_wikilist:
 			w = MakeWikiLists()
 			w.save_wikilist()
 
-	# Запись списков и установка шаблонов в wiki
-	if not do_all_post_to_wiki:
-		do_post_list = do_post_template = do_remove_template = False
-	if do_post_list:
-		post_to_wiki.posting_list()
-	if do_post_template:
-		post_to_wiki.posting_template()
-	if do_remove_template:
-		post_to_wiki.remove_template()
+	# Постинг списков и установка шаблонов в wiki
+	if do_all_post_to_wiki:
+		if do_post_wikilist:
+			post_to_wiki.posting_list()
+		if do_post_template:
+			post_to_wiki.posting_template()
+		if do_remove_template:
+			post_to_wiki.remove_template()
