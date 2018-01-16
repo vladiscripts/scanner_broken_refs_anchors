@@ -6,10 +6,9 @@
 from config import *
 from scripts import post_to_wiki
 from scripts.db_update import UpdateDB
-# from scripts.make_listspages import MakeLists
 from scripts.make_listspages import save_listpages_to_add_warning_tpl, save_listpages_to_remove_warning_tpl
 from scripts.make_wikilists import MakeWikiLists
-from scripts import scan_refs_of_page
+from scripts import scan_pages
 
 if __name__ == '__main__':
 
@@ -29,14 +28,16 @@ if __name__ == '__main__':
 
 		# старт сканирования
 		print('start scan pages')
-		scan_refs_of_page.do_scan()
+		# scan_pages.do_scan()
+		m = scan_pages.MakeLists()
+		m.scan_pages_for_referrors()
 
 		# Запись списков
 		save_listpages_to_remove_warning_tpl()
 		save_listpages_to_add_warning_tpl()
 		if make_wikilist:
 			w = MakeWikiLists()
-			w.save_wikilist()
+			# w.save_wikilist()
 
 	# Постинг списков и установка шаблонов в wiki
 	if do_all_post_to_wiki:
