@@ -3,3 +3,6 @@ sqlalchemy
 pymysql
 lxml
 cssselect
+asyncio
+aiohttp
+
