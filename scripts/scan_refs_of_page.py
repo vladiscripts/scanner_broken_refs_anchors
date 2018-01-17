@@ -9,7 +9,6 @@ import time
 from config import *
 from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 
-
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 
 
@@ -49,7 +48,8 @@ class ScanRefsOfPage:
 						{'citeref': idRef, 'text': aText, 'link_to_sfn': str(li.attrib['id'])})
 
 		except Exception as error:
-			self.error_print(error)
+			# self.error_print(error)
+			pass
 
 	def find_citations_on_page(self):
 		""" Список id библиографии. Возвращает: self.list_refs """
@@ -65,7 +65,8 @@ class ScanRefsOfPage:
 								   e in self.parsed_html.cssselect(css)}
 
 		except Exception as error:
-			self.error_print(error)
+			# self.error_print(error)
+			pass
 
 	def compare_refs(self):
 		""" Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
@@ -82,7 +83,9 @@ class ScanRefsOfPage:
 						# session.add(Ref(self.page_id, sfn['citeref'], sfn['link_to_sfn'], sfn['text']))
 						it_sfn_double = True
 
-	def error_print(self, error):
-		error_text = 'Error "{}" on parsing footnotes of page "{}"'.format(error, self.title)
-		print(error_text)
-		file_savelines(filename_error_log, error_text)
+# def error_print(self, error):
+# 	error_text = 'Error "{}" on parsing footnotes of page "{}"'.format(error
+# 																	   # , self.title
+# 																	   )
+# 	print(error_text)
+# 	file_savelines(filename_error_log, error_text)

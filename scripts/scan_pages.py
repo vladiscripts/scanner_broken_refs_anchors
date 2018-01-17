@@ -26,11 +26,11 @@ import aiohttp
 
 
 class MakeLists:
-	full_err_listpages = {}
-	transcludes_sfntpls = set()
-	transcludes_of_warning_tpl = set()
-	errpages_without_warning_tpl = set()
-	list_to_remove_warning_tpl = set()
+	# full_err_listpages = {}
+	# transcludes_sfntpls = set()
+	# transcludes_of_warning_tpl = set()
+	# errpages_without_warning_tpl = set()
+	# list_to_remove_warning_tpl = set()
 
 	# self.sfns_like_names = vladi_commons.str2list(names_sfn_templates)
 
@@ -56,7 +56,7 @@ class MakeLists:
 	def scan_pages_for_referrors(self):
 		"""Сканирование страниц на ошибки"""
 
-		# # удаление старых ошибок в любом случае: если не обнаружены, или есть новые
+		# # очистка удаление старых ошибок в любом случае: если не обнаружены, или есть новые
 		# session.query(Ref).filter(Ref.page_id == page_id).delete()
 		# # session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
 		#
@@ -90,41 +90,40 @@ class MakeLists:
 	# session.commit()
 	# return
 
-
-	async def asynchronous(self, list_pages, loop):
+	@asyncio.coroutine
+	def asynchronous(self, list_pages, loop):
 		headers = {'user-agent': 'user:textworkerBot'}
 		sem = asyncio.Semaphore(100)
 		conn = aiohttp.TCPConnector(
 			family=socket.AF_INET,
 			verify_ssl=False,
 		)
-		async with ClientSession(headers=headers, connector=conn, loop=loop) as session:
+		with ClientSession(headers=headers, connector=conn, loop=loop) as session:
 			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
 			# finished, unfinished = event_loop.run_until_complete(asyncio.wait(tasks))
-			finished, unfinished = await asyncio.wait(tasks)
+			result = yield from asyncio.wait(tasks)
 			# for task in finished:
-				# if task.result() != 'None' or task.result() is not None:
-				# 	print('!!!!!!!!!!!!!')
-				# print(task.result())  # returns only None
-				# pass
-			print("unfinished2:", len(unfinished))
+			# if task.result() != 'None' or task.result() is not None:
+			# 	print('!!!!!!!!!!!!!')
+			# print(task.result())  # returns only None
+			# pass
+			# print("unfinished2:", len(unfinished))
 
 			# responses = asyncio.gather(*tasks)
-			# await responses
+			# yield from responses
 			pass
 
-	async def db_works(self, p):
+	@asyncio.coroutine
+	def db_works(self, p):
 		page_id = p[0]
 		# page_title = p[1]
 		errrefs = p[2]
 
-		# удаление записей о старых ошибках
+		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
-		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: null()})
-		# обновление таблицы Refs
+
 		for refs in errrefs:
 			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
-		# обновление таблицы Pages
 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
 		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
 		session.commit()
@@ -150,7 +149,8 @@ class MakeLists:
 	# 		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
 	# 		session.commit()
 
-	async def scan_pagehtml_for_referrors(self, sem, p, session):
+	@asyncio.coroutine
+	def scan_pagehtml_for_referrors(self, sem, p, session):
 		"""Сканирование страницы на ошибки"""
 		page_id = p[0]
 		page_title = p[1]
@@ -160,61 +160,61 @@ class MakeLists:
 			print('!!!!!!!!!!!!!')
 
 		# print(page_title)
-		# response_text = await fetch(url, session)
+		# response_text = yield from fetch(url, session)
 		# try:
-		# 	r = await aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+		# 	r = yield from aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
 		# # r = requests.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
 		# except:
 		# 	return '{}: http error'.format(page_title)
 		# r.close()
-		# text = await response.text
+		# text = yield from response.text
 
 		# async with sem:
-			# async with session.get(url, params={"action": "render"}) as response:
-			# 	if response and response.status == 200:
-			# 		# assert response.status == 200
-			# 		response_text = await response.text()
-			# 		parsed_html = fromstring(response_text)
-			# 		page = ScanRefsOfPage(page_id, page_title, parsed_html)
-			# 		errrefs = [page_id, page_title, page.full_errrefs]
-			# 		del page
-			# 		return errrefs
+		# async with session.get(url, params={"action": "render"}) as response:
+		# 	if response and response.status == 200:
+		# 		# assert response.status == 200
+		# 		response_text = yield from response.text()
+		# 		parsed_html = fromstring(response_text)
+		# 		page = ScanRefsOfPage(page_id, page_title, parsed_html)
+		# 		errrefs = [page_id, page_title, page.full_errrefs]
+		# 		del page
+		# 		return errrefs
 
-			# 	async with session.get(url, params={"action": "render"}) as response:
-			# 		try:
-			# 			if response.status == 200:
-			# 				assert response.status == 200
-			# 				response_text = await response.text()
-			# 				parsed_html = fromstring(response_text)
-			# 				# print(page_title)
-			# 				page = ScanRefsOfPage(page_id, page_title, parsed_html)
-			# 				errrefs = [page_id, page_title, page.full_errrefs]
-			# 				del page
-			# 				return errrefs
-			# 			if response.status != 200:
-			# 				print(page_title + ' response.status != 200:')
-			# 		except Exception as e:
-			# 			print(page_title)
-			# 			# print(e)
-			# 			# Блокируем все таски на 30 секунд в случае ошибки 429.
-			# 			# time.sleep(30)
+		# 	async with session.get(url, params={"action": "render"}) as response:
+		# 		try:
+		# 			if response.status == 200:
+		# 				assert response.status == 200
+		# 				response_text = yield from response.text()
+		# 				parsed_html = fromstring(response_text)
+		# 				# print(page_title)
+		# 				page = ScanRefsOfPage(page_id, page_title, parsed_html)
+		# 				errrefs = [page_id, page_title, page.full_errrefs]
+		# 				del page
+		# 				return errrefs
+		# 			if response.status != 200:
+		# 				print(page_title + ' response.status != 200:')
+		# 		except Exception as e:
+		# 			print(page_title)
+		# 			# print(e)
+		# 			# Блокируем все таски на 30 секунд в случае ошибки 429.
+		# 			# time.sleep(30)
 
-		async with sem:
+		with (yield from sem):
 			# with async_timeout.timeout(5):
 			retries = 0
 			while retries <= 5:
 				try:
-					response = await session.request('get', url, params={"action": "render"},) # timeout=30
-					# response = await scripts.asyncio_exeptions.send_http(session, 'get', url,
+					response = yield from session.request('GET', url, params={"action": "render"}, )  # timeout=30
+					# response = yield from scripts.asyncio_exeptions.send_http(session, 'get', url,
 					# 													 retries=3,
 					# 													 interval=0.9,
 					# 													 backoff=3,
 					# 													 read_timeout=30.9, )
-					# await asyncio.sleep(1)
+					# yield from asyncio.sleep(1)
 					# print(response)
 					pass
 					if response.status == 200:
-						response_text = await response.text()
+						response_text = yield from response.text()
 						# response.close()
 						parsed_html = fromstring(response_text)
 						print(page_title)
@@ -225,19 +225,19 @@ class MakeLists:
 						except:
 							pass
 						errrefs = [page_id, page_title, errrefs]
-						await self.db_works(errrefs)
+						yield from self.db_works(errrefs)
 
 						del page
 
-						# try:
-						# 	errrefs[0]
-						# except:
-						# 	pass
-						# return errrefs
+					# try:
+					# 	errrefs[0]
+					# except:
+					# 	pass
+					# return errrefs
 					elif response.status == 429:
 						# Too many requests
 						retries += 1
-						await asyncio.sleep(1)
+						yield from asyncio.sleep(1)
 					else:
 						# response.close()
 						print(page_title + ' response.status != 200')
@@ -245,37 +245,38 @@ class MakeLists:
 					break
 
 				except (aiohttp.ClientOSError, aiohttp.ClientResponseError,
-				aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
+						aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
 					print('!!! Error. url: %s; error: %r', url, e)
 					retries += 1
-					await asyncio.sleep(1)
-				# except aiohttp.ClientOSError as e:
-				# 	print(page_title + ' !!!!!!! ClientOSError')
-				# 	retries += 1
-				# 	await asyncio.sleep(1)
-				# # Блокируем все таски на 30 секунд в случае ошибки 429.
-				# # time.sleep(30)
-				# except aiohttp.ServerDisconnectedError as e:
-				# 	print(page_title + ' !!!!!!! ServerDisconnectedError')
-				# 	retries += 1
-				# 	await asyncio.sleep(1)
-				# 	# await asyncio.sleep(1)
-				# 	# await self.scan_pagehtml_for_referrors(sem, p, session)
-				# # Блокируем все таски на 30 секунд в случае ошибки 429.
-				# # time.sleep(30)
-				# # time.sleep(1)
-				# except Exception as e:
-				# 	print(page_title + ' !!!!!!! Exception')
-				# 	retries += 1
-				# 	await asyncio.sleep(1)
-				# # # Блокируем все таски на 30 секунд в случае ошибки 429.
-				# # 	time.sleep(30)
-				# # else:
+					yield from asyncio.sleep(1)
+
+	# except aiohttp.ClientOSError as e:
+	# 	print(page_title + ' !!!!!!! ClientOSError')
+	# 	retries += 1
+	# 	yield from asyncio.sleep(1)
+	# # Блокируем все таски на 30 секунд в случае ошибки 429.
+	# # time.sleep(30)
+	# except aiohttp.ServerDisconnectedError as e:
+	# 	print(page_title + ' !!!!!!! ServerDisconnectedError')
+	# 	retries += 1
+	# 	yield from asyncio.sleep(1)
+	# 	# yield from asyncio.sleep(1)
+	# 	# yield from self.scan_pagehtml_for_referrors(sem, p, session)
+	# # Блокируем все таски на 30 секунд в случае ошибки 429.
+	# # time.sleep(30)
+	# # time.sleep(1)
+	# except Exception as e:
+	# 	print(page_title + ' !!!!!!! Exception')
+	# 	retries += 1
+	# 	yield from asyncio.sleep(1)
+	# # # Блокируем все таски на 30 секунд в случае ошибки 429.
+	# # 	time.sleep(30)
+	# # else:
 
 	# async def async_request(self, sem, url):
 	# 	async with sem:
 	# 		try:
-	# 			response = await session.request('get', url, params={"action": "render"})
+	# 			response = yield from session.request('get', url, params={"action": "render"})
 	# 		except aiohttp.ClientOSError as e:
 	# 			print(url + ' aiohttp.ClientOSError as e')
 	# 			print(e)
@@ -310,50 +311,54 @@ class MakeLists:
 			(Page.timecheck.is_(None)) | (Page.timeedit > Page.timecheck))
 		return session.execute(q).fetchall()
 
-	# def make_list_transcludes_of_warning_tpl(self):
-	# 	"""Список страниц где шаблон уже установлен."""
-	# 	# Взять с сайта - True, или из файла - False.
-	# 	if transcludes_of_warning_tpl_get_from_site:
-	# 		db.make_list_transcludes_from_wdb_to_sqlite()
-	# 		vladi_commons.file_savelines(filename_list_transcludes_of_warning_tpl,
-	# 									 sorted(self.transcludes_of_warning_tpl))
-	# 	else:
-	# 		self.transcludes_of_warning_tpl = vladi_commons.file_readlines_in_set(
-	# 				filename_list_transcludes_of_warning_tpl)
-	#
-	# def make_list_transcludes_sfns(self):
-	# 	"""Список включений sfn-шаблонов. С сайта, из файла, или указанные вручную."""
-	# 	global get_transcludes_from
-	#
-	# 	if get_transcludes_from == 1:  # from wikiAPI
-	# 		self.transcludes_sfntpls = self.get_list_transcludes_of_tpls_from_site(self.sfns_like_names)
-	# 		vladi_commons.file_savelines(filename_tpls_transcludes, self.transcludes_sfntpls)
-	#
-	# 	# Тесты
-	# 	elif get_transcludes_from == 2:  # from file
-	# 		self.transcludes_sfntpls = vladi_commons.file_readlines_in_set(filename_tpls_transcludes)
-	#
-	# 	elif get_transcludes_from == 3:  # from manual
-	# 		global test_pages
-	# 		self.transcludes_sfntpls = test_pages
 
+def db_get_list_pages_for_scan():
+	q = session.query(Page.page_id, Page.title).select_from(Page).filter(
+		(Page.timecheck.is_(None)) | (Page.timeedit > Page.timecheck))
+	return session.execute(q).fetchall()
 
-	# async def page_html_parse_a(title):
-	# 	try:
-	# 		r = await aiohttp.request('GET', 'https://ru.wikipedia.org/wiki/' + quote(title),
-	# 								  params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
-	# 	except:
-	# 		return '{}: http error'.format(title)
-	# 	parsed_html = await fromstring(r.text)
-	# 	return parsed_html
-
-
-# def page_html_parse(title):
-# 	r = requests.get('https://ru.wikipedia.org/wiki/' + quote(title), params={"action": "render"},
-# 					 headers={'user-agent': 'user:textworkerBot'})
-# 	return fromstring(r.text)
+# def make_list_transcludes_of_warning_tpl(self):
+# 	"""Список страниц где шаблон уже установлен."""
+# 	# Взять с сайта - True, или из файла - False.
+# 	if transcludes_of_warning_tpl_get_from_site:
+# 		db.make_list_transcludes_from_wdb_to_sqlite()
+# 		vladi_commons.file_savelines(filename_list_transcludes_of_warning_tpl,
+# 									 sorted(self.transcludes_of_warning_tpl))
+# 	else:
+# 		self.transcludes_of_warning_tpl = vladi_commons.file_readlines_in_set(
+# 				filename_list_transcludes_of_warning_tpl)
 #
+# def make_list_transcludes_sfns(self):
+# 	"""Список включений sfn-шаблонов. С сайта, из файла, или указанные вручную."""
+# 	global get_transcludes_from
 #
+# 	if get_transcludes_from == 1:  # from wikiAPI
+# 		self.transcludes_sfntpls = self.get_list_transcludes_of_tpls_from_site(self.sfns_like_names)
+# 		vladi_commons.file_savelines(filename_tpls_transcludes, self.transcludes_sfntpls)
+#
+# 	# Тесты
+# 	elif get_transcludes_from == 2:  # from file
+# 		self.transcludes_sfntpls = vladi_commons.file_readlines_in_set(filename_tpls_transcludes)
+#
+# 	elif get_transcludes_from == 3:  # from manual
+# 		global test_pages
+# 		self.transcludes_sfntpls = test_pages
+
+# async def page_html_parse_a(title):
+# 	try:
+# 		r = yield from aiohttp.request('GET', 'https://ru.wikipedia.org/wiki/' + quote(title),
+# 								  params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+# 	except:
+# 		return '{}: http error'.format(title)
+# 	parsed_html = yield from fromstring(r.text)
+# 	return parsed_html
+
+def page_html_parse(title):
+	r = requests.get('https://ru.wikipedia.org/wiki/' + quote(title), params={"action": "render"},
+					 headers={'user-agent': 'user:textworkerBot'})
+	return fromstring(r.text)
+
+
 # def do_scan():
 # 	"""Сканирование страниц на ошибки"""
 # 	q = session.query(Page.page_id, Page.title).select_from(Page).filter(
@@ -379,9 +384,6 @@ class MakeLists:
 # 		session.commit()
 
 
-
-
-
 # def db_get_list_pages_for_scan(self):
 # 	# 	"""	может праильней так?
 # 	# 	SELECT * FROM  pages LEFT JOIN timecheck
@@ -404,7 +406,6 @@ class MakeLists:
 # 	return session.execute(q).fetchall()
 
 
-
 # for test
 # page = ScanRefsOfPage('2091672', 'Марк Фульвий Флакк (консул 125 года до н. э.)')
 # import traceback
@@ -417,7 +418,7 @@ class MakeLists:
 # async def fetch(url, session):
 # 	async with session.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'}, ) \
 # 			as response:
-# 		return await response.text()
+# 		return yield from response.text()
 #
 #
 # async def db_work(data):
@@ -430,21 +431,21 @@ class MakeLists:
 # 	page_id = p[0]
 # 	page_title = p[2].strip('"')
 # 	url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
-# 	# response_text = await fetch(url, session)
+# 	# response_text = yield from fetch(url, session)
 # 	# try:
-# 	# 	r = await aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
+# 	# 	r = yield from aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
 # 	# # r = requests.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
 # 	# except:
 # 	# 	return '{}: http error'.format(page_title)
 # 	# r.close()
-# 	# text = await response.text
+# 	# text = yield from response.text
 # 	async with sem:
 # 		async with session.get(url, params={"action": "render"}) as response:
 # 			try:
 # 				if response.status != 200:
 # 					pass
 # 				assert response.status == 200
-# 				response_text = await response.text()
+# 				response_text = yield from response.text()
 # 				parsed_html = fromstring(response_text)
 # 				print(page_title)
 # 				page = ScanRefsOfPage(page_id, page_title, parsed_html)
@@ -465,15 +466,15 @@ class MakeLists:
 # 		tasks = [asyncio.ensure_future(scan_pagehtml_for_referrors(sem, p.partition(','), session)) for p in listpages]
 # 		# tasks.extend(asyncio.ensure_future(db_work(data))
 # 		# tasks = [scan_pagehtml_for_referrors(p.partition(','), session) for p in listpages]
-# 		responses = await asyncio.gather(*tasks)
-# 		# await responses
+# 		responses = yield from asyncio.gather(*tasks)
+# 		# yield from responses
 # 		pass
 # 		# print(responses)
-# 	await db_work(responses)
+# 	yield from db_work(responses)
 # 		# asyncio.ensure_future(db_work(data))
 #
-# 		# # done, pending = await asyncio.wait(futures_htmls, return_when=FIRST_COMPLETED)
-# 		# done, pending = await asyncio.wait(tasks)
+# 		# # done, pending = yield from asyncio.wait(futures_htmls, return_when=FIRST_COMPLETED)
+# 		# done, pending = yield from asyncio.wait(tasks)
 # 		# # print(done.pop().result())
 # 		# # for future in pending:
 # 		# # 	future.cancel()
@@ -483,7 +484,7 @@ class MakeLists:
 # 		# 	except:
 # 		# 		print("Unexpected error: {}".format(traceback.format_exc()))
 # 		# 	# for i, future in enumerate(asyncio.as_completed(futures_htmls)):
-# 		# 	# 	result = await future
+# 		# 	# 	result = yield from future
 # 		# 	# 	print('{} {}'.format(">>" * (i + 1), result))
 #
 #
@@ -507,3 +508,101 @@ class MakeLists:
 # # print(timeit.timeit('scan_pages_for_referrors()', number=1))
 # scan_pages_for_referrors()
 # pass
+
+
+
+
+import os
+import urllib.request
+from threading import Thread
+import threading
+
+
+class WorkerThread(threading.Thread):
+	def __init__(self, url_list, url_list_lock):
+		super(WorkerThread, self).__init__()
+		self.url_list = url_list
+		self.url_list_lock = url_list_lock
+
+	def run(self):
+		while (1):
+			nexturl = self.grab_next_url()
+			if nexturl == None: break
+			self.retrieve_url(nexturl)
+			pass
+
+	def grab_next_url(self):
+		self.url_list_lock.acquire(1)
+		if len(self.url_list) < 1:
+			nexturl = None
+		else:
+			nexturl = self.url_list[0]
+			del self.url_list[0]
+		self.url_list_lock.release()
+		return nexturl
+
+	def retrieve_url(self, nexturl):
+		p = nexturl
+		# page_id = p[0]
+		# page_title = p[1]
+		# url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
+		scan_page(p)
+
+
+
+def do_work_threading():
+	list_pages_for_scan = db_get_list_pages_for_scan()
+	url_list = list_pages_for_scan
+	url_list_lock = threading.Lock()
+	workerthreadlist = []
+	for x in range(0, 3):
+		newthread = WorkerThread(url_list, url_list_lock)
+		workerthreadlist.append(newthread)
+		newthread.start()
+	for x in range(0, 3):
+		workerthreadlist[x].join()
+
+
+
+def do_scan():
+	"""Сканирование страниц на ошибки"""
+	q = session.query(Page.page_id, Page.title).select_from(Page).filter(
+		(Page.timecheck.is_(None)) |
+		(Page.timeedit > Page.timecheck))
+	list_pages_for_scan = session.execute(q).fetchall()
+
+	for p in list_pages_for_scan:
+		page_id = p[0]
+		page_title = p[1]
+
+		# очистка db от списка старых ошибок
+		session.query(Ref).filter(Ref.page_id == page_id).delete()
+		# session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+
+		# сканирование страниц на ошибки
+		page = ScanRefsOfPage(page_html_parse(page_title))
+		for ref in page.full_errrefs:
+			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+		# session.add(Timecheck(page_id, time_current))
+		session.commit()
+
+
+def scan_page(p):
+	"""Сканирование страниц на ошибки"""
+	page_id = p[0]
+	page_title = p[1]
+
+	# очистка db от списка старых ошибок
+	session.query(Ref).filter(Ref.page_id == page_id).delete()
+	# session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+
+	# сканирование страниц на ошибки
+	page = ScanRefsOfPage(page_html_parse(page_title))
+	for ref in page.full_errrefs:
+		session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+	time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+	session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+	# session.add(Timecheck(page_id, time_current))
+	session.commit()

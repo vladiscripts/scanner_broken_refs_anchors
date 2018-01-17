@@ -27,10 +27,11 @@ if __name__ == '__main__':
 			db_update = UpdateDB()
 
 		# старт сканирования
-		print('start scan pages')
 		# scan_pages.do_scan()
-		m = scan_pages.MakeLists()
-		m.scan_pages_for_referrors()
+		# m = scan_pages.MakeLists()
+		# m.scan_pages_for_referrors()
+		# scan_pages.scan_pages_for_referrors()
+		scan_pages.do_work_threading()
 
 		# Запись списков
 		save_listpages_to_remove_warning_tpl()
