@@ -4,7 +4,7 @@
 from sqlalchemy.sql import null
 import pymysql
 from config import *
-from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
+from scripts.db import session, Page, Ref, WarningTpls, Timecheck
 # from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
 import passwords
 
@@ -29,7 +29,7 @@ class UpdateDB:
 			self.drop_all_check_pages()
 
 		# чистка PageTimecheck и Ref от записей которых нет в pages
-		# self.drop_depricated_by_timecheck()
+		self.drop_depricated_by_timecheck()
 		self.drop_ref()
 
 	def update_listpages_has_WarningTpl(self):
@@ -73,6 +73,13 @@ class UpdateDB:
 
 		transcludes_current = session.execute(session.query(Page.page_id, Page.title, Page.timeedit)).fetchall()
 
+		session.query(Page).delete()
+		for r in transcludes_wdb:
+			title = self.byte2utf(r[1])
+			row = Page(r[0], title, int(r[2]))  # time_lastcheck
+			session.add(row)
+		session.commit()
+
 		# очистка
 		pageIds_wdb = set(p[0] for p in transcludes_wdb)
 		pageIds_have = set(p[0] for p in transcludes_current)
@@ -115,15 +122,15 @@ class UpdateDB:
 
 		session.commit()
 
-	# @staticmethod
-	# def drop_depricated_by_timecheck():
+	@staticmethod
+	def drop_depricated_by_timecheck():
 	# 	# если в pages нет записи о статьи, то удалить и строки из timecheck?
 	# 	# не нужно при объединении таблиц pages и timecheck
-	# 	q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
-	# 		Page.page_id.is_(None))
-	# 	for r in session.execute(q).fetchall():
-	# 		session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-	# 	session.commit()
+		q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
+			Page.page_id.is_(None))
+		for r in session.execute(q).fetchall():
+			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+		session.commit()
 	# 	"""	может праильней так?
 	# 	SELECT * FROM  pages LEFT JOIN timecheck
 	# 	ON pages.page_id=timecheck.page_id
@@ -132,6 +139,8 @@ class UpdateDB:
 	# 	при объединении таблицы timecheck
 	# 	SELECT * FROM  pages WHERE timecheck is null
 	# 	"""
+
+
 
 	@staticmethod
 	def drop_ref():
@@ -144,19 +153,18 @@ class UpdateDB:
 	@staticmethod
 	def drop_check_pages_with_warnings():
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
-		# for r in session.execute(session.query(WarningTps.page_id)).fetchall():
-		# 	# session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		# 	session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
-		wp = session.query(WarningTpls.page_id).subquery()
-		session.query(Page).filter(Page.page_id.in_(wp)). \
-			update({Page.timecheck: null()}, synchronize_session="fetch")
+		for r in session.execute(session.query(WarningTpls.page_id)).fetchall():
+			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+			# session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
+		# wp = session.query(WarningTpls.page_id).subquery()
+		# session.query(Page).filter(Page.page_id.in_(wp)). \
+		# 	update({Page.timecheck: null()}, synchronize_session="fetch")
 		session.commit()
 
 	@staticmethod
 	def drop_all_check_pages():
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
-		# session.query(Timecheck).delete()
-		session.query(Page).update({Page.timecheck: null()})
+		session.query(Timecheck).delete()
 		session.commit()
 
 	@staticmethod
