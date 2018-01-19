@@ -9,7 +9,7 @@ from scripts.db_update import UpdateDB
 # from scripts.make_listspages import MakeLists
 from scripts.make_listspages import save_listpages_to_add_warning_tpl, save_listpages_to_remove_warning_tpl
 from scripts.make_wikilists import MakeWikiLists
-from scripts import scan_refs_of_page
+from scripts import scan_pages
 
 if __name__ == '__main__':
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
 		# старт сканирования
 		print('start scan pages')
-		scan_refs_of_page.do_scan()
+		scan_pages.do_scan()
 
 		# Запись списков
 		save_listpages_to_remove_warning_tpl()

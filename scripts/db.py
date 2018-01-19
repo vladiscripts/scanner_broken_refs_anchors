@@ -54,7 +54,7 @@ class Ref(Base):
 	__tablename__ = 'erroneous_refs'
 	id = Column(Integer, primary_key=True)
 	page_id = Column(Integer, ForeignKey('pages.page_id'), index=True)
-	citeref = Column(String)
+	citeref = Column(String, unique=True)
 	link_to_sfn = Column(String)
 	text = Column(String)
 

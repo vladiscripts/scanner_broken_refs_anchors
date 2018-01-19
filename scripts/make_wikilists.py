@@ -47,8 +47,8 @@ class MakeWikiLists:
 				.group_by(Ref.page_id) \
 				.order_by(Page.title)
 			pages4check = session.execute(pq).fetchall()
-			for page_refs in pages4check:
-				list_refs_entries += self.formated_refs_entries_of_page(page_refs)
+			for page in pages4check:
+				list_refs_entries += self.formated_refs_entries_of_page(page)
 
 			# fill wikilists page
 			if list_refs_entries != '':
@@ -61,10 +61,10 @@ class MakeWikiLists:
 			pagename=pagename, header=header, footer=footer,
 			refs_entries=wiki_refs_entries)
 
-	def formated_refs_entries_of_page(self, page_refs):
+	def formated_refs_entries_of_page(self, page):
 		refs_entry = ''
-		page_id = page_refs[0]
-		title = page_refs[1]
+		page_id = page[0]
+		title = page[1]
 		q = session.query(Ref.link_to_sfn, Ref.text) \
 			.filter(Ref.page_id == page_id) \
 			.order_by(Ref.citeref)

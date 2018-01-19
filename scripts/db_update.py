@@ -69,30 +69,50 @@ class UpdateDB:
 				AND (%s)
 				GROUP BY page.page_title
 				ORDER BY page.page_id ASC;""" % tpls_str
-		transcludes_new = self.wdb_query(sql)
+		transcludes_wdb = self.wdb_query(sql)
 
-		transcludes = session.execute(session.query(Page.page_id, Page.title, Page.timeedit)).fetchall()
+		transcludes_current = session.execute(session.query(Page.page_id, Page.title, Page.timeedit)).fetchall()
 
 		# очистка
-		ids_new = set(p[0] for p in transcludes_new)
-		ids_old = set(p[0] for p in transcludes)
-		if len(transcludes_new) > 10000:  # иногда возвращается обрезанный результат
-			session.query(Page).filter(Page.page_id in (ids_old.difference(ids_new))).delete()
+		pageIds_wdb = set(p[0] for p in transcludes_wdb)
+		pageIds_have = set(p[0] for p in transcludes_current)
+		if len(transcludes_wdb) > 10000:  # иногда возвращается обрезанный результат
+			# 	session.query(Page).filter(Page.page_id in (pageIds_have.difference(pageIds_wdb))).delete()
+			session.query(Page).filter(Page.page_id not in pageIds_wdb).delete()
 
-		for r in transcludes_new:
-			page_id = r[0]
-			title = self.byte2utf(r[1])
+		# session.commit()
+
+		# обновление
+		for tw in transcludes_wdb:
+			pageId_wdb = tw[0]
+			title = self.byte2utf(tw[1])
 			time_lastcheck = null()
-			time_lastedit = int(r[2])
-			if page_id in ids_old:
-				for p in transcludes:
-					if p[0] == page_id:
-						if p[1] != title or p[2] != time_lastedit:
-							session.query(Page).filter(Page.page_id == page_id).update(
-								{Page.title: title, Page.timeedit: time_lastedit})
+			time_lastedit = int(tw[2])
+			if pageId_wdb in pageIds_have:
+				for tc in transcludes_current:
+					if tc[0] == pageId_wdb:
+						if tc[1] != title or tc[2] != time_lastedit:
+							session.query(Page).filter(Page.page_id == pageId_wdb) \
+								.update({Page.title: title, Page.timeedit: time_lastedit})
 						break
 			else:
-				session.add(Page(page_id, title, time_lastcheck, time_lastedit))
+				session.add(Page(pageId_wdb, title, time_lastcheck, time_lastedit))
+
+		# for tw in transcludes_wdb:
+		# 	pageId_wdb = tw[0]
+		# 	title = self.byte2utf(tw[1])
+		# 	time_lastcheck = null()
+		# 	time_lastedit = int(tw[2])
+		# 	if pageId_wdb in pageIds_have:
+		# 		for tc in transcludes_current:
+		# 			if tc[0] == pageId_wdb:
+		# 				if tc[1] != title or tc[2] != time_lastedit:
+		# 					session.query(Page).filter(Page.page_id == pageId_wdb) \
+		# 						.update({Page.title: title, Page.timeedit: time_lasted})
+		# 				break
+		# 	else:
+		# 		session.add(Page(pageId_wdb, title, time_lastcheck, time_lastedit))
+
 		session.commit()
 
 	# @staticmethod
