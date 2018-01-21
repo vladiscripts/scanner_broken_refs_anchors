@@ -62,7 +62,7 @@ class MakeLists:
 		#
 
 		# сканирование страниц на ошибки
-		list_pages_for_scan = self.db_get_list_pages_for_scan()
+		list_pages_for_scan = db_get_list_pages_for_scan()
 		# futures_htmls = [page_html_parse_a(p[1]) for p in list_pages_for_scan]
 		# futures = [self.scan_page_for_referrors(p) for p in list_pages_for_scan]
 		# list_pages_for_scan = []
@@ -93,11 +93,8 @@ class MakeLists:
 	@asyncio.coroutine
 	def asynchronous(self, list_pages, loop):
 		headers = {'user-agent': 'user:textworkerBot'}
-		sem = asyncio.Semaphore(100)
-		conn = aiohttp.TCPConnector(
-			family=socket.AF_INET,
-			verify_ssl=False,
-		)
+		sem = asyncio.Semaphore(2)
+		conn = aiohttp.TCPConnector(family=socket.AF_INET, verify_ssl=False)
 		with ClientSession(headers=headers, connector=conn, loop=loop) as session:
 			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
 			# finished, unfinished = event_loop.run_until_complete(asyncio.wait(tasks))
@@ -115,19 +112,16 @@ class MakeLists:
 
 	@asyncio.coroutine
 	def db_works(self, p):
-		page_id = p[0]
-		# page_title = p[1]
-		errrefs = p[2]
+		page_id, page_title, err_refs = p[0], p[1],  p[2]
 
 		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
 		session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
 
-		for refs in errrefs:
+		for refs in err_refs:
 			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
 		session.add(Timecheck(page_id, time_current))
-		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
 		session.commit()
 
 	# async def db_works(self, all_errefs):
@@ -154,8 +148,7 @@ class MakeLists:
 	@asyncio.coroutine
 	def scan_pagehtml_for_referrors(self, sem, p, session):
 		"""Сканирование страницы на ошибки"""
-		page_id = p[0]
-		page_title = p[1]
+		page_id, page_title = p[0], p[1]
 		url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
 
 		if page_title == 'None' or page_title is None:
@@ -163,6 +156,8 @@ class MakeLists:
 
 		# print(page_title)
 		# response_text = yield from fetch(url, session)
+		# r = yield from aiohttp.request('GET', url, params={"action": "render"},
+		# 							   headers={'user-agent': 'user:textworkerBot'})
 		# try:
 		# 	r = yield from aiohttp.request('GET', url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
 		# # r = requests.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'})
@@ -511,61 +506,6 @@ def page_html_parse(title):
 # pass
 
 
-
-
-import os
-import urllib.request
-from threading import Thread
-import threading
-
-
-class WorkerThread(threading.Thread):
-	def __init__(self, url_list, url_list_lock):
-		super(WorkerThread, self).__init__()
-		self.url_list = url_list
-		self.url_list_lock = url_list_lock
-
-	def run(self):
-		while (1):
-			nexturl = self.grab_next_url()
-			if nexturl == None: break
-			self.retrieve_url(nexturl)
-			pass
-
-	def grab_next_url(self):
-		self.url_list_lock.acquire(1)
-		if len(self.url_list) < 1:
-			nexturl = None
-		else:
-			nexturl = self.url_list[0]
-			del self.url_list[0]
-		self.url_list_lock.release()
-		return nexturl
-
-	def retrieve_url(self, nexturl):
-		p = nexturl
-		# page_id = p[0]
-		# page_title = p[1]
-		# url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
-		scan_page(p)
-
-
-
-def do_work_threading():
-	list_pages_for_scan = db_get_list_pages_for_scan()
-	url_list = list_pages_for_scan
-	url_list_lock = threading.Lock()
-	workerthreadlist = []
-	for x in range(0, 3):
-		newthread = WorkerThread(url_list, url_list_lock)
-		workerthreadlist.append(newthread)
-		newthread.start()
-	for x in range(0, 3):
-		workerthreadlist[x].join()
-
-
-
-
 def do_scan():
 	"""Сканирование страниц на ошибки"""
 	# pages_for_scan = db_get_list_pages_for_scan()
@@ -579,9 +519,9 @@ def do_scan():
 		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
 		session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-		# session.flush()
+
 		# сканирование страниц на ошибки
-		page = ScanRefsOfPage(page_id, page_title)
+		page = ScanRefsOfPage(page_html_parse(page_title))
 		ref_no_doubles = []
 		for ref in page.err_refs:
 			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
@@ -638,18 +578,20 @@ def db_get_list_pages_for_scan():
 
 def scan_page(p):
 	"""Сканирование страниц на ошибки"""
-	page_id = p[0]
-	page_title = p[1]
+	page_id, page_title = p[0], p[1]
+
+	# For tests
+	# if page_id != 273920:	continue
 
 	# очистка db от списка старых ошибок
 	session.query(Ref).filter(Ref.page_id == page_id).delete()
-	# session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+	session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
 
 	# сканирование страниц на ошибки
 	page = ScanRefsOfPage(page_html_parse(page_title))
-	for ref in page.full_errrefs:
+	for ref in page.err_refs:
 		session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
 	time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-	session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
-	# session.add(Timecheck(page_id, time_current))
+	# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+	session.add(Timecheck(page_id, time_current))
 	session.commit()
