@@ -17,6 +17,7 @@ if __name__ == '__main__':
 		UpdateDB.drop_check_pages_with_warnings()
 	if clear_all_check_pages:
 		UpdateDB.drop_all_check_pages()
+		UpdateDB.drop_all_refs()
 
 	# Сканирование и обновление базы данных
 	if do_generation_lists:

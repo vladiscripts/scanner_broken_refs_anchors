@@ -4,7 +4,6 @@
 # author: https://github.com/vladiscripts
 #
 from sqlalchemy.sql import update
-from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 import asyncio
 import aiohttp
 from aiohttp import ClientSession
@@ -14,6 +13,7 @@ import socket
 import time
 from urllib.parse import quote
 from config import *
+from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
 import scripts.asyncio_exeptions
 # from vladi_commons.vladi_commons import file_readlines
@@ -121,11 +121,13 @@ class MakeLists:
 
 		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
+		session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
 
 		for refs in errrefs:
 			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+		session.add(Timecheck(page_id, time_current))
+		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
 		session.commit()
 
 	# async def db_works(self, all_errefs):
@@ -312,10 +314,6 @@ class MakeLists:
 		return session.execute(q).fetchall()
 
 
-def db_get_list_pages_for_scan():
-	q = session.query(Page.page_id, Page.title).select_from(Page).filter(
-		(Page.timecheck.is_(None)) | (Page.timeedit > Page.timecheck))
-	return session.execute(q).fetchall()
 
 # def make_list_transcludes_of_warning_tpl(self):
 # 	"""Список страниц где шаблон уже установлен."""
@@ -408,6 +406,9 @@ def page_html_parse(title):
 
 # for test
 # page = ScanRefsOfPage('2091672', 'Марк Фульвий Флакк (консул 125 года до н. э.)')
+# pass
+
+
 # import traceback
 # from time import sleep
 # from aiohttp import ClientSession
@@ -564,29 +565,75 @@ def do_work_threading():
 
 
 
+
 def do_scan():
 	"""Сканирование страниц на ошибки"""
-	q = session.query(Page.page_id, Page.title).select_from(Page).filter(
-		(Page.timecheck.is_(None)) |
-		(Page.timeedit > Page.timecheck))
-	list_pages_for_scan = session.execute(q).fetchall()
+	# pages_for_scan = db_get_list_pages_for_scan()
+	# for p in pages_for_scan:
+	for p in db_get_list_pages_for_scan():
+		page_id, page_title = p[0], p[1]
 
-	for p in list_pages_for_scan:
-		page_id = p[0]
-		page_title = p[1]
+		# For tests
+		# if page_id != 273920:	continue
 
 		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
-		# session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-
+		session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+		# session.flush()
 		# сканирование страниц на ошибки
-		page = ScanRefsOfPage(page_html_parse(page_title))
-		for ref in page.full_errrefs:
+		page = ScanRefsOfPage(page_id, page_title)
+		ref_no_doubles = []
+		for ref in page.err_refs:
 			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		# try:
+		# 	session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		# except IntegrityError:
+		# 	pass
+		# except:
+		# 	pass
+
+		# session.query(Ref).filter_by(page_id = page_id, citeref = ref['citeref']).delete()
+		# if session.query(Ref).filter_by(page_id = page_id, citeref = ref['citeref']) .count() < 1:
+		# 	session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		# 	session.commit()
+		# if ref['citeref'] not in ref_no_doubles:
+		# 	ref_no_doubles.append(ref['citeref'])
+		# 	session.merge(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		# 	session.flush()
+
+		# try:
+		# 	session.merge(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		# except:
+		# 	pass
+		# for ref in page.err_refs:
+		# 	# try:
+		# 	# 	x = session.query(Ref).filter_by(Ref.page_id = page_id, Ref.citeref = ref['citeref']).first()
+		# 	# except:
+		# 	# 	pass
+		# 	x = session.query(Ref).filter_by(page_id=page_id, citeref=ref['citeref']).first()
+		# 	if not x:
+		# 		# 	session.query(Ref).filter(page_id=page_id, citeref=ref['citeref']).update(r)
+		# 		# else:
+		# 		try:
+		# 			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+		# 		except:
+		# 			pass
 		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-		session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
-		# session.add(Timecheck(page_id, time_current))
+		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
+		session.add(Timecheck(page_id, time_current))
+		# try:
+		# 	session.flush()
+		# except:
+		# 	pass
+		# session.flush()
 		session.commit()
+
+
+def db_get_list_pages_for_scan():
+	return queryDB(session.query(Page.page_id, Page.title) \
+				   .select_from(Page) \
+				   .outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
+				   .filter((Timecheck.timecheck.is_(None)) | (Page.timeedit > Timecheck.timecheck)))
 
 
 def scan_page(p):

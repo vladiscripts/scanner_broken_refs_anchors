@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from config import *
-from scripts.db import session, Page, Ref, Wikilists
+from scripts.db import session, Page, Ref, Wikilists, queryDB
 
 
 class MakeWikiLists:
@@ -36,7 +36,7 @@ class MakeWikiLists:
 		session.commit()
 
 	def make_wikilists(self):
-		wikilists_sql = session.execute(session.query(Wikilists.title).group_by(Wikilists.title)).fetchall()
+		wikilists_sql = queryDB(session.query(Wikilists.title).group_by(Wikilists.title))
 		for wikilist_sql in wikilists_sql:
 			wikilist_title = wikilist_sql[0]
 			list_refs_entries = ''
@@ -46,11 +46,11 @@ class MakeWikiLists:
 				.filter(Ref.page_id.isnot(None), Wikilists.title == wikilist_title) \
 				.group_by(Ref.page_id) \
 				.order_by(Page.title)
-			pages4check = session.execute(pq).fetchall()
-			for page_refs in pages4check:
-				list_refs_entries += self.formated_refs_entries_of_page(page_refs)
+			pages4check = queryDB(pq)
+			for page in pages4check:
+				list_refs_entries += self.formated_refs_entries_of_page(page)
 
-			# fill wikilists page
+			# Fill wikilists page
 			if list_refs_entries != '':
 				pagename = u'Шаблон:' + root_wikilists + wikilist_title
 				self.wikilists += self.formated_wikilist(pagename, list_refs_entries)
@@ -61,14 +61,9 @@ class MakeWikiLists:
 			pagename=pagename, header=header, footer=footer,
 			refs_entries=wiki_refs_entries)
 
-	def formated_refs_entries_of_page(self, page_refs):
-		refs_entry = ''
-		page_id = page_refs[0]
-		title = page_refs[1]
-		q = session.query(Ref.link_to_sfn, Ref.text) \
-			.filter(Ref.page_id == page_id) \
-			.order_by(Ref.citeref)
-		refs = session.execute(q).fetchall()
+	def formated_refs_entries_of_page(self, page):
+		refs_entry, page_id, title = '', page[0], page[1]
+		refs = queryDB(session.query(Ref.link_to_sfn, Ref.text).filter(Ref.page_id == page_id).order_by(Ref.citeref))
 		if len(refs) > 0:
 			page_wikilinks = []
 			for ref in refs:
