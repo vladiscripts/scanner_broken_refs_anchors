@@ -17,7 +17,7 @@ class ScanRefsOfPage:
 		self.list_sfns = set()
 		self.list_citations = set()
 		self.all_sfn_info_of_page = []
-		self.full_errrefs = []
+		self.err_refs = []
 
 		# self.page_id = page_id
 		# self.title = title
@@ -74,12 +74,12 @@ class ScanRefsOfPage:
 		err_refs = self.list_sfns - self.list_citations
 		# Если в статье есть некорректные сноски без целевых примечаний
 		if err_refs:
-			self.full_errrefs = []
+			self.err_refs = []
 			for citeref_bad in sorted(err_refs):
 				it_sfn_double = False
 				for sfn in self.all_sfn_info_of_page:
 					if citeref_bad == sfn['citeref'] and not it_sfn_double:
-						self.full_errrefs.append(sfn)
+						self.err_refs.append(sfn)
 						# session.add(Ref(self.page_id, sfn['citeref'], sfn['link_to_sfn'], sfn['text']))
 						it_sfn_double = True
 
