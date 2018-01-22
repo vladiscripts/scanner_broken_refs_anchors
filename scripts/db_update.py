@@ -20,6 +20,9 @@ class UpdateDB:
 		# обновить список страниц, имеющих шаблоны типа {{sfn}}
 		self.update_transcludes_sfn_tempates()
 
+		# очистка метки проверки неучтенных шаблонов
+		# self.query_transcludes_any_tpl('Citation')
+
 		# Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
 		if clear_check_pages_with_warnings:
 			# удаление метки проверки у страниц имеющих warning-шаблон
@@ -50,6 +53,19 @@ class UpdateDB:
 		for r in result:
 			session.add(WarningTpls(r[0], self.byte2utf(r[1])))
 		session.commit()
+
+	def query_transcludes_any_tpl(self, tpl):
+		"""Полоучение списка трансклюзий какого-либо шаблона.
+		Для тестов в основном, и сброса отметки проверки и перепроверки неучтённых шаблонов."""
+		sql = """SELECT page_id, page_title
+				FROM page
+				JOIN templatelinks ON templatelinks.tl_from = page.page_id
+				WHERE tl_namespace = 10 AND page_namespace = 0
+				AND tl_title LIKE "%s"
+				ORDER BY page.page_id ASC;""" % tpl
+		result = self.wdb_query(sql)
+		pages_titles = [self.byte2utf(p[1]) for p in result]
+		session.query(Timecheck).filter(Timecheck.page_id in [p[0] for p in result]).delete()
 
 	def update_transcludes_sfn_tempates(self):
 		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
@@ -153,7 +169,7 @@ class UpdateDB:
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
 		for r in queryDB((session.query(WarningTpls.page_id))):
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-			# session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
+		# session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
 		# wp = session.query(WarningTpls.page_id).subquery()
 		# session.query(Page).filter(Page.page_id.in_(wp)). \
 		# 	update({Page.timecheck: null()}, synchronize_session="fetch")
