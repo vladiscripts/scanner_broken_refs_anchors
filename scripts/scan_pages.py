@@ -93,7 +93,8 @@ class MakeLists:
 	@asyncio.coroutine
 	def asynchronous(self, list_pages, loop):
 		headers = {'user-agent': 'user:textworkerBot'}
-		sem = asyncio.Semaphore(2)
+		limit_http_queries = 100
+		sem = asyncio.Semaphore(limit_http_queries)
 		conn = aiohttp.TCPConnector(family=socket.AF_INET, verify_ssl=False)
 		with ClientSession(headers=headers, connector=conn, loop=loop) as session:
 			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
@@ -196,6 +197,14 @@ class MakeLists:
 		# 			# Блокируем все таски на 30 секунд в случае ошибки 429.
 		# 			# time.sleep(30)
 
+		# with (yield from sem):
+		# 	response = yield from session.request('GET', url, params={"action": "render"})
+		# 	# response = yield from session.request('GET', url, params={"action": "render"}, )
+		# 	response_text = yield from response.text()
+		# 	# response_text = yield from fetch(url, session)
+		# 	print(response_text)
+
+
 		with (yield from sem):
 			# with async_timeout.timeout(5):
 			retries = 0
@@ -210,19 +219,25 @@ class MakeLists:
 					# yield from asyncio.sleep(1)
 					# print(response)
 					pass
+					# response_text = yield from response.text()
+					# print(response_text)
+					# except:
+					# 	pass
+
+
 					if response.status == 200:
 						response_text = yield from response.text()
 						# response.close()
 						parsed_html = fromstring(response_text)
 						print(page_title)
 						page = ScanRefsOfPage(parsed_html)
-						errrefs = page.full_errrefs
+						errrefs = page.err_refs
 						try:
 							errrefs
 						except:
 							pass
-						errrefs = [page_id, page_title, errrefs]
-						yield from self.db_works(errrefs)
+						pagedata = [page_id, page_title, errrefs]
+						yield from self.db_works(pagedata)
 
 						del page
 
@@ -246,6 +261,9 @@ class MakeLists:
 					print('!!! Error. url: %s; error: %r', url, e)
 					retries += 1
 					yield from asyncio.sleep(1)
+
+
+
 
 	# except aiohttp.ClientOSError as e:
 	# 	print(page_title + ' !!!!!!! ClientOSError')
@@ -415,6 +433,17 @@ def page_html_parse(title):
 # 	async with session.get(url, params={"action": "render"}, headers={'user-agent': 'user:textworkerBot'}, ) \
 # 			as response:
 # 		return yield from response.text()
+
+
+# @asyncio.coroutine
+# def fetch(url, session):
+# 	@asyncio.coroutine
+# 	def g(url, session):
+# 		with session.get(url, params={"action": "render"}) as response:
+# 			return (yield from response.text())
+# 	return g(url, session)
+#
+
 #
 #
 # async def db_work(data):
