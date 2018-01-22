@@ -3,6 +3,7 @@
 #
 from config import *
 from scripts.db import session, Page, Ref, Wikilists, queryDB
+from scripts.make_listspages import file_savetext
 
 
 class MakeWikiLists:
@@ -45,7 +46,7 @@ class MakeWikiLists:
 				.join(Wikilists, Wikilists.letter == Page.wikilist) \
 				.filter(Ref.page_id.isnot(None), Wikilists.title == wikilist_title) \
 				.order_by(Page.title, Ref.citeref)
-				# .group_by(Ref.page_id) \
+			# .group_by(Ref.page_id) \
 			refs_pages4check = queryDB(pq)
 			# pages4check_ids = [p[0] for p in pages4check]
 			# refs = queryDB(
@@ -92,17 +93,17 @@ class MakeWikiLists:
 	def save_wikilist(self):
 		file_savetext(filename_wikilists + '.txt', self.wikilists)
 
-	# def formating_sql2wikilink(self, part):
-	# 	"""Сортировка sql refs по алфавиту и форматирование в викиссылки."""
-	# 	part_list_wikilinks = []
-	# 	q = db.session.query(db.Page.page_id, db.Page.title)
-	# 	for p in db.session.execute(q).fetchall():
-	# 		q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
-	# 			.filter(db.Ref.page_id == p[0]) \
-	# 			.order_by(db.Ref.citeref)
-	# 		page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text) for ref in
-	# 						  db.session.execute(q).fetchall()]
-	# 		part_list_wikilinks.append(
-	# 				r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
-	# 						t=p.pages_title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
-	# 	return part_list_wikilinks
+# def formating_sql2wikilink(self, part):
+# 	"""Сортировка sql refs по алфавиту и форматирование в викиссылки."""
+# 	part_list_wikilinks = []
+# 	q = db.session.query(db.Page.page_id, db.Page.title)
+# 	for p in db.session.execute(q).fetchall():
+# 		q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
+# 			.filter(db.Ref.page_id == p[0]) \
+# 			.order_by(db.Ref.citeref)
+# 		page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text) for ref in
+# 						  db.session.execute(q).fetchall()]
+# 		part_list_wikilinks.append(
+# 				r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
+# 						t=p.pages_title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
+# 	return part_list_wikilinks

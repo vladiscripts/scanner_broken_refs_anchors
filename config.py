@@ -84,17 +84,3 @@ names_sfn_templates = ((
 # Число асинхронных, одновременно запущенных, потоков. Столько же может делаться http-запросов.
 # При более 50 http-запросах сервер Wikipedia может отказываться отвечать.
 limit_asynch_threads = 100
-
-
-# --- Общие функции
-
-def file_savelines(filename, strlist, append=False):
-	mode = 'a' if append else 'w'
-	text = '\n'.join(strlist)
-	with open(filename, mode, encoding='utf-8') as f:
-		f.write(text)
-
-
-def file_savetext(filename, text):
-	with open(filename, 'w', encoding='utf-8') as f:
-		f.write(text)
