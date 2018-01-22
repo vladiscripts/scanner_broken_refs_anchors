@@ -2,12 +2,8 @@
 #
 # author: https://github.com/vladiscripts
 #
-from urllib.parse import quote
-from lxml.html import tostring, fromstring
+from lxml.html import tostring
 import re
-import time
-from config import *
-from scripts.db import session, Page, Ref, WarningTpls  # , Timecheck
 
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 
@@ -19,27 +15,15 @@ class ScanRefsOfPage:
 		self.all_sfn_info_of_page = []
 		self.err_refs = []
 
-		# self.page_id = page_id
-		# self.title = title
-		# self.parsed_html = page_html_parse(self.title)
-		# self.parsed_html = await page_html_parse_a(self.title)
 		self.parsed_html = parsed_html
 		self.find_sfns_on_page()
 		self.find_citations_on_page()
 		self.compare_refs()
 
 	def find_sfns_on_page(self):
-		""" Список сносок из раздела 'Примечания'.
-		Возвращает:
-		self.list_sfns - список только sfn-id
-		self.all_sfn_info_of_page - полный список
-		"""
+		""" Список сносок из раздела 'Примечания' """
 		try:
-			# page_references = self.parsed_html.xpath("//ol[@class='references']/li")
 			for li in self.parsed_html.cssselect("ol.references li[id^='cite']"):
-				# for span in li.xpath("./span[@class='reference-text']"):
-				# a_list = span.xpath("./descendant::a[contains(@href,'CITEREF')]")
-				# for a in a_list:
 				for a in li.cssselect("span.reference-text a[href^='#CITEREF']"):
 					aText = tag_a.search(str(tostring(a, encoding='unicode'))).group(1)
 					idRef = a.attrib['href'].lstrip('#')
@@ -52,17 +36,8 @@ class ScanRefsOfPage:
 			pass
 
 	def find_citations_on_page(self):
-		""" Список id библиографии. Возвращает: self.list_refs """
+		""" Список id библиографии """
 		try:
-			# for xpath in ['//span[@class="citation"]/@id', '//cite/@id']:
-			# 	# for href in self.parsed_html.xpath(xpath):
-			# for refId in [e.attrib['id'] for e in self.parsed_html.cssselect(css) if 'CITEREF' in e.attrib['id']]:
-			# 	# self.list_refs.add(self.cut_refIds(refId))
-			# 	self.list_refs.add(refId.lstrip('#'))
-			# 	pass
-			# cssselect использован для надёжности. В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
-			# self.list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]', 'cite[id^="CITEREF"]']
-			# 					   for e in self.parsed_html.cssselect(css)}
 			for cite in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]', 'span[id^="CITEREF"]']:
 				for e in self.parsed_html.cssselect(cite):
 					self.list_citations.add(e.attrib['id'])
@@ -73,9 +48,8 @@ class ScanRefsOfPage:
 
 	def compare_refs(self):
 		""" Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
-		# список сносок с битыми ссылками, из сравнения списков сносок и примечаний
+		# Список сносок с битыми ссылками, из сравнения списков сносок и примечаний
 		err_refs = self.list_sfns - self.list_citations
-		# Если в статье есть некорректные сноски без целевых примечаний
 		if err_refs:
 			self.err_refs = []
 			for citeref_bad in sorted(err_refs):

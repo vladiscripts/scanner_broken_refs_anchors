@@ -18,6 +18,8 @@ from urllib.parse import quote
 from config import *
 from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
+
+
 # from vladi_commons.vladi_commons import file_readlines
 # from vladi_commons import file_readlines
 
@@ -90,27 +92,29 @@ class MakeLists:
 	@asyncio.coroutine
 	def asynchronous(self, list_pages, loop):
 		headers = {'user-agent': 'user:textworkerBot'}
-		limit_http_queries = 300
-		sem = asyncio.Semaphore(limit_http_queries)
+		sem = asyncio.Semaphore(limit_asynch_threads)
 		conn = aiohttp.TCPConnector(family=socket.AF_INET, verify_ssl=False)
 		with ClientSession(headers=headers, connector=conn, loop=loop) as session:
 			tasks = [asyncio.async(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
+			finished, unfinished = yield from asyncio.wait(tasks)
 			# finished, unfinished = event_loop.run_until_complete(asyncio.wait(tasks))
-			result = yield from asyncio.wait(tasks)
+			# result = yield from asyncio.wait(tasks)
 			# for task in finished:
-			# if task.result() != 'None' or task.result() is not None:
-			# 	print('!!!!!!!!!!!!!')
-			# print(task.result())  # returns only None
+			# 	if task.result() != 'None' or task.result() is not None:
+			# 		print('!!!!!!!!!!!!!')
+			# 	print(task.result())  # returns only None
 			# pass
 			# print("unfinished2:", len(unfinished))
-
 			# responses = asyncio.gather(*tasks)
 			# yield from responses
 			pass
 
 	@asyncio.coroutine
 	def db_works(self, p):
-		page_id, page_title, err_refs = p[0], p[1],  p[2]
+		page_id, page_title, err_refs = p[0], p[1], p[2]
+
+		# For tests
+		# if page_id != 17492: return
 
 		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
@@ -201,7 +205,6 @@ class MakeLists:
 		# 	# response_text = yield from fetch(url, session)
 		# 	print(response_text)
 
-
 		with (yield from sem):
 			# with async_timeout.timeout(5):
 			retries = 0
@@ -220,7 +223,6 @@ class MakeLists:
 					# print(response_text)
 					# except:
 					# 	pass
-
 
 					if response.status == 200:
 						response_text = yield from response.text()
@@ -255,12 +257,10 @@ class MakeLists:
 
 				except (aiohttp.ClientOSError, aiohttp.ClientResponseError,
 						aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
-					print('!!! Error. url: %s; error: %r', url, e)
+					print('!!! Error. Page title: "%s"; url: %s; error: %r. Can will work on a next request.' % (
+					page_title, url, e))
 					retries += 1
 					yield from asyncio.sleep(1)
-
-
-
 
 	# except aiohttp.ClientOSError as e:
 	# 	print(page_title + ' !!!!!!! ClientOSError')
@@ -322,7 +322,6 @@ class MakeLists:
 		q = session.query(Page.page_id, Page.title).select_from(Page).filter(
 			(Page.timecheck.is_(None)) | (Page.timeedit > Page.timecheck))
 		return session.execute(q).fetchall()
-
 
 
 # def make_list_transcludes_of_warning_tpl(self):
@@ -540,7 +539,7 @@ def do_scan():
 		page_id, page_title = p[0], p[1]
 
 		# For tests
-		# if page_id != 273920:	continue
+		# if page_id != 17492:	continue
 
 		# очистка db от списка старых ошибок
 		session.query(Ref).filter(Ref.page_id == page_id).delete()
@@ -607,7 +606,7 @@ def scan_page(p):
 	page_id, page_title = p[0], p[1]
 
 	# For tests
-	# if page_id != 273920:	continue
+	# if page_id != 17492:	continue
 
 	# очистка db от списка старых ошибок
 	session.query(Ref).filter(Ref.page_id == page_id).delete()
