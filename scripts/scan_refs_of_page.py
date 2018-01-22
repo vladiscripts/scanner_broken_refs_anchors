@@ -61,8 +61,11 @@ class ScanRefsOfPage:
 			# 	self.list_refs.add(refId.lstrip('#'))
 			# 	pass
 			# cssselect использован для надёжности. В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
-			self.list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]'] for
-								   e in self.parsed_html.cssselect(css)}
+			# self.list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]', 'cite[id^="CITEREF"]']
+			# 					   for e in self.parsed_html.cssselect(css)}
+			for cite in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]', 'span[id^="CITEREF"]']:
+				for e in self.parsed_html.cssselect(cite):
+					self.list_citations.add(e.attrib['id'])
 
 		except Exception as error:
 			# self.error_print(error)

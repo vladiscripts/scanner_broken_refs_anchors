@@ -65,10 +65,7 @@ class MakeWikiLists:
 		refs_entry, page_id, title = '', page[0], page[1]
 		refs = queryDB(session.query(Ref.link_to_sfn, Ref.text).filter(Ref.page_id == page_id).order_by(Ref.citeref))
 		if len(refs) > 0:
-			page_wikilinks = []
-			for ref in refs:
-				page_wikilinks.append(
-					r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text))
+			page_wikilinks = [r"[[#%s|%s]]" % (ref[0], ref[1]) for ref in refs]
 			refs_entry = '* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />\n' \
 				.format(t=title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks))
 		return refs_entry

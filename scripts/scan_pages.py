@@ -3,26 +3,23 @@
 #
 # author: https://github.com/vladiscripts
 #
-from sqlalchemy.sql import update
+# from sqlalchemy.sql import update
+# from sqlalchemy.sql import null
 import asyncio
 import aiohttp
 from aiohttp import ClientSession
-import async_timeout
-# from time import
+# import async_timeout
+# import scripts.asyncio_exeptions
+import requests
+from lxml.html import tostring, fromstring
 import socket
 import time
 from urllib.parse import quote
 from config import *
 from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
-import scripts.asyncio_exeptions
 # from vladi_commons.vladi_commons import file_readlines
 # from vladi_commons import file_readlines
-from lxml.html import tostring, fromstring
-from sqlalchemy.sql import null
-import requests
-import asyncio
-import aiohttp
 
 
 class MakeLists:
@@ -93,11 +90,11 @@ class MakeLists:
 	@asyncio.coroutine
 	def asynchronous(self, list_pages, loop):
 		headers = {'user-agent': 'user:textworkerBot'}
-		limit_http_queries = 100
+		limit_http_queries = 300
 		sem = asyncio.Semaphore(limit_http_queries)
 		conn = aiohttp.TCPConnector(family=socket.AF_INET, verify_ssl=False)
 		with ClientSession(headers=headers, connector=conn, loop=loop) as session:
-			tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
+			tasks = [asyncio.async(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
 			# finished, unfinished = event_loop.run_until_complete(asyncio.wait(tasks))
 			result = yield from asyncio.wait(tasks)
 			# for task in finished:
