@@ -21,24 +21,20 @@ if __name__ == '__main__':
 
 	# Сканирование и обновление базы данных
 	if do_generation_lists:
-		# m = MakeLists()
 		if do_update_db_from_wiki:
 			# Обновление списка страниц имеющих warning-шаблон, шаблоны сносок,
 			# и очистка базы от устарелых данных
 			db_update = UpdateDB()
 
 		# старт сканирования
-		# scan_pages.do_scan()
 		m = scan_pages.MakeLists()
 		m.scan_pages_for_referrors()
-		# scan_pages.scan_pages_for_referrors()
 
 		# Запись списков
 		save_listpages_to_remove_warning_tpl()
 		save_listpages_to_add_warning_tpl()
 		if make_wikilist:
 			w = MakeWikiLists()
-			# w.save_wikilist()
 
 	# Постинг списков и установка шаблонов в wiki
 	if do_all_post_to_wiki:
