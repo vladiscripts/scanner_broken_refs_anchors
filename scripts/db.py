@@ -58,8 +58,7 @@ class Ref(Base):
 
 class WarningTpls(Base):
 	__tablename__ = 'warnings'
-	page_id = Column(Integer, ForeignKey('pages.page_id'), ForeignKey('erroneous_refs.page_id'), primary_key=True,
-					 unique=True)
+	page_id = Column(Integer, ForeignKey('pages.page_id'), ForeignKey('erroneous_refs.page_id'), primary_key=True, unique=True)
 	title = Column(String, unique=True)
 
 	def __init__(self, page_id, title):

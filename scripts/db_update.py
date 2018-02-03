@@ -1,15 +1,10 @@
 # coding: utf-8
 # author: https://github.com/vladiscripts
 #
-from sqlalchemy.sql import null
 import pymysql
 from config import *
 from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
-# from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
 import passwords
-
-
-# import vladi_commons.passwords as pw  # contents parameters: api_user, api_pw, wdb_user, wdb_pw
 
 
 class UpdateDB:
@@ -20,7 +15,11 @@ class UpdateDB:
 		# обновить список страниц, имеющих шаблоны типа {{sfn}}
 		self.update_transcludes_sfn_tempates()
 
-		# Опциональные чистки, проще удалить и пересоздать файл базы данных
+		# очистка метки проверки неучтенных шаблонов
+		# self.query_transcludes_any_tpl(('Citation', 'Cite'))
+		# self.query_transcludes_any_tpl('Cite')
+
+		# Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
 		if clear_check_pages_with_warnings:
 			# удаление метки проверки у страниц имеющих warning-шаблон
 			self.drop_check_pages_with_warnings()
@@ -35,8 +34,6 @@ class UpdateDB:
 
 	def update_listpages_have_WarningTpl(self):
 		"""Обновить список страниц имеющих установленный шаблон."""
-		# tpls_str = ' OR '.join(['tl_title LIKE "%s"' % self.normalization_pagename(t)
-		# 	 for t in self.str2list(warning_tpl_name)])
 		tpls_str = self.list_to_str_params('tl_title',
 										   map(self.normalization_pagename, self.str2list(warning_tpl_name)))
 		sql = """SELECT page_id, page_title
@@ -51,10 +48,24 @@ class UpdateDB:
 			session.add(WarningTpls(r[0], self.byte2utf(r[1])))
 		session.commit()
 
+	def query_transcludes_any_tpl(self, tpl_name):
+		"""Полоучение списка трансклюзий какого-либо шаблона.
+		Для тестов в основном, и сброса отметки проверки и перепроверки неучтённых шаблонов."""
+		tpls_str = self.list_to_str_params('tl_title',
+										   map(self.normalization_pagename, self.str2list(tpl_name)))
+		sql = """SELECT page_id, page_title
+				FROM page
+				JOIN templatelinks ON templatelinks.tl_from = page.page_id
+				WHERE tl_namespace = 10 AND page_namespace = 0
+				AND (%s)
+				ORDER BY page.page_id ASC;""" % tpls_str
+		result = self.wdb_query(sql)
+		pages_titles = sorted([self.byte2utf(p[1]) for p in result])
+		session.query(Timecheck).filter(Timecheck.page_id in [p[0] for p in result]).delete()
+		session.commit()
+
 	def update_transcludes_sfn_tempates(self):
 		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
-		# tpls_str = ' OR '.join(['templatelinks.tl_title LIKE "%s"' % self.normalization_pagename(t)
-		# 	 for t in self.str2list(names_sfn_templates)])
 		tpls_str = self.list_to_str_params('templatelinks.tl_title',
 										   map(self.normalization_pagename, self.str2list(names_sfn_templates)))
 		sql = """SELECT
@@ -69,76 +80,21 @@ class UpdateDB:
 				GROUP BY page.page_title
 				ORDER BY page.page_id ASC;""" % tpls_str
 		transcludes_wdb = self.wdb_query(sql)
-
-		# transcludes_current = session.execute(session.query(Page.page_id, Page.title, Page.timeedit)).fetchall()
-
-		if len(transcludes_wdb) > 10000:
+		if len(transcludes_wdb) > 10000:  # иногда возвращается обрезанный результат
 			session.query(Page).delete()
-
 		for p in transcludes_wdb:
 			id, title, timeedit = p[0], self.byte2utf(p[1]), int(p[2])
 			session.add(Page(id, title, timeedit))
 		session.commit()
 
-	# очистка
-	# pageIds_wdb = set(p[0] for p in transcludes_wdb)
-	# pageIds_have = set(p[0] for p in transcludes_current)
-	# if len(transcludes_wdb) > 10000:  # иногда возвращается обрезанный результат
-	# 	# 	session.query(Page).filter(Page.page_id in (pageIds_have.difference(pageIds_wdb))).delete()
-	# 	session.query(Page).filter(Page.page_id not in pageIds_wdb).delete()
-	# session.commit()
-
-	# обновление
-	# for tw in transcludes_wdb:
-	# 	pageId_wdb = tw[0]
-	# 	title = self.byte2utf(tw[1])
-	# 	time_lastcheck = null()
-	# 	time_lastedit = int(tw[2])
-	# 	if pageId_wdb in pageIds_have:
-	# 		for tc in transcludes_current:
-	# 			if tc[0] == pageId_wdb:
-	# 				if tc[1] != title or tc[2] != time_lastedit:
-	# 					session.query(Page).filter(Page.page_id == pageId_wdb) \
-	# 						.update({Page.title: title, Page.timeedit: time_lastedit})
-	# 				break
-	# 	else:
-	# 		session.add(Page(pageId_wdb, title, time_lastcheck, time_lastedit))
-
-	# for tw in transcludes_wdb:
-	# 	pageId_wdb = tw[0]
-	# 	title = self.byte2utf(tw[1])
-	# 	time_lastcheck = null()
-	# 	time_lastedit = int(tw[2])
-	# 	if pageId_wdb in pageIds_have:
-	# 		for tc in transcludes_current:
-	# 			if tc[0] == pageId_wdb:
-	# 				if tc[1] != title or tc[2] != time_lastedit:
-	# 					session.query(Page).filter(Page.page_id == pageId_wdb) \
-	# 						.update({Page.title: title, Page.timeedit: time_lasted})
-	# 				break
-	# 	else:
-	# 		session.add(Page(pageId_wdb, title, time_lastcheck, time_lastedit))
-
-	# session.commit()
-
 	@staticmethod
 	def drop_depricated_by_timecheck():
-		# если в pages нет записи о статье, то удалить ее строки из timecheck
-		# не нужно при объединении таблиц pages и timecheck
+		"""Если в pages нет записи о статье, то удалить ее строки из timecheck"""
 		q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
 			Page.page_id.is_(None))
 		for r in queryDB(q):
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
 		session.commit()
-
-	# 	"""	может праильней так?
-	# 	SELECT * FROM  pages LEFT JOIN timecheck
-	# 	ON pages.page_id=timecheck.page_id
-	# 	WHERE timecheck.page_id is null
-	#
-	# 	при объединении таблицы timecheck
-	# 	SELECT * FROM  pages WHERE timecheck is null
-	# 	"""
 
 	@staticmethod
 	def drop_ref():
@@ -153,10 +109,6 @@ class UpdateDB:
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
 		for r in queryDB((session.query(WarningTpls.page_id))):
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		# session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
-		# wp = session.query(WarningTpls.page_id).subquery()
-		# session.query(Page).filter(Page.page_id.in_(wp)). \
-		# 	update({Page.timecheck: null()}, synchronize_session="fetch")
 		session.commit()
 
 	@staticmethod
@@ -185,7 +137,7 @@ class UpdateDB:
 
 	@staticmethod
 	def normalization_pagename(t):
-		"""Первая буква в верхний регистр, ' ' → '_'"""
+		"""Первая буква в верхний регистр, ' ' → '_' """
 		t = t.strip()
 		return t[0:1].upper() + t[1:].replace(' ', '_')
 
@@ -206,8 +158,6 @@ class UpdateDB:
 			host='127.0.0.1' if run_local_not_from_wmflabs else 'ruwiki.labsdb',
 			port=4711 if run_local_not_from_wmflabs else 3306,
 			db='ruwiki_p',
-			# user=passwords.__wdb_user,
-			# password=passwords.__wdb_pw,
 			user=passwords.wdb_user,
 			password=passwords.wdb_pw,
 			use_unicode=True, charset="utf8")

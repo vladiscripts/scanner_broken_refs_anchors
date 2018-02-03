@@ -2,31 +2,19 @@
 #
 # author: https://github.com/vladiscripts
 #
-import requests
-from urllib.parse import quote
 from lxml.html import tostring, fromstring
 import re
-
-
-def page_html_parse(title):
-	r = requests.get('https://ru.wikipedia.org/wiki/' + quote(title), params={"action": "render"},
-					 headers={'user-agent': 'user:textworkerBot'})
-	return fromstring(r.text)
-
 
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 
 
 class ScanRefsOfPage:
-	def __init__(self, page_id, title):
+	def __init__(self, html):
 		self.list_sfns = set()
 		self.list_citations = set()
 		self.all_sfns_info = []
 		self.err_refs = []
-
-		# self.page_id = page_id
-		self.title = title
-		self.parsed_html = page_html_parse(self.title)
+		self.htmltree = fromstring(html)
 		self.find_sfns_on_page()
 		self.find_citations_on_page()
 		self.compare_refs()
@@ -38,11 +26,7 @@ class ScanRefsOfPage:
 		self.all_sfn_info_of_page - полный список
 		"""
 		try:
-			# page_references = self.parsed_html.xpath("//ol[@class='references']/li")
-			for li in self.parsed_html.cssselect("ol.references li[id^='cite']"):
-				# for span in li.xpath("./span[@class='reference-text']"):
-				# a_list = span.xpath("./descendant::a[contains(@href,'CITEREF')]")
-				# for a in a_list:
+			for li in self.htmltree.cssselect("ol.references li[id^='cite']"):
 				for a in li.cssselect("span.reference-text a[href^='#CITEREF']"):
 					aText = tag_a.search(str(tostring(a, encoding='unicode'))).group(1)
 					idRef = a.attrib['href'].lstrip('#')
@@ -57,15 +41,10 @@ class ScanRefsOfPage:
 	def find_citations_on_page(self):
 		""" Список id библиографии. Возвращает: self.list_refs """
 		try:
-			# for xpath in ['//span[@class="citation"]/@id', '//cite/@id']:
-			# 	# for href in self.parsed_html.xpath(xpath):
-			# for refId in [e.attrib['id'] for e in self.parsed_html.cssselect(css) if 'CITEREF' in e.attrib['id']]:
-			# 	# self.list_refs.add(self.cut_refIds(refId))
-			# 	self.list_refs.add(refId.lstrip('#'))
-			# 	pass
-			# cssselect использован для надёжности. В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
+			# cssselect использован для надёжности.
+			# В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
 			self.list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]'] for
-								   e in self.parsed_html.cssselect(css)}
+								   e in self.htmltree.cssselect(css)}
 
 		except Exception as error:
 			# self.error_print(error)
@@ -83,7 +62,6 @@ class ScanRefsOfPage:
 				for sfn in self.all_sfns_info:
 					if citeref_bad == sfn['citeref'] and not it_sfn_double:
 						self.err_refs.append(sfn)
-						# session.add(Ref(self.page_id, sfn['citeref'], sfn['link_to_sfn'], sfn['text']))
 						it_sfn_double = True
 
 # def error_print(self, error):

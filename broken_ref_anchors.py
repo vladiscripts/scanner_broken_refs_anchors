@@ -6,7 +6,6 @@
 from config import *
 from scripts import post_to_wiki
 from scripts.db_update import UpdateDB
-# from scripts.make_listspages import MakeLists
 from scripts.make_listspages import save_listpages_to_add_warning_tpl, save_listpages_to_remove_warning_tpl
 from scripts.make_wikilists import MakeWikiLists
 from scripts import scan_pages
@@ -22,7 +21,6 @@ if __name__ == '__main__':
 
 	# Сканирование и обновление базы данных
 	if do_generation_lists:
-		# m = MakeLists()
 		if do_update_db_from_wiki:
 			# Обновление списка страниц имеющих warning-шаблон, шаблоны сносок,
 			# и очистка базы от устарелых данных

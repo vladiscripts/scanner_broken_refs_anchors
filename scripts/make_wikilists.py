@@ -3,6 +3,7 @@
 #
 from config import *
 from scripts.db import session, Page, Ref, Wikilists, queryDB
+from scripts.make_listspages import file_savetext
 
 
 class MakeWikiLists:
@@ -40,15 +41,20 @@ class MakeWikiLists:
 		for wikilist_sql in wikilists_sql:
 			wikilist_title = wikilist_sql[0]
 			list_refs_entries = ''
-			pq = session.query(Page.page_id, Page.title).select_from(Page) \
+			pq = session.query(Page.page_id, Page.title, Ref.link_to_sfn, Ref.text).select_from(Page) \
 				.join(Ref, Page.page_id == Ref.page_id) \
 				.join(Wikilists, Wikilists.letter == Page.wikilist) \
 				.filter(Ref.page_id.isnot(None), Wikilists.title == wikilist_title) \
-				.group_by(Ref.page_id) \
-				.order_by(Page.title)
-			pages4check = queryDB(pq)
-			for page in pages4check:
-				list_refs_entries += self.formated_refs_entries_of_page(page)
+				.order_by(Page.title, Ref.citeref)
+			refs_pages4check = queryDB(pq)
+
+			for page_title in sorted({p[1] for p in refs_pages4check}):
+				page_refs = [r for r in refs_pages4check if r[1] == page_title]
+				refs_wikilinks = [r"[[#%s|%s]]" % (ref[2], ref[3]) for ref in page_refs]
+				refs_entry = '* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />\n' \
+					.format(t=page_title.replace('_', ' '), all_wikilinks=', '.join(refs_wikilinks))
+				list_refs_entries += refs_entry
+				pass
 
 			# Fill wikilists page
 			if list_refs_entries != '':
@@ -61,29 +67,5 @@ class MakeWikiLists:
 			pagename=pagename, header=header, footer=footer,
 			refs_entries=wiki_refs_entries)
 
-	def formated_refs_entries_of_page(self, page):
-		refs_entry, page_id, title = '', page[0], page[1]
-		refs = queryDB(session.query(Ref.link_to_sfn, Ref.text).filter(Ref.page_id == page_id).order_by(Ref.citeref))
-		if len(refs) > 0:
-			page_wikilinks = [r"[[#%s|%s]]" % (ref[0], ref[1]) for ref in refs]
-			refs_entry = '* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />\n' \
-				.format(t=title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks))
-		return refs_entry
-
 	def save_wikilist(self):
 		file_savetext(filename_wikilists + '.txt', self.wikilists)
-
-	# def formating_sql2wikilink(self, part):
-	# 	"""Сортировка sql refs по алфавиту и форматирование в викиссылки."""
-	# 	part_list_wikilinks = []
-	# 	q = db.session.query(db.Page.page_id, db.Page.title)
-	# 	for p in db.session.execute(q).fetchall():
-	# 		q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
-	# 			.filter(db.Ref.page_id == p[0]) \
-	# 			.order_by(db.Ref.citeref)
-	# 		page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text) for ref in
-	# 						  db.session.execute(q).fetchall()]
-	# 		part_list_wikilinks.append(
-	# 				r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
-	# 						t=p.pages_title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
-	# 	return part_list_wikilinks

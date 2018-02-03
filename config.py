@@ -20,7 +20,7 @@ do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
-do_all_post_to_wiki = False  # Отключение всех опции ниже в этой секции
+do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
 
 do_post_wikilist = True  # Запись списков
 do_post_wikilist_simulate = True  # Симуляция записи
@@ -30,6 +30,12 @@ do_post_template_simulate = True  # Симуляция записи
 
 do_remove_template = True  # Удаление из статей ненужного шаблона
 do_remove_template_simulate = True  # Симуляция записи
+
+# ---
+# Удаление метки проверки у страниц имеющих warning-шаблон.
+# Выключать после очистки, иначе будет сбрасвать базу данных при каждом запуске.
+clear_check_pages_with_warnings = False
+clear_all_check_pages = False
 
 # ---
 warning_tpl_name = 'Нет полных библиографических описаний'
@@ -66,30 +72,11 @@ footer = '[[Категория:Википедия:Подстраницы шаб�
 print_log = True
 filename_error_log = 'errors_log.txt'
 
-# удаление метки проверки у страниц имеющих warning-шаблон
-clear_check_pages_with_warnings = False
-clear_all_check_pages = False
-
+# Названия sfn-шаблонов
+# Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
 names_sfn_templates = ((
 	'sfn', 'sfn0', 'Sfn-1',
 	'Harvard citation', 'Harv',
 	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
 ))
-
-
-# Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
-
-
-# --- Общие функции
-
-def file_savelines(filename, strlist, append=False):
-	mode = 'a' if append else 'w'
-	text = '\n'.join(strlist)
-	with open(filename, mode, encoding='utf-8') as f:
-		f.write(text)
-
-
-def file_savetext(filename, text):
-	with open(filename, 'w', encoding='utf-8') as f:
-		f.write(text)
