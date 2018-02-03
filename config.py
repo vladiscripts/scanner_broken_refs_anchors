@@ -70,26 +70,10 @@ filename_error_log = 'errors_log.txt'
 clear_check_pages_with_warnings = False
 clear_all_check_pages = False
 
+# Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
 names_sfn_templates = ((
 	'sfn', 'sfn0', 'Sfn-1',
 	'Harvard citation', 'Harv',
 	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
 ))
-
-
-# Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
-
-
-# --- Общие функции
-
-def file_savelines(filename, strlist, append=False):
-	mode = 'a' if append else 'w'
-	text = '\n'.join(strlist)
-	with open(filename, mode, encoding='utf-8') as f:
-		f.write(text)
-
-
-def file_savetext(filename, text):
-	with open(filename, 'w', encoding='utf-8') as f:
-		f.write(text)

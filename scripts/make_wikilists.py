@@ -73,17 +73,16 @@ class MakeWikiLists:
 	def save_wikilist(self):
 		file_savetext(filename_wikilists + '.txt', self.wikilists)
 
-	# def formating_sql2wikilink(self, part):
-	# 	"""Сортировка sql refs по алфавиту и форматирование в викиссылки."""
-	# 	part_list_wikilinks = []
-	# 	q = db.session.query(db.Page.page_id, db.Page.title)
-	# 	for p in db.session.execute(q).fetchall():
-	# 		q = db.session.query(db.Ref.link_to_sfn, db.Ref.text) \
-	# 			.filter(db.Ref.page_id == p[0]) \
-	# 			.order_by(db.Ref.citeref)
-	# 		page_wikilinks = [r"[[#{link}|{text}]]".format(link=ref.refs_link_to_sfn, text=ref.refs_text) for ref in
-	# 						  db.session.execute(q).fetchall()]
-	# 		part_list_wikilinks.append(
-	# 				r'* [[{t}]]:<br><section begin="{t}" />{all_wikilinks}<section end="{t}" />'.format(
-	# 						t=p.pages_title.replace('_', ' '), all_wikilinks=', '.join(page_wikilinks)))
-	# 	return part_list_wikilinks
+
+
+
+def file_savelines(filename, strlist, append=False):
+	mode = 'a' if append else 'w'
+	text = '\n'.join(strlist)
+	with open(filename, mode, encoding='utf-8') as f:
+		f.write(text)
+
+
+def file_savetext(filename, text):
+	with open(filename, 'w', encoding='utf-8') as f:
+		f.write(text)

@@ -1,15 +1,14 @@
 # coding: utf-8
 # author: https://github.com/vladiscripts
 #
-from sqlalchemy.sql import null
 import pymysql
 from config import *
 from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
-# from passwords import __api_user, __api_pw, __wdb_user, __wdb_pw
 import passwords
 
 
-# import vladi_commons.passwords as pw  # contents parameters: api_user, api_pw, wdb_user, wdb_pw
+# import vladi_commons.passwords as pw
+# contents parameters: api_user, api_pw, wdb_user, wdb_pw
 
 
 class UpdateDB:
@@ -80,65 +79,13 @@ class UpdateDB:
 			session.add(Page(id, title, timeedit))
 		session.commit()
 
-	# очистка
-	# pageIds_wdb = set(p[0] for p in transcludes_wdb)
-	# pageIds_have = set(p[0] for p in transcludes_current)
-	# if len(transcludes_wdb) > 10000:  # иногда возвращается обрезанный результат
-	# 	# 	session.query(Page).filter(Page.page_id in (pageIds_have.difference(pageIds_wdb))).delete()
-	# 	session.query(Page).filter(Page.page_id not in pageIds_wdb).delete()
-	# session.commit()
-
-	# обновление
-	# for tw in transcludes_wdb:
-	# 	pageId_wdb = tw[0]
-	# 	title = self.byte2utf(tw[1])
-	# 	time_lastcheck = null()
-	# 	time_lastedit = int(tw[2])
-	# 	if pageId_wdb in pageIds_have:
-	# 		for tc in transcludes_current:
-	# 			if tc[0] == pageId_wdb:
-	# 				if tc[1] != title or tc[2] != time_lastedit:
-	# 					session.query(Page).filter(Page.page_id == pageId_wdb) \
-	# 						.update({Page.title: title, Page.timeedit: time_lastedit})
-	# 				break
-	# 	else:
-	# 		session.add(Page(pageId_wdb, title, time_lastcheck, time_lastedit))
-
-	# for tw in transcludes_wdb:
-	# 	pageId_wdb = tw[0]
-	# 	title = self.byte2utf(tw[1])
-	# 	time_lastcheck = null()
-	# 	time_lastedit = int(tw[2])
-	# 	if pageId_wdb in pageIds_have:
-	# 		for tc in transcludes_current:
-	# 			if tc[0] == pageId_wdb:
-	# 				if tc[1] != title or tc[2] != time_lastedit:
-	# 					session.query(Page).filter(Page.page_id == pageId_wdb) \
-	# 						.update({Page.title: title, Page.timeedit: time_lasted})
-	# 				break
-	# 	else:
-	# 		session.add(Page(pageId_wdb, title, time_lastcheck, time_lastedit))
-
-	# session.commit()
-
 	@staticmethod
 	def drop_depricated_by_timecheck():
-		# если в pages нет записи о статье, то удалить ее строки из timecheck
-		# не нужно при объединении таблиц pages и timecheck
 		q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
 			Page.page_id.is_(None))
 		for r in queryDB(q):
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
 		session.commit()
-
-	# 	"""	может праильней так?
-	# 	SELECT * FROM  pages LEFT JOIN timecheck
-	# 	ON pages.page_id=timecheck.page_id
-	# 	WHERE timecheck.page_id is null
-	#
-	# 	при объединении таблицы timecheck
-	# 	SELECT * FROM  pages WHERE timecheck is null
-	# 	"""
 
 	@staticmethod
 	def drop_ref():
@@ -153,10 +100,6 @@ class UpdateDB:
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
 		for r in queryDB((session.query(WarningTpls.page_id))):
 			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		# session.query(Page).filter(Page.page_id == str(r)).update({Page.timecheck: null()})
-		# wp = session.query(WarningTpls.page_id).subquery()
-		# session.query(Page).filter(Page.page_id.in_(wp)). \
-		# 	update({Page.timecheck: null()}, synchronize_session="fetch")
 		session.commit()
 
 	@staticmethod
