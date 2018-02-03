@@ -13,6 +13,8 @@ from scripts.scan_refs_of_page import ScanRefsOfPage
 def do_scan():
 	"""Сканирование страниц на ошибки"""
 	s = requests.Session()
+	s.headers.update({'User-Agent': 'user:textworkerBot'})
+	s.params.update({"action": "render"})
 
 	for p in db_get_list_pages_for_scan():
 		page_id, page_title = p[0], p[1]
@@ -26,8 +28,7 @@ def do_scan():
 
 		# Сканирование страниц на ошибки
 		# page = ScanRefsOfPage(page_id, page_title)
-		htmltree = s.get('https://ru.wikipedia.org/wiki/' + quote(page_title), params={"action": "render"},
-						 headers={'user-agent': 'user:textworkerBot'})
+		htmltree = s.get('https://ru.wikipedia.org/wiki/' + quote(page_title))
 		print(page_title)
 		page = ScanRefsOfPage(htmltree)
 		for ref in page.err_refs:
