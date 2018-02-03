@@ -3,7 +3,7 @@
 #
 import pymysql
 from config import *
-from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
+from scripts.db import db_session, Page, Ref, WarningTpls, Timecheck, queryDB
 import passwords
 
 
@@ -26,7 +26,7 @@ class UpdateDB:
 		if clear_all_check_pages:
 			# сброс всех меток проверки
 			self.drop_all_check_pages()
-			session.query(Ref).delete()
+			db_session.query(Ref).delete()
 
 		# чистка PageTimecheck и Ref от записей которых нет в pages
 		self.drop_depricated_by_timecheck()
@@ -43,10 +43,10 @@ class UpdateDB:
 				AND (%s)
 				ORDER BY page.page_id ASC;""" % tpls_str
 		result = self.wdb_query(sql)
-		session.query(WarningTpls).delete()
+		db_session.query(WarningTpls).delete()
 		for r in result:
-			session.add(WarningTpls(r[0], self.byte2utf(r[1])))
-		session.commit()
+			db_session.add(WarningTpls(r[0], self.byte2utf(r[1])))
+		db_session.commit()
 
 	def query_transcludes_any_tpl(self, tpl_name):
 		"""Полоучение списка трансклюзий какого-либо шаблона.
@@ -61,8 +61,8 @@ class UpdateDB:
 				ORDER BY page.page_id ASC;""" % tpls_str
 		result = self.wdb_query(sql)
 		pages_titles = sorted([self.byte2utf(p[1]) for p in result])
-		session.query(Timecheck).filter(Timecheck.page_id in [p[0] for p in result]).delete()
-		session.commit()
+		db_session.query(Timecheck).filter(Timecheck.page_id in [p[0] for p in result]).delete()
+		db_session.commit()
 
 	def update_transcludes_sfn_tempates(self):
 		"""Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
@@ -81,47 +81,47 @@ class UpdateDB:
 				ORDER BY page.page_id ASC;""" % tpls_str
 		transcludes_wdb = self.wdb_query(sql)
 		if len(transcludes_wdb) > 10000:  # иногда возвращается обрезанный результат
-			session.query(Page).delete()
+			db_session.query(Page).delete()
 		for p in transcludes_wdb:
 			id, title, timeedit = p[0], self.byte2utf(p[1]), int(p[2])
-			session.add(Page(id, title, timeedit))
-		session.commit()
+			db_session.add(Page(id, title, timeedit))
+		db_session.commit()
 
 	@staticmethod
 	def drop_depricated_by_timecheck():
 		"""Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-		q = session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
+		q = db_session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
 			Page.page_id.is_(None))
 		for r in queryDB(q):
-			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		session.commit()
+			db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+		db_session.commit()
 
 	@staticmethod
 	def drop_ref():
-		q = session.query(Ref.page_id).select_from(Ref).outerjoin(Page).filter(Page.page_id.is_(None))
+		q = db_session.query(Ref.page_id).select_from(Ref).outerjoin(Page).filter(Page.page_id.is_(None))
 		for r in queryDB(q):
-			session.query(Ref).filter(Ref.page_id == r[0]).delete()
-		session.commit()
+			db_session.query(Ref).filter(Ref.page_id == r[0]).delete()
+		db_session.commit()
 
 	# Helpers
 	@staticmethod
 	def drop_check_pages_with_warnings():
 		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
-		for r in queryDB((session.query(WarningTpls.page_id))):
-			session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		session.commit()
+		for r in queryDB((db_session.query(WarningTpls.page_id))):
+			db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+		db_session.commit()
 
 	@staticmethod
 	def drop_all_check_pages():
 		"""Очистка таблицы Timecheck: удаление метки проверки у всех страниц"""
-		session.query(Timecheck).delete()
-		session.commit()
+		db_session.query(Timecheck).delete()
+		db_session.commit()
 
 	@staticmethod
 	def drop_all_refs():
 		"""Очистка таблицы Refs"""
-		session.query(Ref).delete()
-		session.commit()
+		db_session.query(Ref).delete()
+		db_session.commit()
 
 	@staticmethod
 	def str2list(string):

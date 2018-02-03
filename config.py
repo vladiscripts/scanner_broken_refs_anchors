@@ -9,8 +9,11 @@ filename_listpages_errref = 'listpages_err_ref.txt'
 # переключатель доступа к базе данных. True если скрипт запускается на ПК, False если на сервере wmflabs
 run_local_not_from_wmflabs = True
 # Асинхронное сканирование. Быстро работает при локальном запуске, но глючит на сервере.
-# scan_asyncio = True
-scan_asyncio = True if run_local_not_from_wmflabs else False  # автозапуск asyncio на PC, и выкл. на сервере
+scan_asyncio = False
+# scan_asyncio = True if run_local_not_from_wmflabs else False  # автозапуск asyncio на PC, и выкл. на сервере
+# Число асинхронных потоков. Столько же может делаться http-запросов.
+# При более 50 http-запросах сервер Wikipedia может отказываться отвечать.
+limit_asynch_threads = 100
 
 # ---
 # True - сканировать и генерировать новые списки.
@@ -83,7 +86,3 @@ names_sfn_templates = ((
 	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
 	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
 ))
-
-# Для режима Asyncio. Число асинхронных, одновременно запущенных, потоков. Столько же может делаться http-запросов.
-# При более 50 http-запросах сервер Wikipedia может отказываться отвечать.
-limit_asynch_threads = 100

@@ -12,14 +12,16 @@ import socket
 import time
 from urllib.parse import quote
 from config import *
-from scripts.db import session, Page, Ref, Timecheck, queryDB
+from scripts.db import db_session, Page, Ref, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
+from scripts.scan_pages import open_requests_session, db_get_list_pages_for_scan, scan_page, do_scan, \
+	download_and_scan_page
 
 
 class Scanner:
 	def do_scan(self):
 		"""Сканирование страниц на ошибки"""
-		list_pages_for_scan = self.db_get_list_pages_for_scan()
+		list_pages_for_scan = db_get_list_pages_for_scan()
 
 		loop = asyncio.get_event_loop()
 		loop.run_until_complete(self.asynchronous(list_pages_for_scan, loop))
@@ -36,21 +38,7 @@ class Scanner:
 				print('have unfinished async tasks')
 
 	async def db_works(self, p):
-		page_id, page_title, err_refs = p[0], p[1], p[2]
-		session.rollback()
-
-		# For tests
-		# if page_id != 17492: return
-
-		# очистка db от списка старых ошибок
-		session.query(Ref).filter(Ref.page_id == page_id).delete()
-		session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-
-		for refs in err_refs:
-			session.add(Ref(page_id, refs['citeref'], refs['link_to_sfn'], refs['text']))
-		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-		session.add(Timecheck(page_id, time_current))
-		session.commit()
+		scan_page(p)
 
 	async def scan_pagehtml_for_referrors(self, sem, p, session):
 		"""Сканирование страницы на ошибки"""
@@ -68,14 +56,13 @@ class Scanner:
 
 					if response.status == 200:
 						response_text = await response.text()
-						parsed_html = fromstring(response_text)
-						print(page_title)
-						page = ScanRefsOfPage(parsed_html)
+						print(page_title + ':')
+						page = ScanRefsOfPage(response_text)
 						errrefs = page.err_refs
-						try:
-							errrefs
-						except:
-							pass
+						# try:
+						# 	errrefs
+						# except:
+						# 	pass
 						await self.db_works([page_id, page_title, errrefs])
 						del page
 					elif response.status == 429:
@@ -93,18 +80,6 @@ class Scanner:
 						page_title, url, e))
 					retries += 1
 					await asyncio.sleep(1)
-
-	def db_get_list_pages_for_scan(self):
-		return queryDB(session.query(Page.page_id, Page.title) \
-					   .select_from(Page) \
-					   .outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
-					   .filter((Timecheck.timecheck.is_(None)) | (Page.timeedit > Timecheck.timecheck)))
-
-
-def page_html_parse(title):
-	r = requests.get('https://ru.wikipedia.org/wiki/' + quote(title), params={"action": "render"},
-					 headers={'user-agent': 'user:textworkerBot'})
-	return fromstring(r.text)
 
 # for test
 # page = ScanRefsOfPage('2091672', 'Марк Фульвий Флакк (консул 125 года до н. э.)')

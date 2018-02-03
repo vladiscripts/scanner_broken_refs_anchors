@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from config import *
-from scripts.db import session, Page, Ref, Wikilists, queryDB
+from scripts.db import db_session, Page, Ref, Wikilists, queryDB
 from scripts.make_listspages import file_savetext
 
 
@@ -33,15 +33,15 @@ class MakeWikiLists:
 			['*', 'Не русские буквы'],
 		]
 		for r in wikilists:
-			session.merge(Wikilists(r[0], r[1]))
-		session.commit()
+			db_session.merge(Wikilists(r[0], r[1]))
+		db_session.commit()
 
 	def make_wikilists(self):
-		wikilists_sql = queryDB(session.query(Wikilists.title).group_by(Wikilists.title))
+		wikilists_sql = queryDB(db_session.query(Wikilists.title).group_by(Wikilists.title))
 		for wikilist_sql in wikilists_sql:
 			wikilist_title = wikilist_sql[0]
 			list_refs_entries = ''
-			pq = session.query(Page.page_id, Page.title, Ref.link_to_sfn, Ref.text).select_from(Page) \
+			pq = db_session.query(Page.page_id, Page.title, Ref.link_to_sfn, Ref.text).select_from(Page) \
 				.join(Ref, Page.page_id == Ref.page_id) \
 				.join(Wikilists, Wikilists.letter == Page.wikilist) \
 				.filter(Ref.page_id.isnot(None), Wikilists.title == wikilist_title) \

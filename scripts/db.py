@@ -10,7 +10,7 @@ Base = declarative_base()
 db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=print_log)  # 'sqlite:///:memory:'
 Base.metadata.create_all(db_engine)
 Session = sessionmaker(bind=db_engine)
-session = Session()
+db_session = Session()
 
 
 # Объявление таблиц --------------
@@ -78,4 +78,4 @@ class Wikilists(Base):
 
 # Helpers
 def queryDB(query):
-	return session.execute(query).fetchall()
+	return db_session.execute(query).fetchall()

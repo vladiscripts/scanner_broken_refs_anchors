@@ -2,12 +2,12 @@
 #
 # author: https://github.com/vladiscripts
 #
-from scripts.db import session, Page, Ref, WarningTpls, queryDB
+from scripts.db import db_session, Page, Ref, WarningTpls, queryDB
 from config import *
 
 
 def save_listpages_to_remove_warning_tpl():
-	query = session.query(WarningTpls.title) \
+	query = db_session.query(WarningTpls.title) \
 		.select_from(WarningTpls) \
 		.outerjoin(Ref, WarningTpls.page_id == Ref.page_id) \
 		.filter(Ref.page_id.is_(None))
@@ -18,7 +18,7 @@ def save_listpages_to_remove_warning_tpl():
 
 def save_listpages_to_add_warning_tpl():
 	"""Список куда предупреждение ещё не поставлено."""
-	query = session.query(Page.title).select_from(Page) \
+	query = db_session.query(Page.title).select_from(Page) \
 		.outerjoin(WarningTpls) \
 		.join(Ref, Page.page_id == Ref.page_id) \
 		.filter(WarningTpls.page_id.is_(None), Ref.page_id.isnot(None)) \

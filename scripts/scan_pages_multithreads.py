@@ -5,9 +5,13 @@
 #
 import time
 from config import *
-from scripts.db import session, Page, Ref, WarningTpls, Timecheck, queryDB
+from scripts.db import db_session, Page, Ref, WarningTpls, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
+from scripts.scan_pages import open_requests_session, db_get_list_pages_for_scan, scan_page, do_scan, \
+	download_and_scan_page
+import requests
 import urllib.request
+from urllib.parse import quote
 from threading import Thread
 import threading
 from threading import BoundedSemaphore
@@ -62,6 +66,7 @@ def worker_Semaphore(sema, p):
 
 
 def do_work_threading_Semaphore():
+	s = open_requests_session()
 	list_pages_for_scan = db_get_list_pages_for_scan()
 	# url_list_lock = threading.Lock()
 
@@ -82,7 +87,7 @@ def do_work_threading_Semaphore():
 			t = threading.Thread(target=worker, args={p, pool_sema})
 			t.start()
 			threads.append(t)
-			scan_page(pool_sema, p)
+			download_and_scan_page(pool_sema, p)
 
 		# try:
 		# 	pool_sema.acquire()
@@ -100,23 +105,21 @@ def do_work_threading_Semaphore():
 import queue
 
 
-
-
-def worker(q):
+def worker(q, s):
 	while True:
 		item = q.get()
 		if item is None:
 			break
-		scan_page(item)
+		download_and_scan_page(s, item)
 		q.task_done()
 
 
-def do_work_threading():
+def do_work_threading(s):
 	list_pages_for_scan = db_get_list_pages_for_scan()
 	q = queue.Queue()
 	threads = []
 	for i in range(3):
-		t = threading.Thread(target=worker, args=(q,))
+		t = threading.Thread(target=worker, args=(q, s,))
 		t.start()
 		threads.append(t)
 
@@ -132,8 +135,6 @@ def do_work_threading():
 	for t in threads:
 		t.join()
 
-
-
 # workerthreadlist = []
 # for x in range(0, 3):
 # 	newthread = WorkerThread(url_list, url_list_lock)
@@ -141,93 +142,3 @@ def do_work_threading():
 # 	newthread.start()
 # for x in range(0, 3):
 # 	workerthreadlist[x].join()
-
-
-def do_scan():
-	"""Сканирование страниц на ошибки"""
-	# pages_for_scan = db_get_list_pages_for_scan()
-	# for p in pages_for_scan:
-	for p in db_get_list_pages_for_scan():
-		page_id, page_title = p[0], p[1]
-
-		# For tests
-		# if page_id != 273920:	continue
-
-		# очистка db от списка старых ошибок
-		session.query(Ref).filter(Ref.page_id == page_id).delete()
-		session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-		# session.flush()
-		# сканирование страниц на ошибки
-		r = s.get('https://ru.wikipedia.org/wiki/' + quote(title))
-		page = ScanRefsOfPage(r.text)
-		ref_no_doubles = []
-		for ref in page.err_refs:
-			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-		# try:
-		# 	session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-		# except IntegrityError:
-		# 	pass
-		# except:
-		# 	pass
-
-		# session.query(Ref).filter_by(page_id = page_id, citeref = ref['citeref']).delete()
-		# if session.query(Ref).filter_by(page_id = page_id, citeref = ref['citeref']) .count() < 1:
-		# 	session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-		# 	session.commit()
-		# if ref['citeref'] not in ref_no_doubles:
-		# 	ref_no_doubles.append(ref['citeref'])
-		# 	session.merge(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-		# 	session.flush()
-
-		# try:
-		# 	session.merge(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-		# except:
-		# 	pass
-		# for ref in page.err_refs:
-		# 	# try:
-		# 	# 	x = session.query(Ref).filter_by(Ref.page_id = page_id, Ref.citeref = ref['citeref']).first()
-		# 	# except:
-		# 	# 	pass
-		# 	x = session.query(Ref).filter_by(page_id=page_id, citeref=ref['citeref']).first()
-		# 	if not x:
-		# 		# 	session.query(Ref).filter(page_id=page_id, citeref=ref['citeref']).update(r)
-		# 		# else:
-		# 		try:
-		# 			session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-		# 		except:
-		# 			pass
-		time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-		# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
-		session.add(Timecheck(page_id, time_current))
-		# try:
-		# 	session.flush()
-		# except:
-		# 	pass
-		# session.flush()
-		session.commit()
-
-
-def db_get_list_pages_for_scan():
-	return queryDB(session.query(Page.page_id, Page.title) \
-				   .select_from(Page) \
-				   .outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
-				   .filter((Timecheck.timecheck.is_(None)) | (Page.timeedit > Timecheck.timecheck)))
-
-
-def scan_page(p):
-	"""Сканирование страниц на ошибки"""
-	page_id, page_title = p[0], p[1]
-
-	# очистка db от списка старых ошибок
-	session.query(Ref).filter(Ref.page_id == page_id).delete()
-	session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-
-	# сканирование страниц на ошибки
-	r = s.get('https://ru.wikipedia.org/wiki/' + quote(title))
-	page = ScanRefsOfPage(r.text)
-	for ref in page.err_refs:
-		session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-	time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-	# session.query(Page).filter(Page.page_id == page_id).update({Page.timecheck: time_current})
-	session.add(Timecheck(page_id, time_current))
-	session.commit()
