@@ -8,7 +8,7 @@ from scripts import post_to_wiki
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_to_add_warning_tpl, save_listpages_to_remove_warning_tpl
 from scripts.make_wikilists import MakeWikiLists
-from scripts.scan_pages_asyncio import Scanner
+# from scripts.scan_pages_asyncio import Scanner
 from scripts import scan_pages
 
 if __name__ == '__main__':
@@ -29,11 +29,13 @@ if __name__ == '__main__':
 
 		# старт сканирования
 		print('start scan pages')
-		if scan_asyncio:
-			scaner = Scanner()
-			scaner.do_scan()
-		else:
-			scan_pages.do_scan()
+		# Run asyncio have problem on this server
+		# if scan_asyncio:
+		# 	scaner = Scanner()
+		# 	scaner.do_scan()
+		# else:
+		# 	scan_pages.do_scan()
+		scan_pages.do_scan()
 
 		# Запись списков
 		save_listpages_to_remove_warning_tpl()
