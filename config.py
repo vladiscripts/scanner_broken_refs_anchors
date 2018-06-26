@@ -3,17 +3,14 @@
 # Для починки сменить в ОС кодировку, на utf-8 командой консоли "chcp 65001".
 # Или отключить в скрипте выводы типа print("не английские символы").
 
-
-filename_tpls_transcludes = 'list_tpls_transcludes.txt'
-filename_listpages_errref = 'listpages_err_ref.txt'
 # переключатель доступа к базе данных. True если скрипт запускается на ПК, False если на сервере wmflabs
-run_local_not_from_wmflabs = True
+run_local_not_from_wmflabs = False
 # Асинхронное сканирование. Быстро работает при локальном запуске, но глючит на сервере.
 scan_asyncio = False
 # scan_asyncio = True if run_local_not_from_wmflabs else False  # автозапуск asyncio на PC, и выкл. на сервере
 # Число асинхронных потоков. Столько же может делаться http-запросов.
 # При более 50 http-запросах сервер Wikipedia может отказываться отвечать.
-limit_asynch_threads = 100
+limit_asynch_threads = 50
 
 # ---
 # True - сканировать и генерировать новые списки.
@@ -26,16 +23,16 @@ do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
-do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
+do_all_post_to_wiki = True  # Отключение всех опций ниже в этой секции
 
 do_post_wikilist = True  # Запись списков
-do_post_wikilist_simulate = True  # Симуляция записи
+do_post_wikilist_simulate = False  # Симуляция записи
 
 do_post_template = True  # Запись в статьи шаблона
-do_post_template_simulate = True  # Симуляция записи
+do_post_template_simulate = False  # Симуляция записи
 
 do_remove_template = True  # Удаление из статей ненужного шаблона
-do_remove_template_simulate = True  # Симуляция записи
+do_remove_template_simulate = False  # Симуляция записи
 
 # ---
 # Удаление метки проверки у страниц имеющих warning-шаблон.
@@ -52,6 +49,9 @@ transcludes_of_warning_tpl_get_from_site = True
 filename_list_transcludes_of_warning_tpl = 'list_uses_warningtpl.txt'
 filename_listpages_errref_where_no_yet_warning_tpl = 'listpages_without_warning_tpl.txt'
 filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
+
+filename_tpls_transcludes = 'list_tpls_transcludes.txt'
+filename_listpages_errref = 'listpages_err_ref.txt'
 
 # ---
 # summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
