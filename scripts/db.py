@@ -6,9 +6,10 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 import re
 from config import *
 
-Base = declarative_base()
+# Для создания таблицы надо Base = declarative_base() и ...create_all() внизу под классами
+# https://ru.wikibooks.org/wiki/SQLAlchemy
 db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=print_log)  # 'sqlite:///:memory:'
-Base.metadata.create_all(db_engine)
+Base = declarative_base()
 Session = sessionmaker(bind=db_engine)
 db_session = Session()
 
@@ -75,6 +76,7 @@ class Wikilists(Base):
 		self.letter = letter
 		self.title = title
 
+Base.metadata.create_all(db_engine)
 
 # Helpers
 def queryDB(query):
