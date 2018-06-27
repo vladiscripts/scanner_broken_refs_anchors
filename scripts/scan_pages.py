@@ -6,7 +6,7 @@
 import time
 import requests
 from urllib.parse import quote
-from scripts.db import db_session, Page, Ref, Timecheck, queryDB
+from scripts.db import db_session, Page, ErrRef, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
 
 
@@ -14,7 +14,6 @@ def do_scan():
     """Сканирование страниц на ошибки"""
     s = open_requests_session()
     pages = db_get_list_pages_for_scan()
-
     for p in pages:
         download_and_scan_page(s, p)
 
@@ -35,12 +34,11 @@ def scan_page(p):
     db_session.rollback()
 
     # Очистка db от списка старых ошибок
-    db_session.query(Ref).filter(Ref.page_id == page_id).delete()
+    db_session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
     db_session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
 
-    # Сканирование страниц на ошибки
     for ref in err_refs:
-        db_session.add(Ref(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+        db_session.add(ErrRef(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
 
     time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
     db_session.add(Timecheck(page_id, time_current))

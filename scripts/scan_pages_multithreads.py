@@ -5,7 +5,7 @@
 #
 import time
 from config import *
-from scripts.db import db_session, Page, Ref, WarningTpls, Timecheck, queryDB
+from scripts.db import db_session, Page, ErrRef, WarningTpls, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts.scan_pages import open_requests_session, db_get_list_pages_for_scan, scan_page, do_scan, \
 	download_and_scan_page

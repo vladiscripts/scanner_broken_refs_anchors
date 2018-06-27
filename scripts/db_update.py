@@ -3,8 +3,11 @@
 #
 from pywikibot.data import mysql
 from config import *
-from scripts.db import db_session, Page, Ref, WarningTpls, Timecheck, queryDB
-import passwords
+from scripts.db import db_session, Page, ErrRef, WarningTpls, Timecheck, queryDB
+
+
+# import pymysql
+# import passwords
 
 
 class UpdateDB:
@@ -19,14 +22,14 @@ class UpdateDB:
         # self.query_transcludes_any_tpl(('Citation', 'Cite'))
         # self.query_transcludes_any_tpl('Cite')
 
-		# Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
-		if clear_check_pages_with_warnings:
-			# удаление метки проверки у страниц имеющих warning-шаблон
-			self.drop_check_pages_with_warnings()
-		if clear_all_check_pages:
-			# сброс всех меток проверки
-			self.drop_all_check_pages()
-			db_session.query(Ref).delete()
+        # Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
+        if clear_check_pages_with_warnings:
+            # удаление метки проверки у страниц имеющих warning-шаблон
+            self.drop_check_pages_with_warnings()
+        if clear_all_check_pages:
+            # сброс всех меток проверки
+            self.drop_all_check_pages()
+            db_session.query(ErrRef).delete()
 
         # чистка PageTimecheck и Ref от записей которых нет в pages
         self.drop_depricated_by_timecheck()
@@ -96,12 +99,12 @@ class UpdateDB:
             db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
         db_session.commit()
 
-	@staticmethod
-	def drop_ref():
-		q = db_session.query(Ref.page_id).select_from(Ref).outerjoin(Page).filter(Page.page_id.is_(None))
-		for r in queryDB(q):
-			db_session.query(Ref).filter(Ref.page_id == r[0]).delete()
-		db_session.commit()
+    @staticmethod
+    def drop_ref():
+        q = db_session.query(ErrRef.page_id).select_from(ErrRef).outerjoin(Page).filter(Page.page_id.is_(None))
+        for r in queryDB(q):
+            db_session.query(ErrRef).filter(ErrRef.page_id == r[0]).delete()
+        db_session.commit()
 
     # Helpers
     @staticmethod
@@ -117,11 +120,11 @@ class UpdateDB:
         db_session.query(Timecheck).delete()
         db_session.commit()
 
-	@staticmethod
-	def drop_all_refs():
-		"""Очистка таблицы Refs"""
-		db_session.query(Ref).delete()
-		db_session.commit()
+    @staticmethod
+    def drop_all_refs():
+        """Очистка таблицы Refs"""
+        db_session.query(ErrRef).delete()
+        db_session.commit()
 
     @staticmethod
     def str2list(string):

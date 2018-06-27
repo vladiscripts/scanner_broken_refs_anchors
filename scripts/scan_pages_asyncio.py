@@ -12,7 +12,7 @@ import socket
 import time
 from urllib.parse import quote
 from config import *
-from scripts.db import db_session, Page, Ref, Timecheck, queryDB
+from scripts.db import db_session, Page, ErrRef, Timecheck, queryDB
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts.scan_pages import open_requests_session, db_get_list_pages_for_scan, scan_page, do_scan, \
 	download_and_scan_page

@@ -39,7 +39,7 @@ class Timecheck(Base):
         self.timecheck = timecheck
 
 
-class Ref(Base):
+class ErrRef(Base):
     __tablename__ = 'erroneous_refs'
     id = Column(Integer, primary_key=True)
     page_id = Column(Integer, ForeignKey('pages.page_id'), index=True)
