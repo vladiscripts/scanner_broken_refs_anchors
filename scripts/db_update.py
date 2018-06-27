@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from pywikibot.data import mysql
-from scripts.db_init import db_session, Page, ErrRef, WarningTpls, Timecheck, queryDB
+from scripts.db_init import db_session, SfnPageChanged, ErrRef, WarningTpls, Timecheck, Timelastcheck, queryDB
 from config import *
 
 
@@ -64,12 +64,13 @@ class UpdateDB:
 				ORDER BY page.page_id ASC;"""
         transcludes_wdb = self.wdb_query(sql)
         # long query ~45000 rows
-        if len(transcludes_wdb) > 100:  # 10000 иногда возвращается обрезанный результат
-            db_session.query(Page).delete()
+        # if len(transcludes_wdb) > 100:  # 10000 иногда возвращается обрезанный результат
+        db_session.query(SfnPageChanged).delete()
         # for id, title, timeedit in transcludes_wdb:
         #     # id, title, timeedit = p[0], self.byte2utf(p[1]), int(p[2])
         #     db_session.add(Page(id, self.byte2utf(title), int(timeedit)))
-        transcludes_wdb = [Page(id, self.byte2utf(title), int(timeedit)) for id, title, timeedit in transcludes_wdb]
+        transcludes_wdb = [SfnPageChanged(id, self.byte2utf(title), int(timeedit))
+                           for id, title, timeedit in transcludes_wdb]
         db_session.bulk_save_objects(transcludes_wdb)
         # long query
         db_session.commit()
@@ -77,17 +78,18 @@ class UpdateDB:
     @staticmethod
     def drop_orphan_by_timecheck():
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-        pages = db_session.query(Timecheck.page_id).outerjoin(Page).filter(Page.page_id.is_(None)).all()
+        pages = db_session.query(Timecheck.page_id).outerjoin(SfnPageChanged).filter(
+            SfnPageChanged.page_id.is_(None)).all()
         for p in pages:
             db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
         db_session.commit()
 
     @staticmethod
     def drop_refs_of_changed_pages():
-        # pages = db_session.query(ErrRef.page_id).outerjoin(Page).filter(Page.page_id.is_(None)).all()
+        # pages = db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).all()
         # for p in pages:
         #     db_session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete()
-        subq = db_session.query(Page.page_id)
+        subq = db_session.query(SfnPageChanged.page_id)
         db_session.query(ErrRef).filter(ErrRef.page_id.in_(subq)).delete(synchronize_session='fetch')
         # db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).delete()
         db_session.commit()

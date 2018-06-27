@@ -7,7 +7,7 @@ import time
 from urllib.parse import quote
 
 import requests
-from scripts.db_init import db_session, Page, ErrRef, Timecheck
+from scripts.db_init import db_session, SfnPageChanged, ErrRef, Timecheck
 from scripts.scan_refs_of_page import ScanRefsOfPage
 
 
@@ -46,10 +46,11 @@ def db_save_results(page_id, err_refs):
     db_session.commit()
 
 
-def db_get_list_pages_for_scan():
-    return db_session.query(Page.page_id, Page.title) \
-        .outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
-        .filter((Timecheck.timecheck.is_(None)) | (Page.timeedit > Timecheck.timecheck)).all()
+def db_get_list_pages_for_scan(timestart, timelastcheck):
+    pages = db_session.query(SfnPageChanged.page_id, SfnPageChanged.title) \
+        .outerjoin(Timecheck, SfnPageChanged.page_id == Timecheck.page_id) \
+        .filter((Timecheck.timecheck.is_(None)) | (SfnPageChanged.timeedit > Timecheck.timecheck)).all()
+    return pages
 
 
 def open_requests_session():

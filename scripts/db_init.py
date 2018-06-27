@@ -14,7 +14,7 @@ Session = sessionmaker(bind=db_engine)
 db_session = Session()
 
 
-class Page(Base):
+class SfnPageChanged(Base):
     __tablename__ = 'pages'
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True, nullable=False)

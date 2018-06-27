@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from config import *
-from scripts.db_init import db_session, Page, ErrRef, Wikilists, queryDB
+from scripts.db_init import db_session, SfnPageChanged, ErrRef, Wikilists, queryDB
 from scripts.make_listspages import file_savetext
 
 
@@ -33,11 +33,11 @@ class MakeWikiLists:
         for wikilist_sql in wikilists_sql:
             wikilist_title = wikilist_sql[0]
             list_refs_entries = ''
-            pq = db_session.query(Page.page_id, Page.title, ErrRef.link_to_sfn, ErrRef.text).select_from(Page) \
-                .join(ErrRef, Page.page_id == ErrRef.page_id) \
-                .join(Wikilists, Wikilists.letter == Page.wikilist) \
+            pq = db_session.query(SfnPageChanged.page_id, SfnPageChanged.title, ErrRef.link_to_sfn, ErrRef.text) \
+                .join(ErrRef, SfnPageChanged.page_id == ErrRef.page_id) \
+                .join(Wikilists, Wikilists.letter == SfnPageChanged.wikilist) \
                 .filter(ErrRef.page_id.isnot(None), Wikilists.title == wikilist_title) \
-                .order_by(Page.title, ErrRef.citeref)
+                .order_by(SfnPageChanged.title, ErrRef.citeref)
             refs_pages4check = queryDB(pq)
 
             for page_title in sorted({p[1] for p in refs_pages4check}):
