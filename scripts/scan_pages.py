@@ -4,9 +4,10 @@
 # author: https://github.com/vladiscripts
 #
 import time
-import requests
 from urllib.parse import quote
-from scripts.db import db_session, Page, ErrRef, Timecheck, queryDB
+
+import requests
+from scripts.db_init import db_session, Page, ErrRef, Timecheck
 from scripts.scan_refs_of_page import ScanRefsOfPage
 
 
@@ -14,23 +15,23 @@ def do_scan():
     """Сканирование страниц на ошибки"""
     s = open_requests_session()
     pages = db_get_list_pages_for_scan()
-    for p in pages:
-        download_and_scan_page(s, p)
+    for id, title in pages:
+        # if id != 273920:	continue  # For tests
+        scan_results = scan_page(s, title)
+        db_save_results(id, scan_results.err_refs)
+    s.close()
 
 
-def download_and_scan_page(s, p):
-    id, title = p[0], p[1]
-    # if page_id != 273920:	continue  # For tests
-    r = s.get('https://ru.wikipedia.org/wiki/' + quote(title))
-    print(title + ':')
-    # page = ScanRefsOfPage(page_id, page_title)
-    page = ScanRefsOfPage(r.text)
-    scan_page([id, title, page.err_refs])
-
-
-def scan_page(p):
+def scan_page(s, title):
     """Сканирование страниц на ошибки"""
-    page_id, page_title, err_refs = p[0], p[1], p[2]
+    print(f'title: {title}')
+    r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
+    scan_results = ScanRefsOfPage(r.text)
+    return scan_results
+
+
+def db_save_results(page_id, err_refs):
+    """Сохранение результатов сканирования в БД"""
     db_session.rollback()
 
     # Очистка db от списка старых ошибок
@@ -46,10 +47,9 @@ def scan_page(p):
 
 
 def db_get_list_pages_for_scan():
-    return queryDB(db_session.query(Page.page_id, Page.title) \
-                   .select_from(Page) \
-                   .outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
-                   .filter((Timecheck.timecheck.is_(None)) | (Page.timeedit > Timecheck.timecheck)))
+    return db_session.query(Page.page_id, Page.title) \
+        .outerjoin(Timecheck, Page.page_id == Timecheck.page_id) \
+        .filter((Timecheck.timecheck.is_(None)) | (Page.timeedit > Timecheck.timecheck)).all()
 
 
 def open_requests_session():

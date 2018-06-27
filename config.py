@@ -4,7 +4,7 @@
 # Или отключить в скрипте выводы типа print("не английские символы").
 
 # переключатель доступа к базе данных. True если скрипт запускается на ПК, False если на сервере wmflabs
-run_local_not_from_wmflabs = False
+run_local_not_from_wmflabs = True
 # Асинхронное сканирование. Быстро работает при локальном запуске, но глючит на сервере.
 scan_asyncio = False
 # scan_asyncio = True if run_local_not_from_wmflabs else False  # автозапуск asyncio на PC, и выкл. на сервере
@@ -23,7 +23,7 @@ do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
-do_all_post_to_wiki = True  # Отключение всех опций ниже в этой секции
+do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
 
 do_post_wikilist = True  # Запись списков
 do_post_wikilist_simulate = False  # Симуляция записи

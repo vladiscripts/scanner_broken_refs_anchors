@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 import re
 from config import *
 
@@ -16,10 +16,12 @@ db_session = Session()
 
 class Page(Base):
     __tablename__ = 'pages'
-    page_id = Column(Integer, primary_key=True, unique=True)
-    title = Column(String, unique=True)
+    page_id = Column(Integer, primary_key=True)
+    title = Column(String, unique=True, nullable=False)
     timeedit = Column(Integer)
     wikilist = Column(String, index=True)
+    timechecks = relationship('Timecheck', backref='page', passive_deletes=True)  # cascade='all,delete,delete-orphan'
+    refs = relationship('ErrRef', backref='page', passive_deletes=True)
 
     def __init__(self, page_id, title, timeedit):
         self.page_id = page_id
@@ -31,7 +33,7 @@ class Page(Base):
 
 class Timecheck(Base):
     __tablename__ = 'timecheck'
-    page_id = Column(Integer, ForeignKey('pages.page_id'), primary_key=True, unique=True)
+    page_id = Column(Integer, ForeignKey('pages.page_id', ondelete='CASCADE'), primary_key=True)
     timecheck = Column(Integer)
 
     def __init__(self, page_id, timecheck):
@@ -39,10 +41,19 @@ class Timecheck(Base):
         self.timecheck = timecheck
 
 
+class Timelastcheck(Base):
+    __tablename__ = 'timelastcheck'
+    id = Column(Integer, primary_key=True)
+    timelastcheck = Column(Integer, nullable=False)
+
+    def __init__(self, timelastcheck):
+        self.timelastcheck = timelastcheck
+
+
 class ErrRef(Base):
     __tablename__ = 'erroneous_refs'
     id = Column(Integer, primary_key=True)
-    page_id = Column(Integer, ForeignKey('pages.page_id'), index=True)
+    page_id = Column(Integer, ForeignKey('pages.page_id', ondelete='CASCADE'), index=True)
     citeref = Column(String)
     link_to_sfn = Column(String)
     text = Column(String)
@@ -56,7 +67,7 @@ class ErrRef(Base):
 
 class WarningTpls(Base):
     __tablename__ = 'warnings'
-    page_id = Column(Integer, ForeignKey('pages.page_id'), ForeignKey('erroneous_refs.page_id'), primary_key=True, unique=True)
+    page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True)
 
     def __init__(self, page_id, title):

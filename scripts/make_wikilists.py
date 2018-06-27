@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from config import *
-from scripts.db import db_session, Page, ErrRef, Wikilists, queryDB
+from scripts.db_init import db_session, Page, ErrRef, Wikilists, queryDB
 from scripts.make_listspages import file_savetext
 
 
@@ -13,28 +13,20 @@ class MakeWikiLists:
         self.make_wikilists()
         self.save_wikilist()
 
-	def make_wikilist_titles(self):
-		wikilists = [
-			['А', 'А'],
-			['Б', 'Б'],
-			['В', 'ВГ'], ['Г', 'ВГ'],
-			['Д', 'Д'],
-			['Е', 'ЕЁЖЗИЙ'], ['Ё', 'ЕЁЖЗИЙ'], ['Ж', 'ЕЁЖЗИЙ'], ['З', 'ЕЁЖЗИЙ'], ['И', 'ЕЁЖЗИЙ'], ['Й', 'ЕЁЖЗИЙ'],
-			['К', 'К'],
-			['Л', 'ЛМ'], ['М', 'ЛМ'],
-			['Н', 'НО'], ['О', 'НО'],
-			['П', 'П'],
-			['Р', 'Р'],
-			['С', 'С'],
-			['Т', 'Т'],
-			['У', 'УФХ'], ['Ф', 'УФХ'], ['Х', 'УФХ'],
-			['Ц', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ч', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ш', 'ЦЧШЩЪЫЬЭЮЯ'], ['Щ', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ъ', 'ЦЧШЩЪЫЬЭЮЯ'],
-			['Ы', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ь', 'ЦЧШЩЪЫЬЭЮЯ'], ['Э', 'ЦЧШЩЪЫЬЭЮЯ'], ['Ю', 'ЦЧШЩЪЫЬЭЮЯ'], ['Я', 'ЦЧШЩЪЫЬЭЮЯ'],
-			['*', 'Не русские буквы'],
-		]
-		for r in wikilists:
-			db_session.merge(Wikilists(r[0], r[1]))
-		db_session.commit()
+    def make_wikilist_titles(self):
+        wikilists = (
+            ('А', 'А'), ('Б', 'Б'), ('В', 'ВГ'), ('Г', 'ВГ'), ('Д', 'Д'),
+            ('Е', 'ЕЁЖЗИЙ'), ('Ё', 'ЕЁЖЗИЙ'), ('Ж', 'ЕЁЖЗИЙ'), ('З', 'ЕЁЖЗИЙ'), ('И', 'ЕЁЖЗИЙ'), ('Й', 'ЕЁЖЗИЙ'),
+            ('К', 'К'), ('Л', 'ЛМ'), ('М', 'ЛМ'), ('Н', 'НО'),
+            ('О', 'НО'), ('П', 'П'), ('Р', 'Р'), ('С', 'С'), ('Т', 'Т'),
+            ('У', 'УФХ'), ('Ф', 'УФХ'), ('Х', 'УФХ'),
+            ('Ц', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ч', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ш', 'ЦЧШЩЪЫЬЭЮЯ'), ('Щ', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ъ', 'ЦЧШЩЪЫЬЭЮЯ'),
+            ('Ы', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ь', 'ЦЧШЩЪЫЬЭЮЯ'), ('Э', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ю', 'ЦЧШЩЪЫЬЭЮЯ'), ('Я', 'ЦЧШЩЪЫЬЭЮЯ'),
+            ('*', 'Не русские буквы'),
+        )
+        for letter, pagename in wikilists:
+            db_session.merge(Wikilists(letter, pagename))
+        db_session.commit()
 
     def make_wikilists(self):
         wikilists_sql = queryDB(db_session.query(Wikilists.title).group_by(Wikilists.title))
@@ -61,11 +53,8 @@ class MakeWikiLists:
                 pagename = u'Шаблон:' + root_wikilists + wikilist_title
                 self.wikilists += self.formated_wikilist(pagename, list_refs_entries)
 
-	def formated_wikilist(self, pagename, wiki_refs_entries):
-		return "{start}\n'''{pagename}'''\n{header}\n{refs_entries}\n{footer}\n{end}\n\n".format(
-			start=marker_page_start, end=marker_page_end,
-			pagename=pagename, header=header, footer=footer,
-			refs_entries=wiki_refs_entries)
+    def formated_wikilist(self, pagename, wiki_refs_entries):
+        return f"{marker_page_start}\n'''{pagename}'''\n{header}\n{wiki_refs_entries}\n{footer}\n{marker_page_end}\n\n"
 
-	def save_wikilist(self):
-		file_savetext(filename_wikilists + '.txt', self.wikilists)
+    def save_wikilist(self):
+        file_savetext(f'{filename_wikilists}.txt', self.wikilists)
