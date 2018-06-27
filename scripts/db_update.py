@@ -1,23 +1,23 @@
 # coding: utf-8
 # author: https://github.com/vladiscripts
 #
-import pymysql
+from pywikibot.data import mysql
 from config import *
 from scripts.db import db_session, Page, Ref, WarningTpls, Timecheck, queryDB
 import passwords
 
 
 class UpdateDB:
-	def __init__(self):
-		# обновить список страниц, имеющих установленный шаблон
-		self.update_listpages_have_WarningTpl()
+    def __init__(self):
+        # обновить список страниц, имеющих установленный шаблон
+        self.update_listpages_have_WarningTpl()
 
-		# обновить список страниц, имеющих шаблоны типа {{sfn}}
-		self.update_transcludes_sfn_tempates()
+        # обновить список страниц, имеющих шаблоны типа {{sfn}}
+        self.update_transcludes_sfn_tempates()
 
-		# очистка метки проверки неучтенных шаблонов
-		# self.query_transcludes_any_tpl(('Citation', 'Cite'))
-		# self.query_transcludes_any_tpl('Cite')
+        # очистка метки проверки неучтенных шаблонов
+        # self.query_transcludes_any_tpl(('Citation', 'Cite'))
+        # self.query_transcludes_any_tpl('Cite')
 
 		# Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
 		if clear_check_pages_with_warnings:
@@ -28,9 +28,9 @@ class UpdateDB:
 			self.drop_all_check_pages()
 			db_session.query(Ref).delete()
 
-		# чистка PageTimecheck и Ref от записей которых нет в pages
-		self.drop_depricated_by_timecheck()
-		self.drop_ref()
+        # чистка PageTimecheck и Ref от записей которых нет в pages
+        self.drop_depricated_by_timecheck()
+        self.drop_ref()
 
 	def update_listpages_have_WarningTpl(self):
 		"""Обновить список страниц имеющих установленный шаблон."""
@@ -87,14 +87,14 @@ class UpdateDB:
 			db_session.add(Page(id, title, timeedit))
 		db_session.commit()
 
-	@staticmethod
-	def drop_depricated_by_timecheck():
-		"""Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-		q = db_session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
-			Page.page_id.is_(None))
-		for r in queryDB(q):
-			db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		db_session.commit()
+    @staticmethod
+    def drop_depricated_by_timecheck():
+        """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
+        q = db_session.query(Timecheck.page_id).select_from(Timecheck).outerjoin(Page).filter(
+            Page.page_id.is_(None))
+        for r in queryDB(q):
+            db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+        db_session.commit()
 
 	@staticmethod
 	def drop_ref():
@@ -103,19 +103,19 @@ class UpdateDB:
 			db_session.query(Ref).filter(Ref.page_id == r[0]).delete()
 		db_session.commit()
 
-	# Helpers
-	@staticmethod
-	def drop_check_pages_with_warnings():
-		"""Удаление метки проверки у страниц имеющих warning-шаблон."""
-		for r in queryDB((db_session.query(WarningTpls.page_id))):
-			db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
-		db_session.commit()
+    # Helpers
+    @staticmethod
+    def drop_check_pages_with_warnings():
+        """Удаление метки проверки у страниц имеющих warning-шаблон."""
+        for r in queryDB((db_session.query(WarningTpls.page_id))):
+            db_session.query(Timecheck).filter(Timecheck.page_id == r[0]).delete()
+        db_session.commit()
 
-	@staticmethod
-	def drop_all_check_pages():
-		"""Очистка таблицы Timecheck: удаление метки проверки у всех страниц"""
-		db_session.query(Timecheck).delete()
-		db_session.commit()
+    @staticmethod
+    def drop_all_check_pages():
+        """Очистка таблицы Timecheck: удаление метки проверки у всех страниц"""
+        db_session.query(Timecheck).delete()
+        db_session.commit()
 
 	@staticmethod
 	def drop_all_refs():
@@ -123,51 +123,52 @@ class UpdateDB:
 		db_session.query(Ref).delete()
 		db_session.commit()
 
-	@staticmethod
-	def str2list(string):
-		"""Строку в список"""
-		return [string] if isinstance(string, str) else string
+    @staticmethod
+    def str2list(string):
+        """Строку в список"""
+        return [string] if isinstance(string, str) else string
 
-	@staticmethod
-	def byte2utf(string):
-		import urllib.parse
-		string = urllib.parse.quote_from_bytes(string)
-		string = urllib.parse.unquote(string, encoding='utf8')
-		return string
+    @staticmethod
+    def byte2utf(string):
+        import urllib.parse
+        string = urllib.parse.quote_from_bytes(string)
+        string = urllib.parse.unquote(string, encoding='utf8')
+        return string
 
-	@staticmethod
-	def normalization_pagename(t):
-		"""Первая буква в верхний регистр, ' ' → '_' """
-		t = t.strip()
-		return t[0:1].upper() + t[1:].replace(' ', '_')
+    @staticmethod
+    def normalization_pagename(t):
+        """Первая буква в верхний регистр, ' ' → '_' """
+        t = t.strip()
+        return t[0:1].upper() + t[1:].replace(' ', '_')
 
-	@staticmethod
-	def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin=' OR '):
-		"""Return string like:  string LIKE string1 OR string LIKE string2"""
-		return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
+    @staticmethod
+    def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin=' OR '):
+        """Return string like:  string LIKE string1 OR string LIKE string2"""
+        return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
 
-	@staticmethod
-	def wdb_query(sql):
-		connection = pymysql.connect(
-			# Для доступа к wiki-БД с ПК необходим ssh-тунель с перебросом порта с localhost
-			# ssh -L 4711:ruwiki.labsdb:3306 <username>@login.tools.wmflabs.org -i "<path/to/key>"
-			# см. https://wikitech.wikimedia.org/wiki/Help:Tool_Labs/Database#Connecting_to_the_database_replicas_from_your_own_computer
-			# host='127.0.0.1', port=4711,
-			# или для доступа из скриптов на tools.wmflabs.org напрямую:
-			# host='ruwiki.labsdb', port=3306,
-			host='127.0.0.1' if run_local_not_from_wmflabs else 'ruwiki.labsdb',
-			port=4711 if run_local_not_from_wmflabs else 3306,
-			db='ruwiki_p',
-			user=passwords.wdb_user,
-			password=passwords.wdb_pw,
-			use_unicode=True, charset="utf8")
-		try:
-			with connection.cursor() as cursor:
-				cursor.execute(sql)
-			result = cursor.fetchall()
-		finally:
-			connection.close()
-		return result
+    @staticmethod
+    def wdb_query(sql):
+        result = list(mysql.mysql_query(sql))
+        # connection = pymysql.connect(
+        #     # Для доступа к wiki-БД с ПК необходим ssh-тунель с перебросом порта с localhost
+        #     # ssh -L 4711:ruwiki.labsdb:3306 <username>@login.tools.wmflabs.org -i "<path/to/key>"
+        #     # см. https://wikitech.wikimedia.org/wiki/Help:Tool_Labs/Database#Connecting_to_the_database_replicas_from_your_own_computer
+        #     # host='127.0.0.1', port=4711,
+        #     # или для доступа из скриптов на tools.wmflabs.org напрямую:
+        #     # host='ruwiki.labsdb', port=3306,
+        #     host='127.0.0.1' if run_local_not_from_wmflabs else 'ruwiki.labsdb',
+        #     port=4711 if run_local_not_from_wmflabs else 3306,
+        #     db='ruwiki_p',
+        #     user=passwords.wdb_user,
+        #     password=passwords.wdb_pw,
+        #     use_unicode=True, charset="utf8")
+        # try:
+        #     with connection.cursor() as cursor:
+        #         cursor.execute(sql)
+        #     result = cursor.fetchall()
+        # finally:
+        #     connection.close()
+        return result
 
 
 """
