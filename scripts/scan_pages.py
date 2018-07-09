@@ -46,7 +46,7 @@ def db_save_results(page_id, err_refs):
     db_session.commit()
 
 
-def db_get_list_pages_for_scan(timestart, timelastcheck):
+def db_get_list_pages_for_scan():
     pages = db_session.query(SfnPageChanged.page_id, SfnPageChanged.title) \
         .outerjoin(Timecheck, SfnPageChanged.page_id == Timecheck.page_id) \
         .filter((Timecheck.timecheck.is_(None)) | (SfnPageChanged.timelastedit > Timecheck.timecheck)).all()

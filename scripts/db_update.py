@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from pywikibot.data import mysql
-from scripts.db_init import db_session, SfnPageChanged, ErrRef, WarningTpls, Timecheck, Timelastcheck, queryDB
+from scripts.db_init import db_session, SfnPageChanged, ErrRef, WarningTpls, Timecheck, queryDB
 from config import *
 
 
@@ -28,7 +28,7 @@ class UpdateDB:
             db_session.query(ErrRef).delete()
 
         # чистка PageTimecheck и Ref от записей которых нет в pages
-        self.drop_orphan_by_timecheck()  # ненадо, если хранить только общее timelastcheck, а не таблицу по всем стр.
+        self.drop_orphan_by_timecheck()
         self.drop_refs_of_changed_pages()
 
     def update_listpages_have_WarningTpl(self):

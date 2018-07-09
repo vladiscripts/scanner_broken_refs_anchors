@@ -41,15 +41,6 @@ class Timecheck(Base):
         self.timecheck = timecheck
 
 
-class Timelastcheck(Base):
-    __tablename__ = 'timelastcheck'
-    id = Column(Integer, primary_key=True)
-    timelastcheck = Column(Integer, nullable=False)
-
-    def __init__(self, timelastcheck):
-        self.timelastcheck = timelastcheck
-
-
 class ErrRef(Base):
     __tablename__ = 'erroneous_refs'
     id = Column(Integer, primary_key=True)
