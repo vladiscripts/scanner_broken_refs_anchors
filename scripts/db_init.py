@@ -14,7 +14,8 @@ Session = sessionmaker(bind=db_engine)
 db_session = Session()
 
 
-class SfnPageChanged(Base):
+class PageWithSfn(Base):
+    """Страницы с шаблоном типа {{sfn}}"""
     __tablename__ = 'pages'
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True, nullable=False)
@@ -32,6 +33,7 @@ class SfnPageChanged(Base):
 
 
 class Timecheck(Base):
+    """Время проверки страниц скриптом"""
     __tablename__ = 'timecheck'
     page_id = Column(Integer, ForeignKey('pages.page_id', ondelete='CASCADE'), primary_key=True)
     timecheck = Column(Integer)
@@ -42,6 +44,7 @@ class Timecheck(Base):
 
 
 class ErrRef(Base):
+    """Списки ошибочных сносок страниц"""
     __tablename__ = 'erroneous_refs'
     id = Column(Integer, primary_key=True)
     page_id = Column(Integer, ForeignKey('pages.page_id', ondelete='CASCADE'), index=True)
@@ -56,7 +59,8 @@ class ErrRef(Base):
         self.text = text
 
 
-class WarningTpls(Base):
+class PageWithWarning(Base):
+    """Страницы с шаблоном об ошибке сносок"""
     __tablename__ = 'warnings'
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True)
@@ -67,6 +71,7 @@ class WarningTpls(Base):
 
 
 class Wikilists(Base):
+    """Названия подстраниц бота со списками ошибок"""
     __tablename__ = 'wikilists'
     letter = Column(String, ForeignKey('pages.wikilist'), primary_key=True, unique=True)
     title = Column(String)

@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from pywikibot.data import mysql
-from scripts.db_init import db_session, SfnPageChanged, ErrRef, WarningTpls, Timecheck, queryDB
+from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, Timecheck, queryDB
 from config import *
 
 
@@ -42,9 +42,9 @@ class UpdateDB:
 				AND ({tpls_str})
 				ORDER BY page.page_id ASC;"""
         pages = self.wdb_query(sql)
-        db_session.query(WarningTpls).delete()
+        db_session.query(PageWithWarning).delete()
         for id, title in pages:
-            db_session.add(WarningTpls(id, self.byte2utf(title)))
+            db_session.add(PageWithWarning(id, self.byte2utf(title)))
         db_session.commit()
 
     def update_transcludes_sfn_tempates(self):
@@ -65,11 +65,11 @@ class UpdateDB:
         transcludes_wdb = self.wdb_query(sql)
         # long query ~45000 rows
         if len(transcludes_wdb) > 10000:  # 10000 иногда возвращается обрезанный результат
-            db_session.query(SfnPageChanged).delete()
+            db_session.query(PageWithSfn).delete()
         # for id, title, timelastedit in transcludes_wdb:
         #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
         #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
-        transcludes_wdb = [SfnPageChanged(id, self.byte2utf(title), int(timelastedit))
+        transcludes_wdb = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
                            for id, title, timelastedit in transcludes_wdb]
         db_session.bulk_save_objects(transcludes_wdb)
         # long query
@@ -78,8 +78,8 @@ class UpdateDB:
     @staticmethod
     def drop_orphan_by_timecheck():
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-        pages = db_session.query(Timecheck.page_id).outerjoin(SfnPageChanged).filter(
-            SfnPageChanged.page_id.is_(None)).all()
+        pages = db_session.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(
+            PageWithSfn.page_id.is_(None)).all()
         for p in pages:
             db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
         db_session.commit()
@@ -89,7 +89,7 @@ class UpdateDB:
         # pages = db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).all()
         # for p in pages:
         #     db_session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete()
-        subq = db_session.query(SfnPageChanged.page_id)
+        subq = db_session.query(PageWithSfn.page_id)
         db_session.query(ErrRef).filter(ErrRef.page_id.in_(subq)).delete(synchronize_session='fetch')
         # db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).delete()
         db_session.commit()
@@ -98,7 +98,7 @@ class UpdateDB:
     @staticmethod
     def drop_check_pages_with_warnings():
         """Удаление метки проверки у страниц имеющих warning-шаблон."""
-        pages = queryDB((db_session.query(WarningTpls.page_id))).all()
+        pages = queryDB((db_session.query(PageWithWarning.page_id))).all()
         for p in pages:
             db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
         db_session.commit()
