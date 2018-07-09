@@ -64,8 +64,8 @@ class UpdateDB:
 				ORDER BY page.page_id ASC;"""
         transcludes_wdb = self.wdb_query(sql)
         # long query ~45000 rows
-        # if len(transcludes_wdb) > 100:  # 10000 иногда возвращается обрезанный результат
-        db_session.query(SfnPageChanged).delete()
+        if len(transcludes_wdb) > 10000:  # 10000 иногда возвращается обрезанный результат
+            db_session.query(SfnPageChanged).delete()
         # for id, title, timelastedit in transcludes_wdb:
         #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
         #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
