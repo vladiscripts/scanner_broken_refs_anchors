@@ -66,11 +66,11 @@ class UpdateDB:
         # long query ~45000 rows
         # if len(transcludes_wdb) > 100:  # 10000 иногда возвращается обрезанный результат
         db_session.query(SfnPageChanged).delete()
-        # for id, title, timeedit in transcludes_wdb:
-        #     # id, title, timeedit = p[0], self.byte2utf(p[1]), int(p[2])
-        #     db_session.add(Page(id, self.byte2utf(title), int(timeedit)))
-        transcludes_wdb = [SfnPageChanged(id, self.byte2utf(title), int(timeedit))
-                           for id, title, timeedit in transcludes_wdb]
+        # for id, title, timelastedit in transcludes_wdb:
+        #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
+        #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
+        transcludes_wdb = [SfnPageChanged(id, self.byte2utf(title), int(timelastedit))
+                           for id, title, timelastedit in transcludes_wdb]
         db_session.bulk_save_objects(transcludes_wdb)
         # long query
         db_session.commit()
@@ -201,7 +201,7 @@ class UpdateDB:
 
 -- с новыми правками или без проверки
 -- SELECT * FROM pages JOIN timecheck ON pages.page_id = timecheck.page_id
--- WHERE pages.timeedit > timecheck.timecheck OR timecheck.timecheck IS NULL
+-- WHERE pages.timelastedit > timecheck.timecheck OR timecheck.timecheck IS NULL
 
 -- pages без warning
 -- SELECT * FROM pages LEFT OUTER JOIN warnings ON pages.page_id = warnings.page_id WHERE warnings.page_id IS NULL

@@ -18,15 +18,15 @@ class SfnPageChanged(Base):
     __tablename__ = 'pages'
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True, nullable=False)
-    timeedit = Column(Integer)
+    timelastedit = Column(Integer)
     wikilist = Column(String, index=True)
     timechecks = relationship('Timecheck', backref='page', passive_deletes=True)  # cascade='all,delete,delete-orphan'
     refs = relationship('ErrRef', backref='page', passive_deletes=True)
 
-    def __init__(self, page_id, title, timeedit):
+    def __init__(self, page_id, title, timelastedit):
         self.page_id = page_id
         self.title = title
-        self.timeedit = timeedit
+        self.timelastedit = timelastedit
         fl = title[0:1].upper()
         self.wikilist = '*' if re.match(r'[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]', fl) else fl
 
