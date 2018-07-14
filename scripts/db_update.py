@@ -69,9 +69,9 @@ class UpdateDB:
         # for id, title, timelastedit in transcludes_wdb:
         #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
         #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
-        transcludes_wdb = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
-                           for id, title, timelastedit in transcludes_wdb]
-        db_session.bulk_save_objects(transcludes_wdb)
+        for p in transcludes_wdb:
+            id, title, timeedit = p[0], self.byte2utf(p[1]), int(p[2])
+            db_session.add(PageWithSfn(id, title, timeedit))
         # long query
         db_session.commit()
 
