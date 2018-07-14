@@ -6,7 +6,7 @@
 # Запись списков и установка шаблонов в wiki
 #
 import os
-from config import *
+from settings import *
 
 python_and_path = r'python $PWBPATH/pwb.py'
 # python_and_path = r'python scripts/'

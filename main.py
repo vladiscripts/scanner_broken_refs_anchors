@@ -3,7 +3,7 @@
 #
 # author: https://github.com/vladiscripts
 #
-from config import *
+from settings import *
 from scripts import post_to_wiki
 # from scripts.scan_pages_asyncio import Scanner
 from scripts import scan_pages

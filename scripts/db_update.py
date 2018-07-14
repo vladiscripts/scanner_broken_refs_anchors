@@ -3,7 +3,7 @@
 #
 from pywikibot.data import mysql
 from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, Timecheck, queryDB
-from config import *
+from settings import *
 
 
 class UpdateDB:

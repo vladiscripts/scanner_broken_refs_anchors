@@ -9,7 +9,7 @@ import socket
 from urllib.parse import quote
 from scripts.scan_pages import db_get_list_pages_for_scan, scan_page
 from scripts.scan_refs_of_page import ScanRefsOfPage
-from config import *
+from settings import *
 
 
 class Scanner:

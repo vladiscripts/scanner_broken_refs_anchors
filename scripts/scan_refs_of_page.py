@@ -3,7 +3,6 @@
 # author: https://github.com/vladiscripts
 #
 import re
-
 from lxml.html import tostring, fromstring
 
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)

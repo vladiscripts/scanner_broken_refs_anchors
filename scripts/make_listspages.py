@@ -2,7 +2,7 @@
 #
 # author: https://github.com/vladiscripts
 #
-from config import *
+from settings import *
 from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, queryDB
 
 

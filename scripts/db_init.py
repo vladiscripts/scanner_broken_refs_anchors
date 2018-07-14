@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import re
-from config import *
+from settings import *
 
 # Для создания таблицы надо Base = declarative_base() и ...create_all() внизу под классами
 # https://ru.wikibooks.org/wiki/SQLAlchemy
