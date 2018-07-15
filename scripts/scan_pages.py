@@ -35,14 +35,16 @@ def db_save_results(page_id, err_refs):
     db_session.rollback()
 
     # Очистка db от списка старых ошибок
-    db_session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
-    db_session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
+    # заменено на ForeignKey
+    # db_session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+    # db_session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
 
     for ref in err_refs:
         db_session.add(ErrRef(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
 
     time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-    db_session.add(Timecheck(page_id, time_current))
+    # db_session.add(Timecheck(page_id, time_current))
+    db_session.merge(Timecheck(page_id, time_current))
     db_session.commit()
 
 
