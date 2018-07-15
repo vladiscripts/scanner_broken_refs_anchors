@@ -3,7 +3,7 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, queryDB
+from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning
 
 
 def save_listpages_to_remove_warning_tpl():
@@ -11,7 +11,7 @@ def save_listpages_to_remove_warning_tpl():
         .outerjoin(ErrRef, PageWithWarning.page_id == ErrRef.page_id) \
         .filter(ErrRef.page_id.is_(None))
 
-    list_to_remove_warning_tpl = (str(title[0]) for title in queryDB(query))
+    list_to_remove_warning_tpl = (str(title[0]) for title in query.all())
     file_savelines(filename_list_to_remove_warning_tpl, sorted(list_to_remove_warning_tpl))
 
 

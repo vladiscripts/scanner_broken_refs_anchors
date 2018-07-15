@@ -82,8 +82,3 @@ class Wikilists(Base):
 
 
 Base.metadata.create_all(db_engine)
-
-
-# Helpers
-def queryDB(query):
-    return db_session.execute(query).fetchall()

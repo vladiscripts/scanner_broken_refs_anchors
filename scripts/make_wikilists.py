@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts.db_init import db_session, PageWithSfn, ErrRef, Wikilists, queryDB
+from scripts.db_init import db_session, PageWithSfn, ErrRef, Wikilists
 from scripts.make_listspages import file_savetext
 
 
@@ -29,7 +29,7 @@ class MakeWikiLists:
         db_session.commit()
 
     def make_wikilists(self):
-        wikilists_sql = queryDB(db_session.query(Wikilists.title).group_by(Wikilists.title))
+        wikilists_sql = db_session.query(Wikilists.title).group_by(Wikilists.title).all()
         for wikilist_sql in wikilists_sql:
             wikilist_title = wikilist_sql[0]
             list_refs_entries = ''
@@ -38,7 +38,7 @@ class MakeWikiLists:
                 .join(Wikilists, Wikilists.letter == PageWithSfn.wikilist) \
                 .filter(ErrRef.page_id.isnot(None), Wikilists.title == wikilist_title) \
                 .order_by(PageWithSfn.title, ErrRef.citeref)
-            refs_pages4check = queryDB(pq)
+            refs_pages4check = pq.all()
 
             for page_title in sorted({p[1] for p in refs_pages4check}):
                 page_refs = [r for r in refs_pages4check if r[1] == page_title]

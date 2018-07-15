@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from pywikibot.data import mysql
-from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, Timecheck, queryDB
+from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, Timecheck
 from settings import *
 
 
@@ -98,7 +98,7 @@ class UpdateDB:
     @staticmethod
     def drop_check_pages_with_warnings():
         """Удаление метки проверки у страниц имеющих warning-шаблон."""
-        pages = queryDB((db_session.query(PageWithWarning.page_id))).all()
+        pages = db_session.query(PageWithWarning.page_id).all()
         for p in pages:
             db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
         db_session.commit()
