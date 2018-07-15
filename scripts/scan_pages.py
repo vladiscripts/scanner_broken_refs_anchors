@@ -24,7 +24,7 @@ def do_scan():
 
 def scan_page(s, title):
     """Сканирование страниц на ошибки"""
-    print(f'title: {title}')
+    print(title)
     r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
     scan_results = ScanRefsOfPage(r.text)
     return scan_results
