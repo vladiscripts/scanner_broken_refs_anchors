@@ -16,7 +16,7 @@ db_session = Session()
 
 class PageWithSfn(Base):
     """Страницы с шаблоном типа {{sfn}}"""
-    __tablename__ = 'pages'
+    __tablename__ = 'pages_with_sfn'
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True, nullable=False)
     timelastedit = Column(Integer)
@@ -35,7 +35,7 @@ class PageWithSfn(Base):
 class Timecheck(Base):
     """Время проверки страниц скриптом"""
     __tablename__ = 'timecheck'
-    page_id = Column(Integer, ForeignKey('pages.page_id', ondelete='CASCADE'), primary_key=True)
+    page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE'), primary_key=True)
     timecheck = Column(Integer)
 
     def __init__(self, page_id, timecheck):
@@ -47,7 +47,7 @@ class ErrRef(Base):
     """Списки ошибочных сносок страниц"""
     __tablename__ = 'erroneous_refs'
     id = Column(Integer, primary_key=True)
-    page_id = Column(Integer, ForeignKey('pages.page_id', ondelete='CASCADE'), index=True)
+    page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE'), index=True)
     citeref = Column(String)
     link_to_sfn = Column(String)
     text = Column(String)
@@ -61,7 +61,7 @@ class ErrRef(Base):
 
 class PageWithWarning(Base):
     """Страницы с шаблоном об ошибке сносок"""
-    __tablename__ = 'warnings'
+    __tablename__ = 'pages_with_warnings'
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True)
 
