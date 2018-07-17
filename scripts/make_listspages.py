@@ -18,7 +18,7 @@ def save_listpages_to_remove_warning_tpl():
 def save_listpages_to_add_warning_tpl():
     """Список куда предупреждение ещё не поставлено."""
     errpages_without_warning_tpl = db_session.query(PageWithSfn.title) \
-        .outerjoin(PageWithWarning) \
+        .outerjoin(PageWithWarning, PageWithSfn.page_id == PageWithWarning.page_id) \
         .join(ErrRef, PageWithSfn.page_id == ErrRef.page_id) \
         .filter(PageWithWarning.page_id.is_(None), ErrRef.page_id.isnot(None)) \
         .group_by(PageWithSfn.title).all()
