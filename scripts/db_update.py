@@ -28,8 +28,9 @@ class UpdateDB:
             db_session.query(ErrRef).delete()
 
         # чистка PageTimecheck и Ref от записей которых нет в pages
-        self.drop_orphan_by_timecheck()
-        self.drop_refs_of_changed_pages()
+        # не нужно с ForeignKey ondelete="CASCADE"
+        # self.drop_orphan_by_timecheck()
+        # self.drop_refs_of_changed_pages()
 
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
@@ -51,15 +52,35 @@ class UpdateDB:
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
 
         w_pages_with_sfns = self.wdb_get_listpages_have_sfnTpl()  # long query ~45000 rows
-        # long query ~45000 rows
-        if len(w_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
-            db_session.query(PageWithSfn).delete()
+
+        # if len(w_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
+        #     db_session.query(PageWithSfn).delete()
+
+        # избранное удаление страниц из ДБ, которых нет в вики
+        # иначе если удалять все, то параметр ForeignKey ondelete="CASCADE" удалит и все проверки
+        # Если же не использовать ondelete="CASCADE", а удалять через WHERE отдельными DELETE, как раньше - это долго
+        db_pages = db_session.query(PageWithSfn).all()
+        db_pages_ids = {p.page_id for p in db_pages}
+        w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
+        delta = db_pages_ids - w_pages_ids
+        if delta:
+            db_session.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
+        # for wid, title, timelastedit in w_pages_with_sfns:
+        #     if wid not in db_pages_ids:
+        #         db_session.query(PageWithSfn).filter(PageWithSfn.page_id == wid).delete()
+
         # for id, title, timelastedit in transcludes_wdb:
         #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
         #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
-        w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
-                             for id, title, timelastedit in w_pages_with_sfns]
-        db_session.bulk_save_objects(w_pages_with_sfns)
+
+        # w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
+        #                      for id, title, timelastedit in w_pages_with_sfns]
+        w_pages_with_sfns = []
+        for id, title, timelastedit in w_pages_with_sfns:
+            p = PageWithSfn(id, self.byte2utf(title), int(timelastedit))
+            w_pages_with_sfns.append(p)
+            db_session.merge(p)
+        # db_session.bulk_save_objects(w_pages_with_sfns)
         # long query
         db_session.commit()
 
