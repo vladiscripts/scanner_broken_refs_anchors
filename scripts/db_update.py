@@ -9,10 +9,10 @@ from settings import *
 class UpdateDB:
     def __init__(self):
         # обновить список страниц, имеющих установленный шаблон
-        self.update_listpages_have_WarningTpl()
+        self.reload_listpages_have_WarningTpl()
 
         # обновить список страниц, имеющих шаблоны типа {{sfn}}
-        self.update_transcludes_sfn_tempates()
+        self.reload_listpages_have_sfnTpl()
 
         # очистка метки проверки неучтенных шаблонов
         # self.query_transcludes_any_tpl(('Citation', 'Cite'))
@@ -31,7 +31,7 @@ class UpdateDB:
         self.drop_orphan_by_timecheck()
         self.drop_refs_of_changed_pages()
 
-    def update_listpages_have_WarningTpl(self):
+    def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
         tpls_str = self.list_to_str_params('tl_title',
                                            map(self.normalization_pagename, self.str2list(warning_tpl_name)))
@@ -47,19 +47,19 @@ class UpdateDB:
             db_session.add(PageWithWarning(id, self.byte2utf(title)))
         db_session.commit()
 
-    def update_transcludes_sfn_tempates(self):
+    def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
 
-        transcludes_wdb = self.wdb_get_listpages_have_sfnTpl()  # long query ~45000 rows
+        w_pages_with_sfns = self.wdb_get_listpages_have_sfnTpl()  # long query ~45000 rows
         # long query ~45000 rows
-        if len(transcludes_wdb) > 10000:  # 10000 иногда возвращается обрезанный результат
+        if len(w_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
             db_session.query(PageWithSfn).delete()
         # for id, title, timelastedit in transcludes_wdb:
         #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
         #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
-        transcludes_wdb = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
-                           for id, title, timelastedit in transcludes_wdb]
-        db_session.bulk_save_objects(transcludes_wdb)
+        w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
+                             for id, title, timelastedit in w_pages_with_sfns]
+        db_session.bulk_save_objects(w_pages_with_sfns)
         # long query
         db_session.commit()
 
