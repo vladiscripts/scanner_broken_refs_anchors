@@ -20,7 +20,7 @@ class PageWithSfn(Base):
     page_id = Column(Integer, primary_key=True)
     title = Column(String, unique=True, nullable=False)
     timelastedit = Column(Integer)
-    wikilist = Column(String, ForeignKey('pages_with_sfn.wikilist'), index=True)
+    wikilist = Column(String, index=True)
     timechecks = relationship('Timecheck', backref='page', passive_deletes=True)  # cascade='all,delete,delete-orphan'
     refs = relationship('ErrRef', backref='page', passive_deletes=True)
 
@@ -73,7 +73,7 @@ class PageWithWarning(Base):
 class Wikilists(Base):
     """Названия подстраниц бота со списками ошибок"""
     __tablename__ = 'wikilists'
-    letter = Column(String, primary_key=True)
+    letter = Column(String, ForeignKey('pages_with_sfn.wikilist'), primary_key=True)
     title = Column(String)
 
     def __init__(self, letter, title):
