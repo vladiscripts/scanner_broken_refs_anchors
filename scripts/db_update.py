@@ -48,21 +48,9 @@ class UpdateDB:
         db_session.commit()
 
     def update_transcludes_sfn_tempates(self):
-        """Обновить список страниц, имеющих шаблоны типа {{sfn}}."""
-        tpls_str = self.list_to_str_params('templatelinks.tl_title',
-                                           map(self.normalization_pagename, self.str2list(names_sfn_templates)))
-        sql = f"""SELECT
-				  page.page_id,
-				  page.page_title,
-				  MAX(revision.rev_timestamp) AS timelastedit
-				FROM page
-				  INNER JOIN templatelinks ON page.page_id = templatelinks.tl_from
-				  INNER JOIN revision ON page.page_id = revision.rev_page
-				WHERE templatelinks.tl_namespace = 10 AND page.page_namespace = 0
-				AND ({tpls_str})
-				GROUP BY page.page_title
-				ORDER BY page.page_id ASC;"""
-        transcludes_wdb = self.wdb_query(sql)
+        """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
+
+        transcludes_wdb = self.wdb_get_listpages_have_sfnTpl()  # long query ~45000 rows
         # long query ~45000 rows
         if len(transcludes_wdb) > 10000:  # 10000 иногда возвращается обрезанный результат
             db_session.query(PageWithSfn).delete()
@@ -74,6 +62,27 @@ class UpdateDB:
         db_session.bulk_save_objects(transcludes_wdb)
         # long query
         db_session.commit()
+
+    def wdb_get_listpages_have_sfnTpl(self):
+        """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
+        tpls_str = self.list_to_str_params('templatelinks.tl_title',
+                                           map(self.normalization_pagename, self.str2list(names_sfn_templates)))
+        sql = f"""SELECT
+                  page.page_id,
+                  page.page_title,
+                  MAX(revision.rev_timestamp) AS timelastedit
+                FROM page
+                  INNER JOIN templatelinks ON page.page_id = templatelinks.tl_from
+                  INNER JOIN revision ON page.page_id = revision.rev_page
+                WHERE templatelinks.tl_namespace = 10 AND page.page_namespace = 0
+                AND ({tpls_str})
+                GROUP BY page.page_title
+                ORDER BY page.page_id ASC;"""
+        pages = self.wdb_query(sql)
+        # if len(wdb_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
+        #     db_session.query(PageWithSfn).delete()
+        # long query ~45000 rows
+        return pages
 
     @staticmethod
     def drop_orphan_by_timecheck():
