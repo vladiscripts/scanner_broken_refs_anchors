@@ -8,7 +8,7 @@ from scripts import post_to_wiki
 # from scripts.scan_pages_asyncio import Scanner
 from scripts import scan_pages
 from scripts.db_update import UpdateDB
-from scripts.make_listspages import save_listpages_to_add_warning_tpl, save_listpages_to_remove_warning_tpl
+from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
 from scripts.make_wikilists import MakeWikiLists
 
 if __name__ == '__main__':
@@ -38,8 +38,8 @@ if __name__ == '__main__':
         scan_pages.do_scan()
 
         # Запись списков
-        save_listpages_to_remove_warning_tpl()
-        save_listpages_to_add_warning_tpl()
+        save_listpages_for_remove_warning_tpls()
+        save_listpages_for_add_warning_tpls()
         if make_wikilist:
             w = MakeWikiLists()
             w.save_wikilist()
