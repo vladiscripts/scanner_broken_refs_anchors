@@ -31,19 +31,25 @@ def scan_page(s, title):
 
 
 def db_save_results(page_id, err_refs):
-    """Сохранение результатов сканирования в БД"""
+    """Сохранение результатов сканирования в БД
+    Очистка db от спискастарых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+    """
     db_session.rollback()
-
-    # Очистка db от списка старых ошибок
-    # заменено на ForeignKey
-    # db_session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
-    # db_session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-
+    time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+    db_session.query(PageWithSfn).filter(PageWithSfn.page_id == page_id).delete()
     for ref in err_refs:
         db_session.add(ErrRef(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+    db_session.add(Timecheck(page_id, time_current))
+    db_session.commit()
 
+
+def db_save_results_no_ForeignKeyCascadeDelete(page_id, err_refs):
+    """Сохранение результатов сканирования в БД"""
+    db_session.rollback()
     time_current = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-    # db_session.add(Timecheck(page_id, time_current))
+    db_session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+    for ref in err_refs:
+        db_session.add(ErrRef(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
     db_session.merge(Timecheck(page_id, time_current))
     db_session.commit()
 
