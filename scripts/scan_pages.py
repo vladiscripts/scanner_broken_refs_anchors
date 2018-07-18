@@ -15,10 +15,10 @@ def do_scan():
     """Сканирование страниц на ошибки"""
     s = open_requests_session()
     pages = db_get_list_pages_for_scan()
-    for id, title in pages:
+    for pid, title in pages:
         # if id != 273920:	continue  # For tests
         scan_results = scan_page(s, title)
-        db_save_results(id, scan_results.err_refs)
+        db_save_results(pid, scan_results.err_refs)
     s.close()
 
 

@@ -51,9 +51,9 @@ class MakeWikiLists:
             # Fill wikilists page
             if list_refs_entries != '':
                 pagename = u'Шаблон:' + root_wikilists + wikilist_title
-                self.wikilists += self.formated_wikilist(pagename, list_refs_entries)
+                self.wikilists += self.formatted_wikilist(pagename, list_refs_entries)
 
-    def formated_wikilist(self, pagename, wiki_refs_entries):
+    def formatted_wikilist(self, pagename, wiki_refs_entries):
         return f"{marker_page_start}\n'''{pagename}'''\n{header}\n{wiki_refs_entries}\n{footer}\n{marker_page_end}\n\n"
 
     def save_wikilist(self):
