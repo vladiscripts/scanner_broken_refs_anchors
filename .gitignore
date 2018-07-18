@@ -1,0 +1,9 @@
+__pycache__/
+\.idea/
+*.txt
+*.sqlite
+passwords.py
+*.sqlite-journal
+*.sqlite.sql
+*.err
+*.csv
