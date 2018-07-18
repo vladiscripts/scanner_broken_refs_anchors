@@ -2,7 +2,4 @@ requests
 sqlalchemy
 pymysql
 lxml
-cssselect
-asyncio
-aiohttp
-
+pywikibot
