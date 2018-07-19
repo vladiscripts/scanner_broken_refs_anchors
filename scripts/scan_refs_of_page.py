@@ -46,14 +46,16 @@ class ScanRefsOfPage:
         # список сносок с отсутствующими ссылками, из сравнения списков сносок и примечаний
         err_refs = self.list_sfns - self.list_citations
         # Если в статье есть некорректные сноски без целевых примечаний
-        if err_refs:
-            self.err_refs = []
-            for citeref_bad in sorted(err_refs):
-                it_sfn_double = False
-                for sfn in self.all_sfns_info:
-                    if citeref_bad == sfn['citeref'] and not it_sfn_double:
-                        self.err_refs.append(sfn)
-                        it_sfn_double = True
+        if not err_refs:
+            return
+        err_refs = []
+        for citeref_bad in sorted(err_refs):
+            it_sfn_double = False
+            for sfn in self.all_sfns_info:
+                if citeref_bad == sfn['citeref'] and not it_sfn_double:
+                    err_refs.append(sfn)
+                    it_sfn_double = True
+        self.err_refs = err_refs
 
     # def error_print(self, error):
 # 	error_text = 'Error "{}" on parsing footnotes of page "{}"'.format(error, self.title)
