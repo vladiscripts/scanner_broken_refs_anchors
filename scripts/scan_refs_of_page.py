@@ -9,6 +9,7 @@ tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 
 
 class ScanRefsOfPage:
+
     def __init__(self, html):
         self.list_sfns = set()
         self.list_citations = set()
@@ -25,30 +26,20 @@ class ScanRefsOfPage:
         self.list_sfns - список только sfn-id
         self.all_sfn_info_of_page - полный список
         """
-        try:
-            for li in self.htmltree.cssselect("ol.references li[id^='cite']"):
-                for a in li.cssselect("span.reference-text a[href^='#CITEREF']"):
-                    aText = tag_a.search(str(tostring(a, encoding='unicode'))).group(1)
-                    idRef = a.attrib['href'].lstrip('#')
-                    self.list_sfns.add(idRef)
-                    self.all_sfns_info.append(
-                        {'citeref': idRef, 'text': aText, 'link_to_sfn': str(li.attrib['id'])})
-
-        except Exception as error:
-            # self.error_print(error)
-            pass
+        for li in self.htmltree.cssselect("ol.references li[id^='cite']"):
+            for a in li.cssselect("span.reference-text a[href^='#CITEREF']"):
+                aText = tag_a.search(str(tostring(a, encoding='unicode'))).group(1)
+                idRef = a.attrib['href'].lstrip('#')
+                self.list_sfns.add(idRef)
+                self.all_sfns_info.append(
+                    {'citeref': idRef, 'text': aText, 'link_to_sfn': str(li.attrib['id'])})
 
     def find_citations_on_page(self):
         """ Список id библиографии. Возвращает: self.list_refs """
-        try:
-            # cssselect использован для надёжности.
-            # В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
-            self.list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]']
-                                   for e in self.htmltree.cssselect(css)}
-
-        except Exception as error:
-            # self.error_print(error)
-            pass
+        # cssselect использован для надёжности.
+        # В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
+        self.list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]']
+                               for e in self.htmltree.cssselect(css)}
 
     def compare_refs(self):
         """ Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
@@ -64,7 +55,7 @@ class ScanRefsOfPage:
                         self.err_refs.append(sfn)
                         it_sfn_double = True
 
-# def error_print(self, error):
+    # def error_print(self, error):
 # 	error_text = 'Error "{}" on parsing footnotes of page "{}"'.format(error, self.title)
 # 	print(error_text)
 # 	file_savelines(filename_error_log, error_text)
