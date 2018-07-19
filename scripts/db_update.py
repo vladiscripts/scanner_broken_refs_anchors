@@ -59,27 +59,32 @@ class UpdateDB:
         # избранное удаление страниц из ДБ, которых нет в вики
         # иначе если удалять все, то параметр ForeignKey ondelete="CASCADE" удалит и все проверки
         # Если же не использовать ondelete="CASCADE", а удалять через WHERE отдельными DELETE, как раньше - это долго
+
+        # db_pages = db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
+        #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
         db_pages = db_session.query(PageWithSfn).all()
         db_pages_ids = {p.page_id for p in db_pages}
         w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
         delta = db_pages_ids - w_pages_ids
+        # new_delta = w_pages_ids - db_pages_ids
         if delta:
             db_session.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
-        # for wid, title, timelastedit in w_pages_with_sfns:
-        #     if wid not in db_pages_ids:
-        #         db_session.query(PageWithSfn).filter(PageWithSfn.page_id == wid).delete()
-
-        # for id, title, timelastedit in transcludes_wdb:
-        #     # id, title, timelastedit = p[0], self.byte2utf(p[1]), int(p[2])
-        #     db_session.add(Page(id, self.byte2utf(title), int(timelastedit)))
+            db_session.commit()
 
         # w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
         #                      for id, title, timelastedit in w_pages_with_sfns]
-        w_pages_with_sfns = []
-        for pid, title, timelastedit in w_pages_with_sfns:
-            p = PageWithSfn(pid, self.byte2utf(title), int(timelastedit))
-            w_pages_with_sfns.append(p)
-            db_session.merge(p)
+
+        for page_id, title, timelastedit in w_pages_with_sfns:
+            db_session.merge(PageWithSfn(page_id, self.byte2utf(title), int(timelastedit)))
+
+        # слишком долная операция
+        # for page_id, title, timelastedit in w_pages_with_sfns:
+        #     for db in db_pages:
+        #         if page_id == db.page_id:
+        #             if int(timelastedit) >= int(db.timecheck) or title.decode("utf-8") != db.title:
+        #                 db_session.merge(PageWithSfn(page_id, self.byte2utf(title), int(timelastedit)))
+        #             break
+
         # db_session.bulk_save_objects(w_pages_with_sfns)
         # long query
         db_session.commit()
