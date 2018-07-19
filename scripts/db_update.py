@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from pywikibot.data import mysql
-from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning, Timecheck
+from scripts.db_models import db_session, PageWithSfn, ErrRef, PageWithWarning, Timecheck
 from settings import *
 
 

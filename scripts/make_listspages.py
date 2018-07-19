@@ -3,7 +3,7 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts.db_init import db_session, PageWithSfn, ErrRef, PageWithWarning
+from scripts.db_models import db_session, PageWithSfn, ErrRef, PageWithWarning
 
 
 def save_listpages_for_remove_warning_tpls():

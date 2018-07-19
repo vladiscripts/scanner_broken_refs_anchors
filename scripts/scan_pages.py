@@ -7,7 +7,7 @@ import time
 from urllib.parse import quote
 
 import requests
-from scripts.db_init import db_session, PageWithSfn, ErrRef, Timecheck
+from scripts.db_models import db_session, PageWithSfn, ErrRef, Timecheck
 from scripts.scan_refs_of_page import ScanRefsOfPage
 
 

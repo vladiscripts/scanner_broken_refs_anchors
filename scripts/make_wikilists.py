@@ -2,7 +2,7 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts.db_init import db_session, PageWithSfn, ErrRef, Wikilists
+from scripts.db_models import db_session, PageWithSfn, ErrRef, Wikilists
 from scripts.make_listspages import file_savetext
 
 
