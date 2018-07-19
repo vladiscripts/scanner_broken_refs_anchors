@@ -14,11 +14,11 @@ from scripts.scan_refs_of_page import ScanRefsOfPage
 def do_scan():
     """Сканирование страниц на ошибки"""
     s = open_requests_session()
-    pages = db_get_list_pages_for_scan()
+    pages = db_get_list_changed_pages()
     for pid, title in pages:
         # if id != 273920:	continue  # For tests
         scan_results = scan_page(s, title)
-        db_save_results(pid, scan_results.err_refs)
+        db_update_pagedata(pid, scan_results.err_refs)
     s.close()
 
 

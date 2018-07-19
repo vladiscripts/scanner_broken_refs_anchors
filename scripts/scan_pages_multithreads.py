@@ -4,7 +4,7 @@
 # author: https://github.com/vladiscripts
 #
 import threading
-from scripts.scan_pages import open_requests_session, db_get_list_pages_for_scan, scan_page, db_save_results
+from scripts.scan_pages import open_requests_session, db_get_list_changed_pages, scan_page, db_update_pagedata
 
 
 # class WorkerThread(threading.Thread):
@@ -57,7 +57,7 @@ def worker_Semaphore(sema, p):
 
 def do_work_threading_Semaphore():
     s = open_requests_session()
-    list_pages_for_scan = db_get_list_pages_for_scan()
+    list_pages_for_scan = db_get_list_changed_pages()
     # url_list_lock = threading.Lock()
 
     limit = 5
@@ -78,7 +78,7 @@ def do_work_threading_Semaphore():
             t.start()
             threads.append(t)
             scan_results = scan_page(pool_sema, p[1])
-            db_save_results(p[0], scan_results.err_refs)
+            db_update_pagedata(p[0], scan_results.err_refs)
 
         # try:
         # 	pool_sema.acquire()
@@ -102,12 +102,12 @@ def worker(q, s):
         if item is None:
             break
         scan_results = scan_page(s, item[1])
-        db_save_results(item[0], scan_results.err_refs)
+        db_update_pagedata(item[0], scan_results.err_refs)
         q.task_done()
 
 
 def do_work_threading(s):
-    list_pages_for_scan = db_get_list_pages_for_scan()
+    list_pages_for_scan = db_get_list_changed_pages()
     q = queue.Queue()
     threads = []
     for i in range(3):

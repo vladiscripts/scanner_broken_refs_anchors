@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 import socket
 from urllib.parse import quote
-from scripts.scan_pages import db_get_list_pages_for_scan, scan_page
+from scripts.scan_pages import db_get_list_changed_pages, scan_page
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from settings import *
 
@@ -15,7 +15,7 @@ from settings import *
 class Scanner:
     def do_scan(self):
         """Сканирование страниц на ошибки"""
-        list_pages_for_scan = db_get_list_pages_for_scan()
+        list_pages_for_scan = db_get_list_changed_pages()
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.asynchronous(list_pages_for_scan, loop))

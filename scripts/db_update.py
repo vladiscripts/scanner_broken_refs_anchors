@@ -42,9 +42,9 @@ class UpdateDB:
 				WHERE tl_namespace = 10 AND page_namespace = 0
 				AND ({tpls_str})
 				ORDER BY page.page_id ASC;"""
-        pages = self.wdb_query(sql)
+        w_pages = self.wdb_query(sql)
         db_session.query(PageWithWarning).delete()
-        for pid, title in pages:
+        for pid, title in w_pages:
             db_session.add(PageWithWarning(pid, self.byte2utf(title)))
         db_session.commit()
 
