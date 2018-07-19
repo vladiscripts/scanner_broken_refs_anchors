@@ -105,24 +105,24 @@ class UpdateDB:
         # long query ~45000 rows
         return pages
 
-    @staticmethod
-    def drop_orphan_by_timecheck():
-        """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-        pages = db_session.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(
-            PageWithSfn.page_id.is_(None)).all()
-        for p in pages:
-            db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
-        db_session.commit()
+    # @staticmethod
+    # def drop_orphan_by_timecheck():
+    #     """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
+    #     pages = db_session.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(
+    #         PageWithSfn.page_id.is_(None)).all()
+    #     for p in pages:
+    #         db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
+    #     db_session.commit()
 
-    @staticmethod
-    def drop_refs_of_changed_pages():
-        # pages = db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).all()
-        # for p in pages:
-        #     db_session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete()
-        subq = db_session.query(PageWithSfn.page_id)
-        db_session.query(ErrRef).filter(ErrRef.page_id.in_(subq)).delete(synchronize_session='fetch')
-        # db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).delete()
-        db_session.commit()
+    # @staticmethod
+    # def drop_refs_of_changed_pages():
+    #     # pages = db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).all()
+    #     # for p in pages:
+    #     #     db_session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete()
+    #     subq = db_session.query(PageWithSfn.page_id)
+    #     db_session.query(ErrRef).filter(ErrRef.page_id.in_(subq)).delete(synchronize_session='fetch')
+    #     # db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).delete()
+    #     db_session.commit()
 
     # Helpers
     @staticmethod
