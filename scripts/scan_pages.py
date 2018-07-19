@@ -16,7 +16,7 @@ def do_scan():
     s = open_requests_session()
     pages = db_get_list_changed_pages()
     for pid, title in pages:
-        # if id != 273920:	continue  # For tests
+        # if pid != 3690723:  continue  # For tests
         print(title)
         r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
         scan_results = ScanRefsOfPage(r.text)
@@ -32,9 +32,7 @@ def db_update_pagedata(page_id, err_refs):
     db_session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
     for ref in err_refs:
         db_session.add(ErrRef(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
-    db_session.query(Timecheck).filter(Timecheck.page_id == page_id).delete()
-    db_session.add(Timecheck(page_id, time_current()))  # merge
-    # db_session.merge(Timecheck(page_id, time_current()))  # merge
+    db_session.merge(Timecheck(page_id, time_current()))  # merge
     db_session.commit()
 
 
