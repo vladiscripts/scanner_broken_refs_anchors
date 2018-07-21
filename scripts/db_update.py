@@ -53,13 +53,6 @@ class UpdateDB:
 
         w_pages_with_sfns = self.wdb_get_listpages_have_sfnTpl()  # long query ~45000 rows
 
-        # if len(w_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
-        #     db_session.query(PageWithSfn).delete()
-
-        # избранное удаление страниц из ДБ, которых нет в вики
-        # иначе если удалять все, то параметр ForeignKey ondelete="CASCADE" удалит и все проверки
-        # Если же не использовать ondelete="CASCADE", а удалять через WHERE отдельными DELETE, как раньше - это долго
-
         # db_pages = db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
         db_pages = db_session.query(PageWithSfn).all()
@@ -71,13 +64,10 @@ class UpdateDB:
             db_session.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
             db_session.commit()
 
-        # w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
-        #                      for id, title, timelastedit in w_pages_with_sfns]
-
         for page_id, title, timelastedit in w_pages_with_sfns:
             db_session.merge(PageWithSfn(page_id, self.byte2utf(title), int(timelastedit)))
 
-        # слишком долная операция
+        # слишком долгая операция
         # for page_id, title, timelastedit in w_pages_with_sfns:
         #     for db in db_pages:
         #         if page_id == db.page_id:
@@ -85,6 +75,12 @@ class UpdateDB:
         #                 db_session.merge(PageWithSfn(page_id, self.byte2utf(title), int(timelastedit)))
         #             break
 
+        # очистка и перезаливка таблицы
+        # не подходит - если удалять все, то параметр ForeignKey ondelete="CASCADE" удалит и все проверки
+        # if len(w_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
+        #     db_session.query(PageWithSfn).delete()
+        # w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
+        #                      for id, title, timelastedit in w_pages_with_sfns]
         # db_session.bulk_save_objects(w_pages_with_sfns)
         # long query
         db_session.commit()
