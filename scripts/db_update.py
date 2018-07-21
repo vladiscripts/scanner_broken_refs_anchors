@@ -7,7 +7,7 @@ from settings import *
 
 
 class UpdateDB:
-    def __init__(self):
+    def listpages(self):
         # обновить список страниц, имеющих установленный шаблон
         self.reload_listpages_have_WarningTpl()
 
@@ -17,15 +17,6 @@ class UpdateDB:
         # очистка метки проверки неучтенных шаблонов
         # self.query_transcludes_any_tpl(('Citation', 'Cite'))
         # self.query_transcludes_any_tpl('Cite')
-
-        # Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
-        if clear_check_pages_with_warnings:
-            # удаление метки проверки у страниц имеющих warning-шаблон
-            self.drop_check_pages_with_warnings()
-        if clear_all_check_pages:
-            # сброс всех меток проверки
-            self.drop_all_check_pages()
-            db_session.query(ErrRef).delete()
 
         # чистка PageTimecheck и Ref от записей которых нет в pages
         # не нужно с ForeignKey ondelete="CASCADE"
@@ -56,14 +47,11 @@ class UpdateDB:
         # db_pages = db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
         db_pages = db_session.query(PageWithSfn).all()
-        db_pages_ids = {p.page_id for p in db_pages}
-        w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
-        delta = db_pages_ids - w_pages_ids
-        # new_delta = w_pages_ids - db_pages_ids
-        if delta:
-            db_session.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
-            db_session.commit()
 
+        # чистка PageWithSfn
+        self.drop_orphan_sfnpages(w_pages_with_sfns, db_pages)
+
+        # upsert
         for page_id, title, timelastedit in w_pages_with_sfns:
             db_session.merge(PageWithSfn(page_id, self.byte2utf(title), int(timelastedit)))
 
@@ -101,10 +89,15 @@ class UpdateDB:
                 GROUP BY page.page_title
                 ORDER BY page.page_id ASC;"""
         pages = self.wdb_query(sql)
-        # if len(wdb_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
-        #     db_session.query(PageWithSfn).delete()
-        # long query ~45000 rows
         return pages
+
+    def drop_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
+        db_pages_ids = {p.page_id for p in db_pages}
+        w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
+        delta = db_pages_ids - w_pages_ids
+        if delta:
+            db_session.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
+            db_session.commit()
 
     # @staticmethod
     # def drop_orphan_by_timecheck():

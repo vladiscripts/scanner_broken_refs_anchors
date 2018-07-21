@@ -23,7 +23,7 @@ do_update_db_from_wiki = True
 make_wikilist = True
 
 # --- Внмание, включение записи в википедию
-do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
+do_all_post_to_wiki = True  # Отключение всех опций ниже в этой секции
 
 do_post_wikilist = True  # Запись списков
 do_post_wikilist_simulate = False  # Симуляция записи
