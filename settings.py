@@ -72,7 +72,7 @@ header = """
 Список обновляется ботом.
 
 """  # в шапку шаблон {{координационный список}} не нужен, ибо это не список, а подстраница данных скрипта
-footer = '[[Категория:Википедия:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
+footer = '[[Категория:Шаблоны:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
 
 # ---
 print_log = True
@@ -81,8 +81,8 @@ filename_error_log = 'errors_log.txt'
 # Названия sfn-шаблонов
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
 names_sfn_templates = ((
-	'sfn', 'sfn0', 'Sfn-1',
-	'Harvard citation', 'Harv',
-	'Harvard citation no brackets', 'Harvnb', 'Harvsp',
-	'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
+    'sfn', 'sfn0', 'Sfn-1',
+    'Harvard citation', 'Harv',
+    'Harvard citation no brackets', 'Harvnb', 'Harvsp',
+    'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
 ))
