@@ -21,8 +21,8 @@ def do_scan():
             # if pid != 3690723:  continue  # For tests
             print(title)
             r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
-            scan_results = ScanRefsOfPage(r.text)
-            db_update_pagedata(pid, scan_results.err_refs)
+            err_refs = ScanRefsOfPage(r.text)
+            db_update_pagedata(pid, err_refs)
         pages = db_get_list_changed_pages(limit)
     s.close()
 

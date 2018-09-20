@@ -8,54 +8,54 @@ from lxml.html import tostring, fromstring
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 
 
-class ScanRefsOfPage:
-
-    def __init__(self, html):
-        self.err_refs = []
-        self.__list_sfns = set()
-        self.__list_citations = set()
-        self.__all_sfns_info = []
-        self.__htmltree = fromstring(html)
-        self.find_sfns_on_page()
-        self.find_citations_on_page()
-        self.compare_refs()
-
-    def find_sfns_on_page(self):
+def ScanRefsOfPage(html):
+    def find_sfns_on_page(htmltree):
         """ Список сносок из раздела 'Примечания'.
         Возвращает:
         self.list_sfns - список только sfn-id
         self.all_sfn_info_of_page - полный список
         """
-        for li in self.__htmltree.cssselect("ol.references li[id^='cite']"):
+        list_sfns = set()
+        all_sfns_info = []
+
+        for li in htmltree.cssselect("ol.references li[id^='cite']"):
             for a in li.cssselect("span.reference-text a[href^='#CITEREF']"):
                 aText = tag_a.search(str(tostring(a, encoding='unicode'))).group(1)
                 idRef = a.attrib['href'].lstrip('#')
-                self.__list_sfns.add(idRef)
-                self.__all_sfns_info.append(
+                list_sfns.add(idRef)
+                all_sfns_info.append(
                     {'citeref': idRef, 'text': aText, 'link_to_sfn': str(li.attrib['id'])})
+                # return list_sfns, all_sfns_info
+        return list_sfns, all_sfns_info
 
-    def find_citations_on_page(self):
+    def find_citations_on_page(htmltree):
         """ Список id библиографии. Возвращает: self.list_refs """
         # cssselect использован для надёжности.
         # В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
-        self.__list_citations = {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]']
-                                 for e in self.__htmltree.cssselect(css)}
+        return {e.attrib['id'] for css in ['span.citation[id^="CITEREF"]', 'cite[id^="CITEREF"]']
+                for e in htmltree.cssselect(css)}
 
-    def compare_refs(self):
-        """ Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
-        # список сносок с отсутствующими ссылками, из сравнения списков сносок и примечаний
-        err_refs_loc = self.__list_sfns - self.__list_citations
-        # Если в статье есть некорректные сноски без целевых примечаний
-        if not err_refs_loc:
-            return
-        for citeref_bad in sorted(err_refs_loc):
-            it_sfn_double = False
-            for sfn in self.__all_sfns_info:
-                if citeref_bad == sfn['citeref'] and not it_sfn_double:
-                    self.err_refs.append(sfn)
-                    it_sfn_double = True
+    err_refs = []
 
-    # def error_print(self, error):
+    htmltree = fromstring(html)
+
+    list_sfns, all_sfns_info = find_sfns_on_page(htmltree)
+    list_citations = find_citations_on_page(htmltree)
+
+    # """ Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
+    # список сносок с отсутствующими ссылками, из сравнения списков сносок и примечаний
+    err_citerefs = list_sfns - list_citations
+
+    if err_citerefs:
+        for c in sorted(err_citerefs):
+            for sfn in all_sfns_info:
+                if c == sfn['citeref']:
+                    err_refs.append(sfn)
+                    break
+
+    return err_refs
+
+#     # def error_print(self, error):
 # 	error_text = 'Error "{}" on parsing footnotes of page "{}"'.format(error, self.title)
 # 	print(error_text)
 # 	file_savelines(filename_error_log, error_text)
