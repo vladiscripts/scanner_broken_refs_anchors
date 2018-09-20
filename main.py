@@ -6,6 +6,7 @@
 from settings import *
 from scripts import post_to_wiki
 # from scripts.scan_pages_asyncio import Scanner
+from scripts import scan_pages_multithreads
 from scripts import scan_pages
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
@@ -38,7 +39,10 @@ if __name__ == '__main__':
         # 	scaner.do_scan()
         # else:
         # 	scan_pages.do_scan()
-        scan_pages.do_scan()
+        # scan_pages.do_scan()
+
+        scaner = scan_pages_multithreads.Scanner()
+        scaner.do_multiprocessing()
 
         # Запись списков
         save_listpages_for_remove_warning_tpls()
