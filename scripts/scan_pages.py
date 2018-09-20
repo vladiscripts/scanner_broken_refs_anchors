@@ -13,14 +13,17 @@ from scripts.scan_refs_of_page import ScanRefsOfPage
 
 def do_scan():
     """Сканирование страниц на ошибки"""
+    limit = 100
+    pages = db_get_list_changed_pages(limit)
     s = open_requests_session()
-    pages = db_get_list_changed_pages()
-    for pid, title in pages:
-        # if pid != 3690723:  continue  # For tests
-        print(title)
-        r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
-        scan_results = ScanRefsOfPage(r.text)
-        db_update_pagedata(pid, scan_results.err_refs)
+    while pages:
+        for pid, title in pages:
+            # if pid != 3690723:  continue  # For tests
+            print(title)
+            r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
+            scan_results = ScanRefsOfPage(r.text)
+            db_update_pagedata(pid, scan_results.err_refs)
+        pages = db_get_list_changed_pages(limit)
     s.close()
 
 
@@ -36,10 +39,12 @@ def db_update_pagedata(page_id, err_refs):
     db_session.commit()
 
 
-def db_get_list_changed_pages():
+def db_get_list_changed_pages(limit=None, offset=None):
     pages = db_session.query(PageWithSfn.page_id, PageWithSfn.title) \
         .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
-        .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck)).all()
+        .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck)) \
+        .limit(limit).offset(offset) \
+        .all()
     return pages
 
 
