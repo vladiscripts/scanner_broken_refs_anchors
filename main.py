@@ -39,10 +39,10 @@ if __name__ == '__main__':
         # 	scaner.do_scan()
         # else:
         # 	scan_pages.do_scan()
-        # scan_pages.do_scan()
+        scan_pages.do_scan()
 
-        scaner = scan_pages_multithreads.Scanner()
-        scaner.do_multiprocessing()
+        # scaner = scan_pages_multithreads.Scanner()
+        # scaner.do_multiprocessing()
 
         # Запись списков
         save_listpages_for_remove_warning_tpls()
