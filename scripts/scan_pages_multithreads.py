@@ -142,8 +142,8 @@ class Scanner():
             r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
         except Exception as e:
             print(e)
-        scan_results = ScanRefsOfPage(r.text)
-        return pid, scan_results
+        err_refs = ScanRefsOfPage(r.text)
+        return pid, err_refs
 
     def do_multiprocessing(self, pool_size=None):
         limit, offset = 100, 0
