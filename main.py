@@ -4,9 +4,8 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts import post_to_wiki
 # from scripts.scan_pages_asyncio import Scanner
-from scripts import scan_pages_multithreads
+# from scripts import scan_pages_multithreads
 from scripts import scan_pages
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
@@ -50,12 +49,3 @@ if __name__ == '__main__':
         if make_wikilist:
             w = MakeWikiLists()
             w.save_wikilist()
-
-    # Постинг списков и установка шаблонов в wiki
-    if do_all_post_to_wiki:
-        if do_post_wikilist:
-            post_to_wiki.posting_list()
-        if do_post_template:
-            post_to_wiki.posting_template()
-        if do_remove_template:
-            post_to_wiki.remove_template()

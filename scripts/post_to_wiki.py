@@ -62,3 +62,14 @@ def remove_template():
     ]
     command = '%s replace %s' % (python_and_path, ' '.join(params))
     os.system(command)
+
+
+if __name__ == '__main__':
+    # Постинг списков и установка шаблонов в wiki
+    if do_all_post_to_wiki:
+        if do_post_wikilist:
+            posting_list()
+        if do_post_template:
+            posting_template()
+        if do_remove_template:
+            remove_template()
