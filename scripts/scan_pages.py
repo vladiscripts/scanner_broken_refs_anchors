@@ -13,7 +13,7 @@ from scripts.scan_refs_of_page import ScanRefsOfPage
 
 def do_scan():
     """Сканирование страниц на ошибки"""
-    limit, offset = 20, 0
+    limit, offset = 100, 0
     pages = db_get_list_changed_pages(limit, offset)
     s = open_requests_session()
     while pages:
@@ -28,8 +28,8 @@ def do_scan():
             results.append([pid, err_refs])
 
         for pid, err_refs in results:
-            if err_refs:
-                db_update_pagedata(pid, err_refs)
+            # if err_refs:
+            db_update_pagedata(pid, err_refs)
         offset = offset + limit
         pages = db_get_list_changed_pages(limit, offset)
     s.close()

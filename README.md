@@ -7,5 +7,5 @@ Scanner of all pages of russian Wikipedia for broken footnotes. Marking this err
 * Uses: Wikipedia API, Sqlite via SQLAlchemy (ORM), framework Pywikibot.
 * Works on tools.wmlabs.org by schedule in `crontab -e`.
 * Config file: `settings.py`. And there must be data to access the wiki database in your `~/.pywikibot/user-config.py`.
-* Run files: `main.py` (scaner), `/script/post_to_wiki.py` (poster)
+* Scripts: `scanner.py`, `post_to_wiki.py`.
 
