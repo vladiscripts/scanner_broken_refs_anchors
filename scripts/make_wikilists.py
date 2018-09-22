@@ -57,4 +57,4 @@ class MakeWikiLists:
         return f"{marker_page_start}\n'''{pagename}'''\n{header}\n{wiki_refs_entries}\n{footer}\n{marker_page_end}\n\n"
 
     def save_wikilist(self):
-        file_savetext(f'{filename_wikilists}.txt', self.wikilists)
+        file_savetext(filename_wikilists, self.wikilists)
