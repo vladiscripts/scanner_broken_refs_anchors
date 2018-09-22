@@ -3,7 +3,7 @@
 #
 # author: https://github.com/vladiscripts
 #
-import threading
+# import threading
 from scripts.scan_pages import open_requests_session, db_get_list_changed_pages, db_update_pagedata, ScanRefsOfPage
 from multiprocessing.dummy import Pool as ThreadPool
 from urllib.parse import quote
