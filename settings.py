@@ -58,7 +58,7 @@ filename_listpages_errref = 'listpages_err_ref.txt'
 
 # ---
 # Создание вики-списков для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
-filename_wikilists = 'wikisections'  # к имени добавляется № части и расширение '.txt'
+filename_wikilists = 'wikisections.txt'
 
 root_wikilists = warning_tpl_name + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
 marker_page_start = '{{-start-}}'
