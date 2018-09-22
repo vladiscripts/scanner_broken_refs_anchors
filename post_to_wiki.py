@@ -45,7 +45,7 @@ def posting_list():
         '-begin:"%s"' % marker_page_start, '-end:"%s"' % marker_page_end, '-notitle',
         '-summary:"обновление списка"',
         '-pt:1', pwb_cfg, '-family:' + family,
-        # '-user:' + user,
+        '-user:' + user,
         '-force',
     ]
     if do_post_wikilist_simulate: params.append('-simulate')  # "-simulate" параметр для тестирования записи pwb
