@@ -152,11 +152,9 @@ class Scanner():
         pool = ThreadPool(pool_size)
 
         while pages:
-            # l = len(pages)
             results = pool.map(self.scan_page_mp, pages)
             for pid, err_refs in results:
-                if err_refs:
-                    db_update_pagedata(pid, err_refs)
+                db_update_pagedata(pid, err_refs)
             offset = offset + limit
             pages = db_get_list_changed_pages(limit, offset)
 
