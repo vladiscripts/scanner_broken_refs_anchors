@@ -68,7 +68,7 @@ def posting_template():
         '-user:' + user,
         '-always',
     ]
-    if do_post_wikilist_simulate: params.append('-simulate')
+    if do_post_template_simulate: params.append('-simulate')
     command = '%s add_text %s' % (python_and_path, ' '.join(params))
     run(command, filename_listpages_errref_where_no_yet_warning_tpl)
 
@@ -83,7 +83,7 @@ def remove_template():
         '-user:' + user,
         '-always',
     ]
-    if do_post_wikilist_simulate: params.append('-simulate')
+    if do_remove_template_simulate: params.append('-simulate')
     command = '%s replace %s' % (python_and_path, ' '.join(params))
     run(command, filename_list_to_remove_warning_tpl)
 
