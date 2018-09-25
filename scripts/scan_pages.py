@@ -28,7 +28,8 @@ def do_scan():
             results.append([pid, err_refs])
 
         for pid, err_refs in results:
-            # if err_refs:
+            # if title == 'Скачок_Резеля': print(title)
+            # if pid == 7575419: print(title)
             db_update_pagedata(pid, err_refs)
         offset = offset + limit
         pages = db_get_list_changed_pages(limit, offset)
