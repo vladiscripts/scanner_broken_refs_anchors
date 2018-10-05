@@ -6,6 +6,7 @@
 # переключатель доступа к базе данных. True если скрипт запускается на ПК, False если на сервере wmflabs
 # run_local_not_from_wmflabs = False   # не нужно после фикса в pwb опции запроса к wiki-mysql
 
+multithreads = True
 # Асинхронное сканирование. Быстро работает при локальном запуске, но глючит на сервере.
 # scan_asyncio = False
 # scan_asyncio = True if run_local_not_from_wmflabs else False  # автозапуск asyncio на PC, и выкл. на сервере

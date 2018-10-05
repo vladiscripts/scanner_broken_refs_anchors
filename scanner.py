@@ -6,7 +6,6 @@
 from datetime import datetime
 from settings import *
 # from scripts.scan_pages_asyncio import Scanner
-# from scripts import scan_pages_multithreads
 from scripts import scan_pages
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
@@ -43,12 +42,13 @@ if __name__ == '__main__':
         # if scan_asyncio:
         # 	scaner = Scanner()
         # 	scaner.do_scan()
-        # else:
-        # 	scan_pages.do_scan()
-        scan_pages.do_scan()
+        if multithreads:
+            from scripts import scan_pages_multithreads
 
-        # scaner = scan_pages_multithreads.Scanner()
-        # scaner.do_multiprocessing()
+            scaner = scan_pages_multithreads.Scanner()
+            scaner.do_multiprocessing()
+        else:
+            scan_pages.do_scan()
 
         # Запись списков
         print('*** Doing save_listpages_for_remove_warning_tpls')
