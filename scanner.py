@@ -9,7 +9,7 @@ from settings import *
 from scripts import scan_pages
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
-from scripts.make_wikilists import MakeWikiLists
+from scripts.make_wikilists import make_and_save_wikilist
 
 if __name__ == '__main__':
     db_update = UpdateDB()
@@ -51,7 +51,5 @@ if __name__ == '__main__':
         save_listpages_for_remove_warning_tpls()
         print('*** Do save_listpages_for_add_warning_tpls')
         save_listpages_for_add_warning_tpls()
-        if make_wikilist:
-            print('*** Do make_wikilist')
-            w = MakeWikiLists()
-            w.save_wikilist()
+        print('*** Do make_wikilist')
+        make_and_save_wikilist()

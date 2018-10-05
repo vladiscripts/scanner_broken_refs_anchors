@@ -6,14 +6,8 @@ from scripts.db_models import db_session, PageWithSfn, ErrRef, Wikilists
 from scripts.make_listspages import file_savetext
 
 
-class MakeWikiLists:
-    def __init__(self):
-        self.wikilists = ''
-        self.make_wikilist_titles()
-        self.make_wikilists()
-        self.save_wikilist()
-
-    def make_wikilist_titles(self):
+def make_and_save_wikilist():
+    def make_wikilist_titles():
         wikilists = (
             ('А', 'А'), ('Б', 'Б'), ('В', 'ВГ'), ('Г', 'ВГ'), ('Д', 'Д'),
             ('Е', 'ЕЁЖЗИЙ'), ('Ё', 'ЕЁЖЗИЙ'), ('Ж', 'ЕЁЖЗИЙ'), ('З', 'ЕЁЖЗИЙ'), ('И', 'ЕЁЖЗИЙ'), ('Й', 'ЕЁЖЗИЙ'),
@@ -28,7 +22,8 @@ class MakeWikiLists:
             db_session.merge(Wikilists(letter, pagename))
         db_session.commit()
 
-    def make_wikilists(self):
+    def make_wikilists():
+        wikilists = ''
         wikilists_sql = db_session.query(Wikilists.title).group_by(Wikilists.title).all()
         for wikilist_sql in wikilists_sql:
             wikilist_title = wikilist_sql[0]
@@ -51,10 +46,12 @@ class MakeWikiLists:
             # Fill wikilists page
             if list_refs_entries != '':
                 pagename = u'Шаблон:' + root_wikilists + wikilist_title
-                self.wikilists += self.formatted_wikilist(pagename, list_refs_entries)
+                wikilists += formatted_wikilist(pagename, list_refs_entries)
+        return wikilists
 
-    def formatted_wikilist(self, pagename, wiki_refs_entries):
+    def formatted_wikilist(pagename, wiki_refs_entries):
         return f"{marker_page_start}\n'''{pagename}'''\n{header}\n{wiki_refs_entries}\n{footer}\n{marker_page_end}\n\n"
 
-    def save_wikilist(self):
-        file_savetext(filename_wikilists, self.wikilists)
+    make_wikilist_titles()
+    wikilists = make_wikilists()
+    file_savetext(filename_wikilists, wikilists)
