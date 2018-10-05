@@ -4,7 +4,8 @@
 # author: https://github.com/vladiscripts
 #
 # import threading
-from scripts.scan_pages import open_requests_session, db_get_list_changed_pages, db_update_pagedata, ScanRefsOfPage
+from scripts.scan_pages import open_requests_session, scanreq_page, db_get_list_changed_pages, db_update_pagedata, \
+    ScanRefsOfPage
 from multiprocessing.dummy import Pool as ThreadPool
 from urllib.parse import quote
 
@@ -137,12 +138,7 @@ class Scanner():
         pid, title = p
         # global s
         # if pid != 3690723:  continue  # For tests
-        print(title)
-        try:
-            r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
-        except Exception as e:
-            print(e)
-        err_refs = ScanRefsOfPage(r.text)
+        err_refs = scanreq_page(self.s, title)
         return pid, err_refs
 
     def do_multiprocessing(self, pool_size=None):
@@ -154,6 +150,8 @@ class Scanner():
         while pages:
             results = pool.map(self.scan_page_mp, pages)
             for pid, err_refs in results:
+                if err_refs is None:
+                    continue
                 db_update_pagedata(pid, err_refs)
             offset = offset + limit
             pages = db_get_list_changed_pages(limit, offset)

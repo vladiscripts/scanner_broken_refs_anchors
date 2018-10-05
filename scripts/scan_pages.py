@@ -19,12 +19,10 @@ def do_scan():
     while pages:
         results = []
         for pid, title in pages:
-            print(title)
-            try:
-                r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
-            except Exception as e:
-                print(e)
-            err_refs = ScanRefsOfPage(r.text)
+            # if pid != 5638145: continue
+            err_refs = scanreq_page(s, title)
+            if err_refs is None:
+                continue
             results.append([pid, err_refs])
 
         for pid, err_refs in results:
@@ -34,6 +32,21 @@ def do_scan():
         offset = offset + limit
         pages = db_get_list_changed_pages(limit, offset)
     s.close()
+
+
+def scanreq_page(s, title):
+    print(title)
+    try:
+        r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
+    except Exception as e:
+        print(f'error: requests: {title}')
+        return None
+    if r.status_code != 200:
+        print(f'error: r.status_code != 200: {title}')
+    if not len(r.text) > 200:
+        print(f'error: not len(r.text) > 200 in page: {title}')
+    err_refs = ScanRefsOfPage(r.text)
+    return err_refs
 
 
 def db_update_pagedata(page_id, err_refs):
