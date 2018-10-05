@@ -20,8 +20,9 @@ class UpdateDB:
 
         # чистка PageTimecheck и Ref от записей которых нет в pages
         # не нужно с ForeignKey ondelete="CASCADE"
-        # self.drop_orphan_by_timecheck()
-        # self.drop_refs_of_changed_pages()
+        # таки нужно
+        self.drop_orphan_by_timecheck()
+        self.drop_refs_of_changed_pages()
 
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
@@ -91,7 +92,9 @@ class UpdateDB:
         pages = self.wdb_query(sql)
         return pages
 
-    def drop_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
+    @staticmethod
+    def drop_orphan_sfnpages(w_pages_with_sfns, db_pages):
+        print('Doing drop_orphan_sfnpages')
         db_pages_ids = {p.page_id for p in db_pages}
         w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
         delta = db_pages_ids - w_pages_ids
@@ -99,24 +102,28 @@ class UpdateDB:
             db_session.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
             db_session.commit()
 
-    # @staticmethod
-    # def drop_orphan_by_timecheck():
-    #     """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-    #     pages = db_session.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(
-    #         PageWithSfn.page_id.is_(None)).all()
-    #     for p in pages:
-    #         db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
-    #     db_session.commit()
+    @staticmethod
+    def drop_orphan_by_timecheck():
+        """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
+        print('Doing drop_orphan_by_timecheck')
+        pages = db_session.query(Timecheck.page_id).outerjoin(PageWithSfn) \
+            .filter(PageWithSfn.page_id.is_(None)).all()
+        for p in pages:
+            db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
+        db_session.commit()
 
-    # @staticmethod
-    # def drop_refs_of_changed_pages():
-    #     # pages = db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).all()
-    #     # for p in pages:
-    #     #     db_session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete()
-    #     subq = db_session.query(PageWithSfn.page_id)
-    #     db_session.query(ErrRef).filter(ErrRef.page_id.in_(subq)).delete(synchronize_session='fetch')
-    #     # db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).delete()
-    #     db_session.commit()
+    @staticmethod
+    def drop_refs_of_changed_pages():
+        print('Doing drop_refs_of_changed_pages')
+        pages = db_session.query(ErrRef.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all()
+        # for p in pages:
+        #     db_session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete(synchronize_session='fetch')
+        db_session.query(ErrRef).filter(ErrRef.page_id.in_(pages)).delete(synchronize_session='fetch')
+
+        # subq = db_session.query(PageWithSfn.page_id)
+        # db_session.query(ErrRef).filter(ErrRef.page_id.in_(subq)).delete(synchronize_session='fetch')
+        # db_session.query(ErrRef.page_id).outerjoin(SfnPageChanged).filter(SfnPageChanged.page_id.is_(None)).delete()  # DELETE do not work with JOIN
+        db_session.commit()
 
     # Helpers
     @staticmethod
