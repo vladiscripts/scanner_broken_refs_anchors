@@ -21,7 +21,6 @@ do_generation_lists = True
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_lists = False
 do_update_db_from_wiki = True
-make_wikilist = True
 
 # --- Внмание, включение записи в википедию
 # --- Постинг запускается скриптом post_to_wiki.py
