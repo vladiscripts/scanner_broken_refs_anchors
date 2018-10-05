@@ -7,11 +7,11 @@
 # run_local_not_from_wmflabs = False   # не нужно после фикса в pwb опции запроса к wiki-mysql
 
 # Асинхронное сканирование. Быстро работает при локальном запуске, но глючит на сервере.
-scan_asyncio = False
+# scan_asyncio = False
 # scan_asyncio = True if run_local_not_from_wmflabs else False  # автозапуск asyncio на PC, и выкл. на сервере
 # Число асинхронных потоков. Столько же может делаться http-запросов.
 # При более 50 http-запросах сервер Wikipedia может отказываться отвечать.
-limit_asynch_threads = 50
+# limit_asynch_threads = 50
 
 # ---
 # True - сканировать и генерировать новые списки.
@@ -46,21 +46,9 @@ clear_all_check_pages = False
 warning_tpl_name = 'Нет полных библиографических описаний'
 warning_tpl_regexp = r'{{([Шш]аблон:)?([Нн]ет[ _]полных[ _]библиографических[ _]описаний|НПБО)'
 
-# Список страниц где шаблон уже установлен. Взять с сайта - True, из файла - False.
-transcludes_of_warning_tpl_get_from_site = True
-filename_list_transcludes_of_warning_tpl = 'list_uses_warningtpl.txt'
 filename_listpages_errref_where_no_yet_warning_tpl = 'listpages_without_warning_tpl.txt'
 filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
-
-filename_tpls_transcludes = 'list_tpls_transcludes.txt'
-filename_listpages_errref = 'listpages_err_ref.txt'
-
-# ---
-# summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
-
-# ---
-# Создание вики-списков для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
-filename_wikilists = 'wikisections.txt'
+filename_wikilists = 'wikisections.txt'  # вики-списки для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
 
 root_wikilists = warning_tpl_name + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
 marker_page_start = '{{-start-}}'
@@ -75,6 +63,9 @@ header = """
 
 """  # в шапку шаблон {{координационный список}} не нужен, ибо это не список, а подстраница данных скрипта
 footer = '[[Категория:Шаблоны:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
+
+# ---
+# summary = 'Пометка сносок с неработающими ссылками в список литературы'  # комментарий к правкам страниц
 
 # ---
 print_log = True

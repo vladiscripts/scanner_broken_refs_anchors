@@ -7,6 +7,7 @@
 #
 import os
 import shlex, subprocess
+from datetime import datetime
 from settings import *
 
 python_and_path = 'python %s/pwb.py' % os.getenv('PWBPATH')
@@ -29,7 +30,7 @@ def run(command, filename):
     # ToDo Хотя это может это только если сам pwb не закрылся по Exception? Сейчас нет времени на тесты.
     # ToDo Если же == 0 в любом случае, то надо открывать вопрос на Phabricator
     if code != 0:
-        raise Exception
+        raise Exception('posting subprocess exited with status %r' % code)
     # p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')  # .wait()
     # stdout, stderr = p.communicate()
     # if p.returncode != 0:
@@ -96,6 +97,9 @@ def login():
 
 
 if __name__ == '__main__':
+    t = datetime.now()
+    print(f'{t} Start posting')
+
     # Постинг списков и установка шаблонов в wiki
     if do_all_posts_simulate:
         do_post_wikilist_simulate = do_post_template_simulate = do_remove_template_simulate = True
