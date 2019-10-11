@@ -74,9 +74,9 @@ filename_error_log = 'errors_log.txt'
 
 # Названия sfn-шаблонов
 # Не работает с шаблонами не создающими ссылки 'CITEREF', типа:  '-1'
-names_sfn_templates = ((
+names_sfn_templates = (
     'sfn', 'sfn0', 'Sfn-1',
     'Harvard citation', 'Harv',
     'Harvard citation no brackets', 'Harvnb', 'Harvsp',
     'Harvcol', 'Harvcoltxt', 'Harvcolnb', 'Harvrefcol',
-))
+)
