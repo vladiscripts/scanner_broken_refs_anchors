@@ -3,11 +3,11 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts.db_models import db_session, PageWithSfn, ErrRef, PageWithWarning
+from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning
 
 
-def save_listpages_for_remove_warning_tpls():
-    query = db_session.query(PageWithWarning.title) \
+def save_listpages_for_remove_warning_tpls(db):
+    query = db.query(PageWithWarning.title) \
         .outerjoin(ErrRef, PageWithWarning.page_id == ErrRef.page_id) \
         .filter(ErrRef.page_id.is_(None))
 
@@ -15,9 +15,9 @@ def save_listpages_for_remove_warning_tpls():
     file_savelines(filename_list_to_remove_warning_tpl, sorted(list_to_remove_warning_tpl))
 
 
-def save_listpages_for_add_warning_tpls():
+def save_listpages_for_add_warning_tpls(db):
     """Список куда предупреждение ещё не поставлено."""
-    errpages_without_warning_tpl = db_session.query(PageWithSfn.title) \
+    errpages_without_warning_tpl = db.query(PageWithSfn.title) \
         .outerjoin(PageWithWarning, PageWithSfn.page_id == PageWithWarning.page_id) \
         .join(ErrRef, PageWithSfn.page_id == ErrRef.page_id) \
         .filter(PageWithWarning.page_id.is_(None), ErrRef.page_id.isnot(None)) \

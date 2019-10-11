@@ -4,10 +4,113 @@
 # author: https://github.com/vladiscripts
 #
 # import threading
-from scripts.scan_pages import open_requests_session, scanreq_page, db_get_list_changed_pages, db_update_pagedata, \
-    ScanRefsOfPage
+from scripts.scan_pages import Scanner
 from multiprocessing.dummy import Pool as ThreadPool
-from urllib.parse import quote
+
+
+
+
+class ScannerMultithreads(Scanner):
+
+    def do_scan(self):
+        pool = ThreadPool(processes=None)  # processes equals CPU threads, usually 6—12
+        limit = pool._processes - 1
+
+        def process(page):
+            pid, title = page
+            err_refs = self.scan_page(title)
+            if err_refs is None:
+                pass
+            self.db_update_pagedata(pid, err_refs)
+
+        # for results in pool.map(process, self.db_get_list_changed_pages(limit), 1):  pass
+        pool.map(process, self.db_get_list_changed_pages(limit), 1)
+
+        pool.close()
+        pool.join()
+        self.s.close()
+
+    # def _do_scan(self, pool_size=None):
+    #     limit = 10
+    #     # offset, limit = 0, 100
+    #     # self.s = open_requests_session()
+    #     pool = ThreadPool(pool_size)
+    #
+    #     while True:
+    #         # pages = self.db_get_list_changed_pages(offset, limit)
+    #         pages = self.db_get_list_changed_pages(limit)
+    #         if not pages:
+    #             break
+    #         results = pool.map(self.scan_page, pages)
+    #         for pid, err_refs in results:
+    #             # Вероятно здесь ошибка.
+    #             # - Не обрабатываются некоторые страницы, т.ч. не удаляются их ErrRefs.
+    #             # Поэтому в уже исправленные статьи повторно ставится предупреждение.
+    #             # Удалять предваритьльно до проверки страницы ErrRefs нельзя, это вызовет тоже сбойные простановки.
+    #             # Не сканировать тоже нельзя, ио люди жалуются на повторные простановки.
+    #             # Значит надо сканировать, и может перепроверять флаги начала и конца проверки каждой страницы,
+    #             # перепроверяя при ошибке. Но вероятны опять глюки мультипотоков.
+    #             #
+    #             # Не, при однопоточном скане таже проблема.
+    #             # (Проверяю по ДБ 1pagesrefs.sqlite с. "Английская_революция" (54229). Там шаблон должен сниматься,
+    #             # время проверки позже времени редактирования.)
+    #             # Почему-то страница в отладчике проверяется, если пропускать все страницы кроме этой.
+    #             # Но в запуске без пропусков, по всем страницам, делает ошибку.
+    #
+    #             # if pid != 54229: continue
+    #             if err_refs is not None:
+    #                 self.db_update_pagedata(pid, err_refs)
+    #             # else: print()
+    #         # offset = offset + limit
+    #
+    #     pool.close()
+    #     pool.join()
+    #     self.s.close()
+    #
+    # def ___do_scan(self, pool_size=None):
+    #     limit = 10
+    #     # offset, limit = 0, 100
+    #     # self.s = open_requests_session()
+    #     pool = ThreadPool(pool_size)
+    #
+    #     while True:
+    #         # pages = self.db_get_list_changed_pages(offset, limit)
+    #         pages = self.db_get_list_changed_pages(limit)
+    #         if not pages:
+    #             break
+    #         results = pool.imap(self.scan_page, pages)
+    #         for pid, err_refs in results:
+    #             # Вероятно здесь ошибка.
+    #             # - Не обрабатываются некоторые страницы, т.ч. не удаляются их ErrRefs.
+    #             # Поэтому в уже исправленные статьи повторно ставится предупреждение.
+    #             # Удалять предваритьльно до проверки страницы ErrRefs нельзя, это вызовет тоже сбойные простановки.
+    #             # Не сканировать тоже нельзя, ио люди жалуются на повторные простановки.
+    #             # Значит надо сканировать, и может перепроверять флаги начала и конца проверки каждой страницы,
+    #             # перепроверяя при ошибке. Но вероятны опять глюки мультипотоков.
+    #             #
+    #             # Не, при однопоточном скане таже проблема.
+    #             # (Проверяю по ДБ 1pagesrefs.sqlite с. "Английская_революция" (54229). Там шаблон должен сниматься,
+    #             # время проверки позже времени редактирования.)
+    #             # Почему-то страница в отладчике проверяется, если пропускать все страницы кроме этой.
+    #             # Но в запуске без пропусков, по всем страницам, делает ошибку.
+    #
+    #             # if pid != 54229: continue
+    #             if err_refs is not None:
+    #                 self.db_update_pagedata(pid, err_refs)
+    #             # else: print()
+    #         # offset = offset + limit
+    #
+    #     pool.close()
+    #     pool.join()
+    #     self.s.close()
+
+# workerthreadlist = []
+# for x in range(0, 3):
+# 	newthread = WorkerThread(url_list, url_list_lock)
+# 	workerthreadlist.append(newthread)
+# 	newthread.start()
+# for x in range(0, 3):
+# 	workerthreadlist[x].join()
 
 
 # class WorkerThread(threading.Thread):
@@ -129,41 +232,3 @@ from urllib.parse import quote
 #         q.put(None)
 #     for t in threads:
 #         t.join()
-
-
-class Scanner():
-
-    def scan_page_mp(self, p):
-        """Сканирование страниц на ошибки"""
-        pid, title = p
-        # global s
-        # if pid != 3690723:  continue  # For tests
-        err_refs = scanreq_page(self.s, title)
-        return pid, err_refs
-
-    def do_multiprocessing(self, pool_size=None):
-        limit, offset = 100, 0
-        pages = db_get_list_changed_pages(limit, offset)
-        self.s = open_requests_session()
-        pool = ThreadPool(pool_size)
-
-        while pages:
-            results = pool.map(self.scan_page_mp, pages)
-            for pid, err_refs in results:
-                if err_refs is None:
-                    continue
-                db_update_pagedata(pid, err_refs)
-            offset = offset + limit
-            pages = db_get_list_changed_pages(limit, offset)
-
-        pool.close()
-        pool.join()
-        self.s.close()
-
-# workerthreadlist = []
-# for x in range(0, 3):
-# 	newthread = WorkerThread(url_list, url_list_lock)
-# 	workerthreadlist.append(newthread)
-# 	newthread.start()
-# for x in range(0, 3):
-# 	workerthreadlist[x].join()

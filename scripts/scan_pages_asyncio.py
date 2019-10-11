@@ -29,7 +29,7 @@ class Scanner:
             tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
             finished, unfinished = await asyncio.wait(tasks)
             if len(unfinished):
-                print('have unfinished async tasks')
+                logging.error('have unfinished async tasks')
 
     async def db_works(self, p):
         scan_page(p)
@@ -40,7 +40,7 @@ class Scanner:
         url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
 
         if page_title == 'None' or page_title is None:
-            print('!!!!!!!!!!!!!')
+            logging.error('!!!!!!!!!!!!!')
 
         async with sem:
             retries = 0
@@ -50,7 +50,7 @@ class Scanner:
 
                     if response.status == 200:
                         response_text = await response.text()
-                        print(page_title + ':')
+                        logging.info(page_title + ':')
                         page = ScanRefsOfPage(response_text)
                         errrefs = page.err_refs
                         # try:
@@ -64,13 +64,14 @@ class Scanner:
                         retries += 1
                         await asyncio.sleep(1)
                     else:
-                        print(page_title + ' response.status != 200')
+                        logging.error(page_title + ' response.status != 200')
                     response.close()
                     break
 
                 except (aiohttp.ClientOSError, aiohttp.ClientResponseError,
                         aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
-                    print('!!! Error. Page title: "%s"; url: %s; error: %r. Can will work on a next request.' % (
+                    logging.error(
+                        '!!! Error. Page title: "%s"; url: %s; error: %r. Can will work on a next request.' % (
                         page_title, url, e))
                     retries += 1
                     await asyncio.sleep(1)

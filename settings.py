@@ -23,7 +23,7 @@ do_generation_lists = True
 # отключено при do_generation_lists = False
 do_update_db_from_wiki = True
 
-# --- Внмание, включение записи в википедию
+# --- Внимание, включение записи в википедию
 # --- Постинг запускается скриптом post_to_wiki.py
 do_all_post_to_wiki = True  # Отключение всех опций ниже в этой секции
 do_all_posts_simulate = True  # Симуляция всего постинга ниже в этой секции

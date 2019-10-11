@@ -35,11 +35,6 @@ def get_listpages_have_sfnTpl():
     return pages
 
 
-def str2list(string):
-    """Строку в список"""
-    return [string] if isinstance(string, str) else string
-
-
 def normalization_pagename(t):
     """Первая буква в верхний регистр, ' ' → '_' """
     t = t.strip()

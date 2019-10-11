@@ -2,11 +2,11 @@
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts.db_models import db_session, PageWithSfn, ErrRef, Wikilists
+from scripts.db_models import PageWithSfn, ErrRef, Wikilists
 from scripts.make_listspages import file_savetext
 
 
-def make_and_save_wikilist():
+def make_and_save_wikilist(db):
     def make_wikilist_titles():
         wikilists = (
             ('А', 'А'), ('Б', 'Б'), ('В', 'ВГ'), ('Г', 'ВГ'), ('Д', 'Д'),
@@ -19,16 +19,16 @@ def make_and_save_wikilist():
             ('*', 'Не русские буквы'),
         )
         for letter, pagename in wikilists:
-            db_session.merge(Wikilists(letter, pagename))
-        db_session.commit()
+            db.merge(Wikilists(letter, pagename))
+        db.commit()
 
     def make_wikilists():
         wikilists = ''
-        wikilists_sql = db_session.query(Wikilists.title).group_by(Wikilists.title).all()
+        wikilists_sql = db.query(Wikilists.title).group_by(Wikilists.title).all()
         for wikilist_sql in wikilists_sql:
             wikilist_title = wikilist_sql[0]
             list_refs_entries = ''
-            pq = db_session.query(PageWithSfn.page_id, PageWithSfn.title, ErrRef.link_to_sfn, ErrRef.text) \
+            pq = db.query(PageWithSfn.page_id, PageWithSfn.title, ErrRef.link_to_sfn, ErrRef.text) \
                 .join(ErrRef, PageWithSfn.page_id == ErrRef.page_id) \
                 .join(Wikilists, Wikilists.letter == PageWithSfn.wikilist) \
                 .filter(ErrRef.page_id.isnot(None), Wikilists.title == wikilist_title) \

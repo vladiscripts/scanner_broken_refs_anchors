@@ -2,16 +2,23 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import re
-from settings import *
+from urllib.parse import quote_from_bytes, unquote
 
 # Для создания таблицы надо Base = declarative_base() и ...create_all() внизу под классами
 # https://ru.wikibooks.org/wiki/SQLAlchemy
 db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=False)  # 'sqlite:///:memory:'
 Base = declarative_base()
-Session = sessionmaker(bind=db_engine)
-db_session = Session()
+Session = scoped_session(sessionmaker(bind=db_engine))
+
+
+# Session = sessionmaker(bind=db_engine)
+# db_session = Session()
+
+# db_engine_mysql = create_engine('mysql+pymysql://v:v@localhost/wikirefsDB', echo=print_log)
+# Session_mysql = sessionmaker(bind=db_engine_mysql)
+# db_session_mysql = Session_mysql()
 
 
 class PageWithSfn(Base):
@@ -26,7 +33,7 @@ class PageWithSfn(Base):
 
     def __init__(self, page_id, title, timelastedit):
         self.page_id = page_id
-        self.title = title
+        self.title = byte2utf(title)
         self.timelastedit = timelastedit
         fl = title[0:1].upper()
         self.wikilist = '*' if re.match(r'[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]', fl) else fl
@@ -67,7 +74,7 @@ class PageWithWarning(Base):
 
     def __init__(self, page_id, title):
         self.page_id = page_id
-        self.title = title
+        self.title = byte2utf(title)
 
 
 class Wikilists(Base):
@@ -79,6 +86,10 @@ class Wikilists(Base):
     def __init__(self, letter, title):
         self.letter = letter
         self.title = title
+
+
+def byte2utf(string):
+    return unquote(quote_from_bytes(string), encoding='utf8')
 
 
 Base.metadata.create_all(db_engine)
