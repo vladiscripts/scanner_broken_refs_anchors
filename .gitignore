@@ -7,3 +7,5 @@ passwords.py
 *.sqlite.sql
 *.err
 *.csv
+*.json
+*.sql
