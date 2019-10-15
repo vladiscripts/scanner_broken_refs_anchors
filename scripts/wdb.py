@@ -13,7 +13,7 @@ def get_listpages_have_WarningTpl():
             WHERE tl_namespace = 10 AND page_namespace = 0
             AND tl_title LIKE "{normalization_pagename(warning_tpl_name)}"
             ORDER BY page.page_id ASC;"""
-    pages = wdb_query(sql)
+    pages = tuple(wdb_query(sql))
     return pages
 
 
@@ -31,7 +31,7 @@ def get_listpages_have_sfnTpl():
             AND ({tpls_str})
             GROUP BY page.page_title
             ORDER BY page.page_id ASC;"""
-    pages = wdb_query(sql)
+    pages = tuple(wdb_query(sql))
     return pages
 
 
