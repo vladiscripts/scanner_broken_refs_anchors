@@ -35,8 +35,8 @@ class PageWithSfn(Base):
         self.page_id = page_id
         self.title = byte2utf(title)
         self.timelastedit = timelastedit
-        fl = title[0:1].upper()
-        self.wikilist = '*' if re.match(r'[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]', fl) else fl
+        fl = self.title[0:1].upper()
+        self.wikilist = fl if re.match(r'[А-ЯЁ]', fl) else '*'
 
 
 class Timecheck(Base):
