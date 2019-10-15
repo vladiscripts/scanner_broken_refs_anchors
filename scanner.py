@@ -7,6 +7,7 @@ from scripts.__init__ import *
 from datetime import datetime
 from settings import *
 from scripts import scan_pages
+from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
 from scripts.make_wikilists import make_and_save_wikilist
@@ -35,8 +36,8 @@ if __name__ == '__main__':
         db_update.drop_all_refs()
 
     # Сканирование и обновление базы данных
-    if do_generation_lists:
-        if do_update_db_from_wiki:
+    if generate_lists:
+        if update_db_from_wiki:
             logging.info('*** Update_db_from_wiki')
             # Обновление списка страниц имеющих warning-шаблон, шаблоны сносок,
             # и очистка базы от устарелых данных
@@ -51,8 +52,6 @@ if __name__ == '__main__':
         # 	scaner.do_scan()
 
         if multithreads:
-            from scripts import scan_pages_multithreads
-
             scanner = scan_pages_multithreads.ScannerMultithreads()
         else:
             scanner = scan_pages.Scanner()
