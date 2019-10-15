@@ -51,8 +51,8 @@ class Scanner:
     def scan_page(self, title):
         """Сканирование страниц на ошибки"""
         logging.info(title)
-        if not title and title == '':
-            pass
+        if not title or title == '':
+            return
         r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
         # try:
         #     r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
