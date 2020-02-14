@@ -1,11 +1,12 @@
 # coding: utf-8
 # author: https://github.com/vladiscripts
 #
+from typing import Callable, Iterator
 from pywikibot.data import mysql
 from settings import *
 
 
-def get_listpages_have_WarningTpl():
+def get_listpages_have_WarningTpl(limit=''):
     """Обновить список страниц имеющих установленный шаблон."""
     sql = f"""SELECT page_id, page_title
             FROM page
@@ -35,13 +36,13 @@ def get_listpages_have_sfnTpl():
     return pages
 
 
-def normalization_pagename(t):
+def normalization_pagename(t: str) -> str:
     """Первая буква в верхний регистр, ' ' → '_' """
     t = t.strip()
     return t[0:1].upper() + t[1:].replace(' ', '_')
 
 
-def list_to_str_params(string, strings2list, couple_arg='LIKE', wordjoin=' OR '):
+def list_to_str_params(string, strings: Iterator[str], couple_arg='LIKE', wordjoin=' OR ') -> str:
     """Return string like:  string LIKE string1 OR string LIKE string2"""
     return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
 

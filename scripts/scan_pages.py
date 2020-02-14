@@ -4,6 +4,7 @@
 # author: https://github.com/vladiscripts
 #
 import time
+from typing import Union, Optional, List
 from urllib.parse import quote
 import requests
 from scripts.__init__ import *
@@ -45,10 +46,9 @@ class Scanner:
                 # if pid != 54229: continue
                 self.db_update_pagedata(pid, err_refs)
             # offset = offset + limit
-
         self.s.close()
 
-    def scan_page(self, title):
+    def scan_page(self, title: str) -> Optional[List[tuple]]:
         """Сканирование страниц на ошибки"""
         logging.info(title)
         if not title or title == '':
@@ -66,14 +66,14 @@ class Scanner:
         err_refs = ScanRefsOfPage(r.text)
         return err_refs
 
-    def open_requests_session(self):
+    def open_requests_session(self) -> requests.Session:
         s = requests.Session()
         s.headers.update({'User-Agent': 'user:textworkerBot'})
         s.params.update({"action": "render"})
         return s
 
     @staticmethod
-    def db_get_list_changed_pages(limit):  # offset,limit
+    def db_get_list_changed_pages(limit=None) -> list:  # offset,limit
         Session()
         pages = Session.query(PageWithSfn.page_id, PageWithSfn.title) \
             .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
@@ -85,7 +85,7 @@ class Scanner:
         return pages
 
     @staticmethod
-    def db_update_pagedata(page_id, err_refs):
+    def db_update_pagedata(page_id, err_refs) -> None:
         """Сохранение результатов сканирования в БД
         Очистка db от спискастарых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
         """

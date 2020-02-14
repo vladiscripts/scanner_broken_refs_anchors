@@ -4,14 +4,14 @@
 #
 import re
 from lxml.html import tostring, fromstring
-from typing import Union, List
+from typing import List, Set
 from collections import namedtuple
 
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 SFN = namedtuple('SFN', 'citeref text link_to_sfn')
 
 
-def ScanRefsOfPage(html):
+def ScanRefsOfPage(html: str) -> List[namedtuple]:
     # """ Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
     htmltree = fromstring(html)
 
@@ -31,7 +31,7 @@ def ScanRefsOfPage(html):
     return err_refs
 
 
-def find_sfns_on_page(htmltree):
+def find_sfns_on_page(htmltree) -> (Set[str], List[namedtuple]):
     """ Список сносок из раздела 'Примечания'.
     Возвращает:
     self.list_sfns - список только sfn-id
@@ -51,7 +51,7 @@ def find_sfns_on_page(htmltree):
     return list_sfns, all_sfns_info
 
 
-def find_citations_on_page(htmltree):
+def find_citations_on_page(htmltree) -> Set[str]:
     """ Список id библиографии. Возвращает: self.list_refs """
     # cssselect использован для надёжности.
     # В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел
