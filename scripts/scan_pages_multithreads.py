@@ -3,16 +3,20 @@
 #
 # author: https://github.com/vladiscripts
 #
-# import threading
 from scripts.scan_pages import Scanner
 from multiprocessing.dummy import Pool as ThreadPool
+import concurrent.futures
+import queue
+import threading
 
 
+# from multiprocessing import Pool
+# from multiprocessing.pool import ThreadPool
 
 
-class ScannerMultithreads(Scanner):
+class __ScannerMultithreads(Scanner):
 
-    def do_scan(self):
+    def ____do_scan(self):
         pool = ThreadPool(processes=None)  # processes equals CPU threads, usually 6—12
         limit = pool._processes - 1
 
@@ -29,6 +33,186 @@ class ScannerMultithreads(Scanner):
         pool.close()
         pool.join()
         self.s.close()
+
+    #
+
+
+class ___ScannerMultithreads(Scanner):
+    def worker(self, _queue, page):
+        with self.LOCK.acquire() as lock:
+
+            page = _queue.get()
+
+            while True:
+                item = _queue.get()
+                if item is None:
+                    break
+                scan_results = scan_page(s, item[1])
+                db_update_pagedata(item[0], scan_results.err_refs)
+                q.task_done()
+
+            pid, title = page
+            err_refs = self.scan_page(title)
+            if err_refs is None:
+                pass
+            self.db_update_pagedata(pid, err_refs)
+
+    def _____do_scan(self, s):
+        list_pages_for_scan = db_get_list_changed_pages()
+        self.LOCK = threading.RLock()
+        _queue = queue.Queue()
+        threads = []
+        for i in range(12):
+            thread = threading.Thread(target=self.worker, args=(_queue, s,))
+            thread.start()
+            threads.append(thread)
+
+        for item in list_pages_for_scan:
+            _queue.put(item)
+
+        # block until all tasks are done
+        _queue.join()
+
+        # stop workers
+        for i in range(list_pages_for_scan):
+            _queue.put(None)
+        for t in threads:
+            t.join()
+
+
+class ScannerMultithreads(Scanner):
+    results = []
+
+    def _scan_page(self, page):
+        pid, title = page
+        err_refs = self.scan_page(title)
+        if err_refs is None:
+            pass
+        logging.info(f'db_update_pagedata: {title}')
+        self.db_update_pagedata(pid, err_refs)
+
+    def worker(self, _queue):
+        while True:
+            page = _queue.get()
+            if page is None:
+                break
+            self._scan_page(page)
+            _queue.task_done()
+
+    def do_scan(self):
+        queue_len = 1000
+        threads_num = 15
+        self.lock = threading.RLock()
+        _queue = queue.Queue(maxsize=queue_len)
+        threads = [threading.Thread(target=self.worker, args=(_queue,)) for i in range(threads_num)]
+        [t.start() for t in threads]
+
+        while True:
+            pages = self.db_get_list_changed_pages(limit=3000)
+            if not pages:
+                break
+            while pages:
+                if _queue.empty():
+                    for p in pages[:queue_len - 5]:
+                        _queue.put(p)
+            # block until all tasks are done
+            _queue.join()
+
+        # stop workers
+        # for i in range(pages):
+        #     _queue.put(None)
+        [t.join() for t in threads]
+
+
+class ____ScannerMultithreads(Scanner):
+    queue_to_scanpages: queue.Queue
+    queue_to_upd_pagesdata: queue.Queue
+    event: threading.Event
+
+    def ___db_get_list_changed_pages(self):
+        limit = 3
+        pages = self.db_get_list_changed_pages(limit)
+        while not self.event.is_set() or self.queue_to_scanpages.empty():
+            self.queue_to_scanpages.put(pages)
+        if pages:
+            self._db_get_list_changed_pages()
+
+    def _db_get_list_changed_pages(self):
+        # limit = 3
+        # pages = self.db_get_list_changed_pages(limit)
+        # while not self.event.is_set() or self.queue_to_scanpages.empty():
+        #     self.queue_to_scanpages.put(pages)
+        # if pages:
+        #     self._db_get_list_changed_pages()
+        # if not pages:
+        #     break
+        while not self.event.is_set() and self.queue_to_scanpages.empty():
+            pages = self.db_get_list_changed_pages(limit=3)
+            if not pages:
+                break
+            self.queue_to_scanpages.put(pages)
+
+    def ____db_get_list_changed_pages(self, pages):
+        while not self.event.is_set() and pages:
+            self.queue_to_scanpages.put(pages)
+
+    def _scan_page(self):
+        while not self.event.is_set():  # or not self.queue_to_scanpages.empty():
+            pages = self.queue_to_scanpages.get()
+            for page in pages:
+                pid, title = page
+                err_refs = self.scan_page(title)
+                if not err_refs:
+                    continue
+                self.queue_to_upd_pagesdata.put((pid, err_refs))
+
+    def _db_update_pagedata(self):
+        while not self.event.is_set() or not self.queue_to_upd_pagesdata.empty():
+            pid, err_refs = self.queue_to_upd_pagesdata.get()
+            self.db_update_pagedata(pid, err_refs)
+
+    def do_scan(self):
+        # limit = 3
+        pages = self.db_get_list_changed_pages()
+        if not pages:
+            return
+        self.queue_to_scanpages = queue.Queue(maxsize=100)
+        self.queue_to_upd_pagesdata = queue.Queue(maxsize=100)
+        self.event = threading.Event()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # while self.queue_to_scanpages.:
+            # self.queue_to_scanpages.put(pages)
+            # executor.submit(self._db_get_list_changed_pages, pages)
+            # executor.submit(self._scan_page)
+            # executor.submit(self._db_update_pagedata)
+            # self.event.set()
+            # self.queue_to_scanpages.put((p for p in pages))
+            # map(self.queue_to_scanpages.put, pages)
+            # for p in pages: self.queue_to_scanpages.put(p)
+            # executor.submit(self._db_get_list_changed_pages, pages)
+            executor.submit(self._scan_page)
+            executor.submit(self._db_update_pagedata)
+            self.event.set()
+
+    #
+
+    # def _scan_page(self, event):
+    #     limit = 1000
+    #     while not event.is_set():
+    #         pages = self.db_get_list_changed_pages(limit)
+    #         for page in pages:
+    #             pid, title = page
+    #             err_refs = self.scan_page(title)
+    #             if err_refs is None:
+    #                 pass
+    #             self.db_update_pagedata(pid, err_refs)
+    #
+    # def do_scan(self):
+    #     # pipeline1 = queue.Queue(maxsize=1000)
+    #     event = threading.Event()
+    #     with concurrent.futures.ThreadPoolExecutor() as executor:
+    #         executor.submit(self._scan_page, event)
+    #         event.set()
 
     # def _do_scan(self, pool_size=None):
     #     limit = 10
