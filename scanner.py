@@ -3,9 +3,9 @@
 #
 # author: https://github.com/vladiscripts
 #
-from scripts.__init__ import *
 from datetime import datetime
 from settings import *
+from scripts.logger import logger
 from scripts import scan_pages
 from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB
@@ -15,7 +15,7 @@ from scripts.db_models import Session
 
 if __name__ == '__main__':
     t = datetime.now()
-    logging.info(f'{t} Start scanner')
+    logger.info(f'{t} Start scanner')
 
     db = Session()
     db_update = UpdateDB(db)
@@ -24,27 +24,27 @@ if __name__ == '__main__':
     # удаление метки проверки у страниц имеющих warning-шаблон
 
     if clear_timechecks_of_erropages:
-        logging.info('*** Clear_timechecks_of_erropages')
+        logger.info('*** Clear_timechecks_of_erropages')
         db_update.drop_timechecks_of_erropages()
     if clear_check_pages_with_warnings:
-        logging.info('*** Clear_check_pages_with_warnings')
+        logger.info('*** Clear_check_pages_with_warnings')
         db_update.drop_check_pages_with_warnings()
     # сброс всех меток проверки
     if clear_all_check_pages:
-        logging.info('*** Clear_all_check_pages')
+        logger.info('*** Clear_all_check_pages')
         db_update.drop_all_check_pages()
         db_update.drop_all_refs()
 
     # Сканирование и обновление базы данных
     if generate_lists:
         if update_db_from_wiki:
-            logging.info('*** Update_db_from_wiki')
+            logger.info('*** Update_db_from_wiki')
             # Обновление списка страниц имеющих warning-шаблон, шаблоны сносок,
             # и очистка базы от устарелых данных
             db_update.listpages()
 
         # старт сканирования
-        logging.info('*** Doing start scan pages')
+        logger.info('*** Doing start scan pages')
         # Run asyncio have problem on this server
         # if scan_asyncio:
         #   from scripts.scan_pages_asyncio import Scanner
@@ -58,10 +58,10 @@ if __name__ == '__main__':
         scanner.do_scan()
 
         # Запись списков
-        logging.info('*** Doing save_listpages_for_remove_warning_tpls')
+        logger.info('*** Doing save_listpages_for_remove_warning_tpls')
         save_listpages_for_remove_warning_tpls(db)
-        logging.info('*** Doing save_listpages_for_add_warning_tpls')
+        logger.info('*** Doing save_listpages_for_add_warning_tpls')
         save_listpages_for_add_warning_tpls(db)
-        logging.info('*** Doing make_wikilist')
+        logger.info('*** Doing make_wikilist')
         make_and_save_wikilist(db)
     Session.remove()

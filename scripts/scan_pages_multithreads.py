@@ -3,11 +3,12 @@
 #
 # author: https://github.com/vladiscripts
 #
-from scripts.scan_pages import Scanner
 from multiprocessing.dummy import Pool as ThreadPool
 import concurrent.futures
 import queue
 import threading
+from scripts.logger import logger
+from scripts.scan_pages import Scanner
 
 
 # from multiprocessing import Pool

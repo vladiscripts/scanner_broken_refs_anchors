@@ -7,9 +7,9 @@ import time
 from typing import Union, Optional, List
 from urllib.parse import quote
 import requests
-from scripts.__init__ import *
 from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage
+from scripts.logger import logger
 
 
 # [p.page_id for p in Session.query(PageWithSfn.page_id, PageWithSfn.title) \
@@ -41,7 +41,7 @@ class Scanner:
                 # else: print()
 
             for pid, err_refs in results:
-                # if title == 'Скачок_Резеля': logging.info(title)
+                # if title == 'Скачок_Резеля': logger.info(title)
                 # if pid != 54229: print()
                 # if pid != 54229: continue
                 self.db_update_pagedata(pid, err_refs)
@@ -50,19 +50,19 @@ class Scanner:
 
     def scan_page(self, title: str) -> Optional[List[tuple]]:
         """Сканирование страниц на ошибки"""
-        logging.info(title)
+        logger.info(f'scan: {title}')
         if not title or title == '':
             return
         r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)
         # try:
         #     r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
         # except Exception as e:
-        #     logging.info(f'error: requests: {title}; {e}')
+        #     logger.info(f'error: requests: {title}; {e}')
         #     return None
         if r.status_code != 200:
-            logging.error(f'error: r.status_code != 200: {title}')
+            logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
         if len(r.text) < 200:
-            logging.error(f'error: len(r.text) < 200 in page: {title}')
+            logger.error(f'error: len(r.text) < 200 in page: {title}')
         err_refs = ScanRefsOfPage(r.text)
         return err_refs
 
@@ -90,6 +90,7 @@ class Scanner:
         Очистка db от спискастарых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
         """
         # todo: В БД пишется моё время или UTC?
+        logger.debug(f'db_updating: {title}')
         Session()
         # Session.rollback()
         Session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
@@ -98,6 +99,7 @@ class Scanner:
         Session.merge(Timecheck(page_id, time_current()))  # merge
         Session.commit()
         Session.remove()
+        logger.debug(f'db_updated: {title}')
 
 
 def time_current():

@@ -1,7 +1,7 @@
 # coding: utf-8
 # author: https://github.com/vladiscripts
 #
-from scripts.__init__ import *
+from scripts.logger import logger
 from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck
 from scripts import wiki_db
 
@@ -47,7 +47,7 @@ class UpdateDB:
         self.drop_orphan_sfnpages(w_pages_with_sfns, db_pages)
 
         # upsert
-        logging.info('Update of timelastedits on merge in reload_listpages_have_sfnTpl')
+        logger.info('Updating of timelastedits in PageWithSfn table')
         for page_id, title, timelastedit in w_pages_with_sfns:
             self.db.merge(PageWithSfn(page_id, title, int(timelastedit)))
 
@@ -70,7 +70,7 @@ class UpdateDB:
         self.db.commit()
 
     def drop_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
-        logging.info('Drop_orphan_sfnpages')
+        logger.info('Drop_orphan_sfnpages')
         db_pages_ids = {p.page_id for p in db_pages}
         w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
         delta = db_pages_ids - w_pages_ids
@@ -80,7 +80,7 @@ class UpdateDB:
 
     def drop_orphan_by_timecheck(self):
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-        logging.info('Drop_orphan_by_timecheck')
+        logger.info('Drop_orphan_by_timecheck')
         pages = self.db.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(
             PageWithSfn.page_id.is_(None)).all()
         for p in pages:
@@ -88,7 +88,7 @@ class UpdateDB:
         self.db.commit()
 
     def drop_orphan_errrefs(self):
-        logging.info('Drop_refs_of_changed_pages')
+        logger.info('Drop_refs_of_changed_pages')
         # pages = Session.query(ErrRef.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all()
         # for p in pages:  # DELETE do not work with JOIN
         #     Session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete(synchronize_session='fetch')
@@ -98,7 +98,7 @@ class UpdateDB:
         self.db.commit()
 
     def drop_timechecks_of_erropages(self):
-        logging.info('Drop_timechecks_of_erropages')
+        logger.info('Drop_timechecks_of_erropages')
         # pages = self.db_session.query(ErrRef.page_id).all()
         # for p in pages:
         #     self.db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
