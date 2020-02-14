@@ -9,3 +9,4 @@ passwords.py
 *.csv
 *.json
 *.sql
+*.pickle
