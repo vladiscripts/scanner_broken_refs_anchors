@@ -53,7 +53,7 @@ class Scanner:
         logging.info(title)
         if not title or title == '':
             return
-        r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
+        r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)
         # try:
         #     r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
         # except Exception as e:
