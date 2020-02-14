@@ -20,18 +20,29 @@ def get_listpages_have_WarningTpl(limit=''):
 
 def get_listpages_have_sfnTpl():
     """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
-    tpls_str = list_to_str_params('templatelinks.tl_title', map(normalization_pagename, names_sfn_templates))
+    # tpls_str = _list_to_str_params('tl_title', names_sfn_templates)
+    # sql = f"""SELECT
+    #           page.page_id,
+    #           page.page_title,
+    #           MAX(revision.rev_timestamp) AS timelastedit
+    #         FROM page
+    #           INNER JOIN templatelinks ON page.page_id = templatelinks.tl_from
+    #           INNER JOIN revision ON page.page_id = revision.rev_page
+    #         WHERE templatelinks.tl_namespace = 10 AND page.page_namespace = 0
+    #         AND ({tpls_str})
+    #         GROUP BY page.page_title
+    #         ORDER BY page.page_id;"""
+    tpls = ','.join((f'"{normalization_pagename(s)}"' for s in names_sfn_templates))
     sql = f"""SELECT
-              page.page_id,
-              page.page_title,
-              MAX(revision.rev_timestamp) AS timelastedit
+              page_id,
+              page_title,
+              rev_timestamp
             FROM page
-              INNER JOIN templatelinks ON page.page_id = templatelinks.tl_from
-              INNER JOIN revision ON page.page_id = revision.rev_page
-            WHERE templatelinks.tl_namespace = 10 AND page.page_namespace = 0
-            AND ({tpls_str})
-            GROUP BY page.page_title
-            ORDER BY page.page_id ASC;"""
+              INNER JOIN templatelinks ON page_id = tl_from
+                AND tl_title IN ({tpls})
+                AND page_namespace = 0 
+                AND tl_namespace = 10 
+              INNER JOIN revision ON page_latest = rev_id;"""
     pages = tuple(wdb_query(sql))
     return pages
 
@@ -44,8 +55,14 @@ def normalization_pagename(t: str) -> str:
 
 def list_to_str_params(string, strings: Iterator[str], couple_arg='LIKE', wordjoin=' OR ') -> str:
     """Return string like:  string LIKE string1 OR string LIKE string2"""
-    return wordjoin.join(['%s %s "%s"' % (string, couple_arg, s) for s in strings2list])
+    return wordjoin.join([f'%s %s "%s"' % (string, couple_arg, normalization_pagename(s)) for s in strings])
 
+
+def _list_to_str_params(field: str, strings: Iterator[str]) -> str:
+    """Return string like:  string LIKE string1 OR string LIKE string2"""
+    tpls = ','.join((f'"{normalization_pagename(s)}"' for s in strings))
+    result = f' AND {field} IN ({tpls})'
+    return result
 
 def wdb_query(sql):
     result = mysql.mysql_query(sql)
