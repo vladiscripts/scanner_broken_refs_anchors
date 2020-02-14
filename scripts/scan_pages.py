@@ -94,7 +94,7 @@ class Scanner:
         # Session.rollback()
         Session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
         for ref in err_refs:
-            Session.add(ErrRef(page_id, ref['citeref'], ref['link_to_sfn'], ref['text']))
+            Session.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
         Session.merge(Timecheck(page_id, time_current()))  # merge
         Session.commit()
         Session.remove()
