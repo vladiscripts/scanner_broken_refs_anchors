@@ -3,7 +3,7 @@
 #
 from scripts.__init__ import *
 from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck
-from scripts import wdb
+from scripts import wiki_db
 
 
 class UpdateDB:
@@ -29,7 +29,7 @@ class UpdateDB:
 
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
-        w_pages = wdb.get_listpages_have_WarningTpl()
+        # w_pages = wiki_db.get_listpages_have_WarningTpl()
         self.db.query(PageWithWarning).delete()
         for pid, title in w_pages:
             self.db.add(PageWithWarning(pid, title))
@@ -37,7 +37,7 @@ class UpdateDB:
 
     def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
-        w_pages_with_sfns = wdb.get_listpages_have_sfnTpl()  # long query ~45000 rows
+        # w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
