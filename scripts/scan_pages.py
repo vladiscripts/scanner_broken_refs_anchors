@@ -49,9 +49,8 @@ class Scanner:
 
     def scan_page(self, title: str) -> List[tuple]:
         """Сканирование страниц на ошибки"""
+        assert not (title is None or title.strip() == '')
         logger.info(f'scan: {title}')
-        if not title or title == '':
-            return
         r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)
         # try:
         #     r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
@@ -63,6 +62,7 @@ class Scanner:
         if len(r.text) < 200:
             logger.error(f'error: len(r.text) < 200 in page: {title}')
         err_refs = ScanRefsOfPage(r.text)
+        assert err_refs is not None
         return err_refs
 
     def open_requests_session(self) -> requests.Session:
