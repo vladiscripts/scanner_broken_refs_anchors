@@ -4,7 +4,7 @@
 # author: https://github.com/vladiscripts
 #
 import time
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Tuple
 from urllib.parse import quote
 import requests
 from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
@@ -85,9 +85,9 @@ class Scanner:
         return pages
 
     @staticmethod
-    def db_update_pagedata(page_id, err_refs) -> None:
+    def db_update_pagedata(title: str, page_id: int, err_refs: tuple) -> None:
         """Сохранение результатов сканирования в БД
-        Очистка db от спискастарых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+        Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
         """
         # todo: В БД пишется моё время или UTC?
         logger.debug(f'db_updating: {title}')
@@ -96,7 +96,7 @@ class Scanner:
         Session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
         for ref in err_refs:
             Session.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
-        Session.merge(Timecheck(page_id, time_current()))  # merge
+        Session.merge(Timecheck(page_id, time_current()))
         Session.commit()
         Session.remove()
         logger.debug(f'db_updated: {title}')
