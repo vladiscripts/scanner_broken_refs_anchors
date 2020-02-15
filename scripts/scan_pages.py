@@ -48,7 +48,7 @@ class Scanner:
             # offset = offset + limit
         self.s.close()
 
-    def scan_page(self, title: str) -> Optional[List[tuple]]:
+    def scan_page(self, title: str) -> List[tuple]:
         """Сканирование страниц на ошибки"""
         logger.info(f'scan: {title}')
         if not title or title == '':
@@ -85,7 +85,7 @@ class Scanner:
         return pages
 
     @staticmethod
-    def db_update_pagedata(title: str, page_id: int, err_refs: tuple) -> None:
+    def db_update_pagedata(title: str, page_id: int, err_refs: list) -> None:
         """Сохранение результатов сканирования в БД
         Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
         """
