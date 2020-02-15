@@ -36,15 +36,14 @@ class Scanner:
                 # if pid != 54229: continue
                 err_refs = self.scan_page(title)
                 # results.append([pid, err_refs])
-                if err_refs is not None:
-                    results.append([pid, err_refs])
+                results.append([title, pid, err_refs])
                 # else: print()
 
-            for pid, err_refs in results:
+            for title, pid, err_refs in results:
                 # if title == 'Скачок_Резеля': logger.info(title)
                 # if pid != 54229: print()
                 # if pid != 54229: continue
-                self.db_update_pagedata(pid, err_refs)
+                self.db_update_pagedata(title, pid, err_refs)
             # offset = offset + limit
         self.s.close()
 
