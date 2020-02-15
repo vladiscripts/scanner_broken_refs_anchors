@@ -5,8 +5,9 @@
 #
 from multiprocessing.dummy import Pool as ThreadPool
 import concurrent.futures
-import queue
+from queue import Queue
 import threading
+from threading import Thread, RLock, Event
 from scripts.logger import logger
 from scripts.scan_pages import Scanner
 
@@ -61,7 +62,7 @@ class ___ScannerMultithreads(Scanner):
     def _____do_scan(self, s):
         list_pages_for_scan = db_get_list_changed_pages()
         self.LOCK = threading.RLock()
-        _queue = queue.Queue()
+        _queue = Queue()
         threads = []
         for i in range(12):
             thread = threading.Thread(target=self.worker, args=(_queue, s,))
@@ -142,8 +143,8 @@ class ____ScannerMultithreads(Scanner):
         queue_len = 1000
         threads_num = 16
         self.lock = threading.RLock()
-        self._queue_toscan = queue.Queue(maxsize=queue_len)
-        self._queue_todb = queue.Queue(maxsize=queue_len)
+        self._queue_toscan = Queue(maxsize=queue_len)
+        self._queue_todb = Queue(maxsize=queue_len)
         threads = [threading.Thread(target=self.worker, args=(self._queue_toscan,)) for i in range(threads_num)]
         [t.start() for t in threads]
 
@@ -222,7 +223,7 @@ class ScannerMultithreads(Scanner):
                      # f'queue_toscan={self.queue_toscan.queue}, '
                      f'unfinished_tasks={self.queue_toscan.unfinished_tasks}')
 
-    def worker(self):
+    def crawler(self):
         # while True:
         #     page = _queue_toscan.get()
         #     if page is None:
@@ -308,23 +309,22 @@ class ScannerMultithreads(Scanner):
     def do_scan(self):
         queue_len = 1000
         threads_num = 16
-        self.lock = threading.RLock()
-        # self.queue_pages = queue.Queue(maxsize=queue_len)
-        self.queue_toscan = queue.Queue(maxsize=queue_len)
-        # self.queue_todb = queue.Queue(maxsize=queue_len)
+        self.lock = RLock()
+        # self.queue_pages = Queue(maxsize=queue_len)
+        self.queue_toscan = Queue(maxsize=queue_len)
+        # self.queue_todb = Queue(maxsize=queue_len)
 
         # self.list_pages_for_scan = self.db_get_list_changed_pages(limit=2)
         # for p in self.list_pages_for_scan:
         #     self.queue_toscan.put(p)
 
-        t_pages = threading.Thread(target=self.thread_pages)
+        t_pages = Thread(target=self.thread_pages)
         t_pages.start()
 
         # if not self.queue_toscan.empty():
-        threads = [threading.Thread(target=self.worker, daemon=True)
-                   for i in range(threads_num)]
+        t_crawlers = [Thread(target=self.crawler, daemon=True) for i in range(threads_num)]
         logger.debug(f't.start()')
-        [t.start() for t in threads]
+        [t.start() for t in t_crawlers]
         # [t.join() for t in threads]
 
         # block until all tasks are done
@@ -341,9 +341,9 @@ class ScannerMultithreads(Scanner):
 
 
 class _ScannerMultithreads(Scanner):
-    queue_to_scanpages: queue.Queue
-    queue_to_upd_pagesdata: queue.Queue
-    event: threading.Event
+    queue_to_scanpages: Queue
+    queue_to_upd_pagesdata: Queue
+    event: Event
 
     def ___db_get_list_changed_pages(self):
         limit = 3
@@ -413,9 +413,9 @@ class _ScannerMultithreads(Scanner):
     def do_scan(self):
         queue_to_scanpages_len = 100
         threads_num = 16
-        self.queue_to_scanpages = queue.Queue(maxsize=queue_to_scanpages_len)
-        self.queue_to_upd_pagesdata = queue.Queue(maxsize=100)
-        self.event = threading.Event()
+        self.queue_to_scanpages = Queue(maxsize=queue_to_scanpages_len)
+        self.queue_to_upd_pagesdata = Queue(maxsize=100)
+        self.event = Event()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             # while self.queue_to_scanpages.:
             # self.queue_to_scanpages.put(pages)
@@ -459,7 +459,7 @@ class _ScannerMultithreads(Scanner):
     #             self.db_update_pagedata(pid, err_refs)
     #
     # def do_scan(self):
-    #     # pipeline1 = queue.Queue(maxsize=1000)
+    #     # pipeline1 = Queue(maxsize=1000)
     #     event = threading.Event()
     #     with concurrent.futures.ThreadPoolExecutor() as executor:
     #         executor.submit(self._scan_page, event)
@@ -649,7 +649,7 @@ class _ScannerMultithreads(Scanner):
 #
 # def do_work_threading(s):
 #     list_pages_for_scan = db_get_list_changed_pages()
-#     q = queue.Queue()
+#     q = Queue()
 #     threads = []
 #     for i in range(3):
 #         t = threading.Thread(target=worker, args=(q, s,))
