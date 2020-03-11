@@ -4,12 +4,12 @@
 # author: https://github.com/vladiscripts
 #
 import time
-from typing import Union, Optional, List, Tuple
 from urllib.parse import quote
 import requests
 import json
 from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage
+from scripts import *
 from scripts.logger import logger
 
 
