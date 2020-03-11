@@ -1,14 +1,17 @@
 # author: https://github.com/vladiscripts
 #
 from scripts.logger import logger
-from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck
+from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck, Session, db_session as s
 from scripts import wiki_db
 from vladi_helpers.file_helpers import pickle_save_to_file, pickle_load_from_file
 
 
 class UpdateDB:
-    def __init__(self, db):
-        self.db = db
+    def __init__(self):
+        self.s = Session()
+
+    # def __del__(self):
+    #     Session.remove()
 
     def listpages(self):
         # обновить список страниц, имеющих установленный шаблон

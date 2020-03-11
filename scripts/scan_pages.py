@@ -7,6 +7,7 @@ import time
 from urllib.parse import quote
 import requests
 import json
+import pymysql.err
 from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts import *
