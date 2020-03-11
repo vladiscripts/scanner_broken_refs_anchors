@@ -101,4 +101,4 @@ def byte2utf(string):
     return unquote(quote_from_bytes(string), encoding='utf8')
 
 
-Base.metadata.create_all(db_engine)
+Base.metadata.create_all()
