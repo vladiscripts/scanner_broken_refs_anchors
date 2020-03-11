@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String, VARBINARY, DateTime
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import re
 from urllib.parse import quote_from_bytes, unquote
+import time
 
 # Для создания таблицы надо Base = declarative_base() и ...create_all() внизу под классами
 # https://ru.wikibooks.org/wiki/SQLAlchemy
@@ -34,7 +35,8 @@ class PageWithSfn(Base):
     def __init__(self, page_id, title, timelastedit):
         self.page_id = page_id
         self.title = byte2utf(title)
-        self.timelastedit = timelastedit
+        # self.timelastedit = timelastedit
+        self.timelastedit = time.strptime(timelastedit.decode(), '%Y%m%d%H%M%S')
         fl = self.title[0:1].upper()
         self.wikilist = fl if re.match(r'[А-ЯЁ]', fl) else '*'
 
@@ -43,10 +45,11 @@ class Timecheck(Base):
     """Время проверки страниц скриптом"""
     __tablename__ = 'timecheck'
     page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE'), primary_key=True)
-    timecheck = Column(Integer)
+    timecheck = Column(DateTime)  # VARBINARY(14) on wikiDB
 
     def __init__(self, page_id, timecheck):
         self.page_id = page_id
+        # self.timecheck = timecheck.encode()
         self.timecheck = timecheck
 
 
