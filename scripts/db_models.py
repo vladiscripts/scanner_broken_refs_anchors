@@ -43,7 +43,8 @@ class PageWithSfn(Base):
 class Timecheck(Base):
     """Время проверки страниц скриптом"""
     __tablename__ = 'timecheck'
-    page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE'), primary_key=True)
+    page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE', onupdate='CASCADE'),
+                     primary_key=True)
     timecheck = Column(DateTime)
 
     def __init__(self, page_id, timecheck):
