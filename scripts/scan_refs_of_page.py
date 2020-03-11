@@ -4,8 +4,7 @@
 #
 import re
 from lxml.html import tostring, fromstring
-from typing import List, Set
-from collections import namedtuple
+from . import *
 
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
 SFN = namedtuple('SFN', 'citeref text link_to_sfn')
@@ -45,9 +44,8 @@ def find_sfns_on_page(htmltree) -> (Set[str], List[namedtuple]):
             aText = tag_a.search(str(tostring(a, encoding='unicode'))).group(1)
             idRef = a.attrib['href'].lstrip('#')
             list_sfns.add(idRef)
-            all_sfns_info.append(
-                SFN(citeref=idRef, text=aText, link_to_sfn=str(li.attrib['id'])))
-            # return list_sfns, all_sfns_info
+            sfn = SFN(citeref=idRef, text=aText, link_to_sfn=str(li.attrib['id']))
+            all_sfns_info.append(sfn)
     return list_sfns, all_sfns_info
 
 
