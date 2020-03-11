@@ -7,6 +7,7 @@ import time
 from typing import Union, Optional, List, Tuple
 from urllib.parse import quote
 import requests
+import json
 from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts.logger import logger
@@ -34,7 +35,9 @@ class Scanner:
             results = []
             for pid, title in pages:
                 # if pid != 54229: continue
-                err_refs = self.scan_page(title)
+                err_refs = self.scan_page(title, pid)
+                if err_refs is None:
+                    continue
                 # results.append([pid, err_refs])
                 results.append([title, pid, err_refs])
                 # else: print()
@@ -47,28 +50,59 @@ class Scanner:
             # offset = offset + limit
         self.s.close()
 
-    def scan_page(self, title: str) -> List[tuple]:
+    def scan_page(self, title: str, pid=None) -> Optional[List[namedtuple]]:
         """Сканирование страниц на ошибки"""
         assert not (title is None or title.strip() == '')
-        logger.info(f'scan: {title}')
-        r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)
-        # try:
-        #     r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
-        # except Exception as e:
-        #     logger.info(f'error: requests: {title}; {e}')
-        #     return None
+        # logger.info(f'scan: {title}')
+        if pid:
+            r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'pageid': pid}, timeout=60)
+        else:
+            r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'page': title}, timeout=60)
         if r.status_code != 200:
             logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
         if len(r.text) < 200:
             logger.error(f'error: len(r.text) < 200 in page: {title}')
-        err_refs = ScanRefsOfPage(r.text)
+        j = json.loads(r.text)
+        if 'error' in j:
+            if j["error"]['code'] == 'missingtitle':
+                logger.warning(f'error on page request - no page. pid={pid}, title={title}, error: {j["error"]}')
+                return
+        if 'error' in j or 'warnings' in j:
+            logger.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}')
+            return
+        if not 'parse' in j:
+            return
+        text = j['parse']['text']
+        err_refs = ScanRefsOfPage(text)
         assert err_refs is not None
         return err_refs
 
+    # def _scan_page_via_html(self, pid, title: str) -> Optional[List[namedtuple]]:
+    #     """Сканирование страниц на ошибки"""
+    #     assert not (title is None or title.strip() == '')
+    #     logger.info(f'scan: {title}')
+    #     # r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)   # + params={"action": "render"}
+    #     try:
+    #         r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
+    #     except Exception as e:
+    #         logger.info(f'error: requests: {title}; {e}')
+    #         return None
+    #     if '|' in title:
+    #         logger.debug("'|' in title: {title}")
+    #     if r.status_code != 200:
+    #         logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
+    #     if len(r.text) < 200:
+    #         logger.error(f'error: len(r.text) < 200 in page: {title}')
+    #     err_refs = ScanRefsOfPage(r.text)
+    #     assert err_refs is not None
+    #     return err_refs
+
     def open_requests_session(self) -> requests.Session:
         s = requests.Session()
-        s.headers.update({'User-Agent': 'user:textworkerBot'})
-        s.params.update({"action": "render"})
+        s.headers.update({'User-Agent': 'user:textworkerBot',
+                          'Accept-Encoding': 'gzip, deflate'})
+        s.params.update({"action": "parse", 'format': 'json', 'prop': 'text', 'utf8': 1, 'formatversion': 2})
+        # s.params.update({"action": "render"})  # для запросов как html, а не через api
         return s
 
     @staticmethod
