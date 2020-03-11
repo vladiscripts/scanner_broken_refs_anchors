@@ -2,13 +2,12 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, scoped_session
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session, Query
 import re
 from urllib.parse import quote_from_bytes, unquote
 
-# Для создания таблицы надо Base = declarative_base() и ...create_all() внизу под классами
-# https://ru.wikibooks.org/wiki/SQLAlchemy
-db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=False)  # 'sqlite:///:memory:'
+# db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=False)  # 'sqlite:///:memory:'
+db_engine = create_engine('mysql+pymysql://root:root@localhost/wiki_scanner_refs', echo=True)
 Base = declarative_base()
 Session = scoped_session(sessionmaker(bind=db_engine))
 
@@ -25,11 +24,17 @@ class PageWithSfn(Base):
     """Страницы с шаблоном типа {{sfn}}"""
     __tablename__ = 'pages_with_sfn'
     page_id = Column(Integer, primary_key=True)
-    title = Column(String, unique=True, nullable=False)
-    timelastedit = Column(Integer)
-    wikilist = Column(String, index=True)
-    timechecks = relationship('Timecheck', backref='page', passive_deletes=True)  # cascade='all,delete,delete-orphan'
-    refs = relationship('ErrRef', backref='page', passive_deletes=True)
+    title = Column(String(255), nullable=False)
+    timelastedit = Column(DateTime)  # VARBINARY(14) on wikiDB
+    wikilist = Column(String(3), index=True)
+
+    # wikilist = Column(String(3), ForeignKey('pages_with_sfn.wikilist'), primary_key=True, index=True)
+    # wikilist = Column(String(3), ForeignKey('wikilists.letter'))
+    # wikilist = relationship('Wikilists', backref='ww', passive_deletes=True)
+    # ref = relationship('ErrRef', backref='refs', passive_deletes=True)
+    # timecheck = relationship('Timecheck', backref='timechecks',
+    #                          passive_deletes=True)  # cascade='all,delete,delete-orphan'
+    # ref = relationship('ErrRef', backref='refs', passive_deletes=True)
 
     def __init__(self, page_id, title, timelastedit):
         self.page_id = page_id
@@ -53,11 +58,11 @@ class Timecheck(Base):
 class ErrRef(Base):
     """Списки ошибочных сносок страниц"""
     __tablename__ = 'erroneous_refs'
-    id = Column(Integer, primary_key=True)
-    page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE'), index=True)
-    citeref = Column(String)
-    link_to_sfn = Column(String)
-    text = Column(String)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE', onupdate='CASCADE'), index=True)
+    citeref = Column(String(255), nullable=False)
+    link_to_sfn = Column(String(255), nullable=False)
+    text = Column(String(255), nullable=False)
 
     def __init__(self, page_id, citeref, link_to_sfn, text):
         self.page_id = page_id
@@ -70,7 +75,7 @@ class PageWithWarning(Base):
     """Страницы с шаблоном об ошибке сносок"""
     __tablename__ = 'pages_with_warnings'
     page_id = Column(Integer, primary_key=True)
-    title = Column(String, unique=True)
+    title = Column(String(255), unique=True, nullable=False)
 
     def __init__(self, page_id, title):
         self.page_id = page_id
@@ -80,8 +85,11 @@ class PageWithWarning(Base):
 class Wikilists(Base):
     """Названия подстраниц бота со списками ошибок"""
     __tablename__ = 'wikilists'
-    letter = Column(String, ForeignKey('pages_with_sfn.wikilist'), primary_key=True)
-    title = Column(String)
+    letter = Column(String(3))
+    title = Column(String(255), nullable=False)
+
+    # pages = relationship('PageWithSfn', backref='wikilist', passive_deletes=True)
+    # pages = relationship('PageWithSfn', backref='pages', passive_deletes=True)
 
     def __init__(self, letter, title):
         self.letter = letter
