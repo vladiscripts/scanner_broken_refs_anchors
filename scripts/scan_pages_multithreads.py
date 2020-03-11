@@ -9,160 +9,11 @@ from queue import Queue
 import threading
 from threading import Thread, RLock, Event
 from scripts.logger import logger
-from scripts.scan_pages import Scanner
+# from scripts import *
+from scripts.scan_pages import Scanner, db_update_pagedata_, db_update_pagedata__, db_get_list_changed_pages, \
+    time_current
 
-
-# from multiprocessing import Pool
-# from multiprocessing.pool import ThreadPool
-
-
-class __ScannerMultithreads(Scanner):
-
-    def ____do_scan(self):
-        pool = ThreadPool(processes=None)  # processes equals CPU threads, usually 6—12
-        limit = pool._processes - 1
-
-        def process(page):
-            pid, title = page
-            err_refs = self.scan_page(title)
-            if err_refs is None:
-                pass
-            self.db_update_pagedata(pid, err_refs)
-
-        # for results in pool.map(process, self.db_get_list_changed_pages(limit), 1):  pass
-        pool.map(process, self.db_get_list_changed_pages(limit), 1)
-
-        pool.close()
-        pool.join()
-        self.s.close()
-
-    #
-
-
-class ___ScannerMultithreads(Scanner):
-    def worker(self, _queue, page):
-        with self.LOCK.acquire() as lock:
-
-            page = _queue.get()
-
-            while True:
-                item = _queue.get()
-                if item is None:
-                    break
-                scan_results = scan_page(s, item[1])
-                db_update_pagedata(item[0], scan_results.err_refs)
-                q.task_done()
-
-            pid, title = page
-            err_refs = self.scan_page(title)
-            if err_refs is None:
-                pass
-            self.db_update_pagedata(pid, err_refs)
-
-    def _____do_scan(self, s):
-        list_pages_for_scan = db_get_list_changed_pages()
-        self.LOCK = threading.RLock()
-        _queue = Queue()
-        threads = []
-        for i in range(12):
-            thread = threading.Thread(target=self.worker, args=(_queue, s,))
-            thread.start()
-            threads.append(thread)
-
-        for item in list_pages_for_scan:
-            _queue.put(item)
-
-        # block until all tasks are done
-        _queue.join()
-
-        # stop workers
-        for i in range(list_pages_for_scan):
-            _queue.put(None)
-        for t in threads:
-            t.join()
-
-
-class ____ScannerMultithreads(Scanner):
-    results = []
-
-    # def _scan_page(self, page):
-    #     pid, title = page
-    #     err_refs = self.scan_page(title)
-    #     if err_refs is None:
-    #         pass
-    #     logger.info(f'db_update_pagedata: {title}')
-    #     with self.lock:
-    #         self.db_update_pagedata(pid, err_refs)
-
-    def _load_pages(self):
-        # while True:
-        pages = []
-        if not pages:
-            # break
-            pages = self.db_get_list_changed_pages(limit=3000)
-            if not pages:
-                self._queue_toscan.task_done()
-                self.done = True
-                return
-            while pages:
-                if self._queue_toscan.empty():
-                    for p in pages[:queue_len - 5]:
-                        self._queue_toscan.put(p)
-
-    # def _scan_page(self, page):
-    def _scan_page(self):
-        # while True:
-        if not self._queue_toscan.empty():
-            page = self._queue_toscan.get()
-            if page is None:
-                # break
-                return
-            pid, title = page
-            err_refs = self.scan_page(title)
-            self._queue_toscan.put((title, pid, err_refs))
-            # self._queue_toscan.task_done()
-
-    def _to_db(self):
-        # with self.lock:
-        if not self._queue_toscan.empty():
-            title, pid, err_refs = self._queue_toscan.get()
-            logger.info(f'db_update_pagedata: {title}')
-            self.db_update_pagedata(pid, err_refs)
-
-    def worker(self, _queue_toscan):
-        while True:
-            page = _queue_toscan.get()
-            if page is None:
-                break
-            self._scan_page(page)
-            self._to_db()
-        # self._scan_page()
-        # self._to_db()
-
-    def do_scan(self):
-        queue_len = 1000
-        threads_num = 16
-        self.lock = threading.RLock()
-        self._queue_toscan = Queue(maxsize=queue_len)
-        self._queue_todb = Queue(maxsize=queue_len)
-        threads = [threading.Thread(target=self.worker, args=(self._queue_toscan,)) for i in range(threads_num)]
-        [t.start() for t in threads]
-
-        while True:
-            pages = self.db_get_list_changed_pages(limit=3000)
-            if not pages:
-                break
-            while pages:
-                if self._queue_toscan.empty():
-                    for p in pages[:queue_len - 5]:
-                        self._queue_toscan.put(p)
-        # block until all tasks are done
-        self._queue_toscan.join()
-
-        # stop workers
-        # for i in range(pages):
-        #     _queue.put(None)
-        [t.join() for t in threads]
+from scripts.db_models import Session, db_session as s
 
 
 class ScannerMultithreads(Scanner):
@@ -302,7 +153,14 @@ class ScannerMultithreads(Scanner):
             while pages and not self.queue_toscan.full():
                 p = pages.pop()
                 self.queue_toscan.put(p)
-
+                if p in k:
+                    logger.info(f'p in k: {p}')
+                k.append(p)
+                print()
+            self.queue_toscan.join()
+            print()
+        # Session.remove()
+        # s.close()
         logger.debug(f'self.queue_toscan {self.queue_toscan.unfinished_tasks}')
         logger.debug(f'thread_pages end')
 

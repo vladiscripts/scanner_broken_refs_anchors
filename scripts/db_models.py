@@ -9,15 +9,10 @@ from urllib.parse import quote_from_bytes, unquote
 # db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=False)  # 'sqlite:///:memory:'
 db_engine = create_engine('mysql+pymysql://root:root@localhost/wiki_scanner_refs', echo=True)
 Base = declarative_base()
-Session = scoped_session(sessionmaker(bind=db_engine))
 
-
-# Session = sessionmaker(bind=db_engine)
-# db_session = Session()
-
-# db_engine_mysql = create_engine('mysql+pymysql://v:v@localhost/wikirefsDB', echo=print_log)
-# Session_mysql = sessionmaker(bind=db_engine_mysql)
-# db_session_mysql = Session_mysql()
+# Session = scoped_session(sessionmaker(bind=db_engine))
+Session = sessionmaker(bind=db_engine)
+db_session = Session()
 
 
 class PageWithSfn(Base):
