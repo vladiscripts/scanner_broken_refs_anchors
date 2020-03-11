@@ -1,7 +1,6 @@
 # coding: utf-8
-#
 # author: https://github.com/vladiscripts
-#
+from scripts import *
 from settings import *
 from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Session
 
@@ -29,15 +28,3 @@ def save_listpages_for_add_warning_tpls():
     s.close()
     errpages_without_warning_tpl = (p.title for p in errpages_without_warning_tpl)
     file_savelines(filename_listpages_errref_where_no_yet_warning_tpl, errpages_without_warning_tpl)
-
-
-def file_savelines(filename, strlist, append=False):
-    mode = 'a' if append else 'w'
-    text = '\n'.join(strlist)
-    with open(filename, mode, encoding='utf-8') as f:
-        f.write(text)
-
-
-def file_savetext(filename, text):
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(text)
