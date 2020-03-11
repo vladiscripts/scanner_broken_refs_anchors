@@ -1,4 +1,3 @@
-# coding: utf-8
 # author: https://github.com/vladiscripts
 #
 from scripts.logger import logger

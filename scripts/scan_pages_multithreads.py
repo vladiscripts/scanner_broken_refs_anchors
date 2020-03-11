@@ -9,7 +9,6 @@ from scripts.logger import logger
 # from scripts import *
 from scripts.scan_pages import Scanner, db_update_pagedata_, db_update_pagedata__, db_get_list_changed_pages, \
     time_current
-
 from scripts.db_models import Session, db_session as s
 
 
