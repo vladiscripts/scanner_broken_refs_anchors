@@ -12,6 +12,7 @@ from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts import *
 from scripts.logger import logger
+from settings import *
 
 
 # [p.page_id for p in Session.query(PageWithSfn.page_id, PageWithSfn.title) \
