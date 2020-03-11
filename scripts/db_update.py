@@ -30,7 +30,7 @@ class UpdateDB:
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
         # w_pages = wiki_db.get_listpages_have_WarningTpl()
-        self.db.query(PageWithWarning).delete()
+        self.s.query(PageWithWarning).delete()
         for pid, title in w_pages:
             self.s.add(PageWithWarning(pid, title))
         self.s.commit()
@@ -71,7 +71,7 @@ class UpdateDB:
         # long query
         self.s.commit()
 
-    def drop_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
+    def clear_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
         logger.info('Drop_orphan_sfnpages')
         db_pages_ids = {p.page_id for p in db_pages}
         w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
