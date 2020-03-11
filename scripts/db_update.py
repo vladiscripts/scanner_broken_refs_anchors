@@ -85,10 +85,13 @@ class UpdateDB:
         logger.info('Drop_orphan_sfnpages')
         db_pages_ids = {p.page_id for p in db_pages}
         w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
-        delta = db_pages_ids - w_pages_ids
+        delta = tuple(db_pages_ids - w_pages_ids)
         if delta:
-            self.db.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
-            self.db.commit()
+            share = 100
+            chunks = [delta[i:i + share] for i in range(0, len(delta), share)]
+            for chunk in chunks:
+                self.s.query(PageWithSfn).filter(PageWithSfn.page_id.in_(chunk)).delete(synchronize_session='fetch')
+                self.s.commit()
 
     def clear_orphan_by_timecheck(self):
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
