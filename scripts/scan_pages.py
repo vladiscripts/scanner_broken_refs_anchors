@@ -234,6 +234,7 @@ def db_update_pagedata(title: str, page_id: int, err_refs: list) -> None:
 
 def time_current():
     return time.strftime('%Y%m%d%H%M%S', time.gmtime())
+    # return datetime.timestamp()..utcfromtimestamp(ts).strftime('%Y%m%d%H%M%S')
 
 # for test
 # page = ScanRefsOfPage('2091672', 'Марк Фульвий Флакк (консул 125 года до н. э.)')
