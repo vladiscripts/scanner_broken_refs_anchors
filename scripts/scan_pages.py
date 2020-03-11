@@ -29,7 +29,7 @@ class Scanner:
         # s = open_requests_session()
         while True:
             # pages = self.db_get_list_changed_pages(offset, limit)
-            pages = self.db_get_list_changed_pages(limit)
+            pages = db_get_list_changed_pages(limit)
             if not pages: break
 
             results = []
@@ -46,7 +46,7 @@ class Scanner:
                 # if title == 'Скачок_Резеля': logger.info(title)
                 # if pid != 54229: print()
                 # if pid != 54229: continue
-                self.db_update_pagedata(title, pid, err_refs)
+                db_update_pagedata(title, pid, err_refs)
             # offset = offset + limit
         self.s.close()
 
@@ -105,34 +105,103 @@ class Scanner:
         # s.params.update({"action": "render"})  # для запросов как html, а не через api
         return s
 
-    @staticmethod
-    def db_get_list_changed_pages(limit=None) -> list:  # offset,limit
-        Session()
-        pages = Session.query(PageWithSfn.page_id, PageWithSfn.title) \
+
+def session_(func):
+    def wrapper(*kargs, **kwargs):
+        s = Session()
+        # s.rollback()
+        result = func(s, *kargs, **kwargs)
+        s.remove()
+        return result
+
+    return wrapper
+
+
+def db_get_list_changed_pages(s, limit=None) -> list:  # offset,limit
+    # s = Session()
+    if limit:
+        _pages = s.query(PageWithSfn) \
             .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
             .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck)) \
-            .limit(limit)
-        # .all()
-        # .offset(offset).limit(limit).all()
-        Session.remove()
-        return pages
+            .limit(limit).all()
+    else:
+        _pages = s.query(PageWithSfn) \
+            .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
+            .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck)) \
+            .all()
+    # .offset(offset).limit(limit).all()
+    # Session.remove()
+    pages = [(p.page_id, p.title) for p in _pages]
+    return pages
 
-    @staticmethod
-    def db_update_pagedata(title: str, page_id: int, err_refs: list) -> None:
-        """Сохранение результатов сканирования в БД
-        Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
-        """
-        # todo: В БД пишется моё время или UTC?
-        logger.debug(f'db_updating: {title}')
-        Session()
-        # Session.rollback()
-        Session.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
-        for ref in err_refs:
-            Session.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
-        Session.merge(Timecheck(page_id, time_current()))
-        Session.commit()
-        Session.remove()
-        logger.debug(f'db_updated: {title}')
+
+@session_
+def db_update_pagedata__(s, title: str, page_id: int, err_refs: list) -> None:
+    """Сохранение результатов сканирования в БД
+    Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+    """
+    # todo: В БД пишется моё время или UTC?
+    s.begin()
+    s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+    for ref in err_refs:
+        s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
+    s.merge(Timecheck(page_id, time_current()))
+    s.commit()
+
+
+def db_update_pagedata_(s, title: str, page_id: int, err_refs: list, chktime: str) -> None:
+    """Сохранение результатов сканирования в БД
+    Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+    """
+    try:
+        with s.begin_nested():
+            s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+            for ref in err_refs:
+                s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
+            s.merge(Timecheck(page_id, chktime))
+        s.commit()
+        # s.begin_nested()
+        # s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+        # for ref in err_refs:
+        #     s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
+        # s.merge(Timecheck(page_id, chktime))
+        # s.commit()
+    except pymysql.err.DataError as e:
+        if len(ref.citeref) > 255 or len(ref.text) > 255:
+            print()
+        print()
+    except Exception as e:
+        print()
+
+
+def db_update_pagedata(title: str, page_id: int, err_refs: list) -> None:
+    """Сохранение результатов сканирования в БД
+    Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+    """
+    logger.debug(f'db_updating: {title}')
+    s = Session()
+    # Session.rollback()
+    db_update_pagedata_(s, title, page_id, err_refs)
+    # Session.remove()
+    s.close()
+    logger.debug(f'db_updated: {title}')
+
+
+# @staticmethod
+# def db_update_pagedata_packet(pages: List[Tuple[str, int, tuple]]) -> None:
+#     """Сохранение результатов сканирования в БД
+#     Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+#     """
+#     Session()
+#     # Session.rollback()
+#     pids = [pid for title, pid, err_refs in pages]
+#     Session.query(ErrRef).filter(ErrRef.page_id.in_(pids)).delete(synchronize_session='fetch')
+#     for title, pid, err_refs in pages:
+#         for ref in err_refs:
+#             Session.add(ErrRef(pid, ref.citeref, ref.link_to_sfn, ref.text))
+#         Session.merge(Timecheck(pid, time_current()))
+#     Session.commit()
+#     Session.remove()
 
 
 def time_current():
