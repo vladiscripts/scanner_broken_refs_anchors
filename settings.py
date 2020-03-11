@@ -27,7 +27,7 @@ update_db_from_wiki = True
 
 # --- Внимание, включение записи в википедию
 # --- Постинг запускается скриптом post_to_wiki.py
-do_all_post_to_wiki = True  # Отключение всех опций ниже в этой секции
+do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
 do_all_posts_simulate = True  # Симуляция всего постинга ниже в этой секции
 
 do_post_wikilist = True  # Запись списков

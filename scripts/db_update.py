@@ -3,6 +3,7 @@
 from scripts.logger import logger
 from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck
 from scripts import wiki_db
+from vladi_helpers.file_helpers import pickle_save_to_file, pickle_load_from_file
 
 
 class UpdateDB:
@@ -29,6 +30,10 @@ class UpdateDB:
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
         # w_pages = wiki_db.get_listpages_have_WarningTpl()
+        # w_pages = tuple(w_pages)
+        # pickle_save_to_file('WarningTpl.pickle', w_pages)
+        w_pages = pickle_load_from_file('WarningTpl.pickle')
+
         self.s.query(PageWithWarning).delete()
         for pid, title in w_pages:
             self.s.add(PageWithWarning(pid, title))
@@ -37,6 +42,9 @@ class UpdateDB:
     def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
         # w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
+        # w_pages_with_sfns = tuple(w_pages_with_sfns)
+        # pickle_save_to_file('wiki_sfnTpl.pickle', w_pages_with_sfns)
+        w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl.pickle')
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
