@@ -61,9 +61,9 @@ class ErrRef(Base):
 
     def __init__(self, page_id, citeref, link_to_sfn, text):
         self.page_id = page_id
-        self.citeref = citeref
+        self.citeref = citeref[:255]
         self.link_to_sfn = link_to_sfn
-        self.text = text
+        self.text = text[:255]
 
 
 class PageWithWarning(Base):

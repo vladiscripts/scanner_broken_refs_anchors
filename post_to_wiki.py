@@ -53,7 +53,7 @@ def posting_list():
     command = '%s pagefromfile %s' % (python_and_path, ' '.join(params))
     run(command, filename_wikilists)
 
-
+# todo: заменить {{PAGENAME}} на {{PAGEID}}
 def posting_template():
     """Простановка в статьях шаблона про ошибки"""
     excepts = [

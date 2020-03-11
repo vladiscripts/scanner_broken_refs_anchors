@@ -19,6 +19,7 @@ multithreads = True
 # True - сканировать и генерировать новые списки.
 # False - только запись списков в файлы и постинг в wiki
 generate_lists = True
+do_recheck_lists = False
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_lists = False
@@ -30,17 +31,18 @@ do_all_post_to_wiki = True  # Отключение всех опций ниже 
 do_all_posts_simulate = True  # Симуляция всего постинга ниже в этой секции
 
 do_post_wikilist = True  # Запись списков
-do_post_wikilist_simulate = False  # Симуляция записи
+do_post_wikilist_simulate = True  # Симуляция записи
 
-do_post_template = True  # Запись в статьи шаблона
-do_post_template_simulate = False  # Симуляция записи
+do_post_template = False  # Запись в статьи шаблона
+do_post_template_simulate = True  # Симуляция записи
 
 do_remove_template = True  # Удаление из статей ненужного шаблона
-do_remove_template_simulate = False  # Симуляция записи
+do_remove_template_simulate = True  # Симуляция записи
 
 # ---
 # Удаление метки проверки у страниц имеющих warning-шаблон.
 # Выключать после очистки, иначе будет сбрасывать базу данных при каждом запуске.
+clear_timechecks_of_erropages = False
 clear_check_pages_with_warnings = False
 clear_all_check_pages = False
 
@@ -52,7 +54,7 @@ filename_listpages_errref_where_no_yet_warning_tpl = 'listpages_without_warning_
 filename_list_to_remove_warning_tpl = 'list2remove_warning_tpl.txt'
 filename_wikilists = 'wikisections.txt'  # вики-списки для автоподстановки в шаблон посредством {{#lst:}} и <section="" />
 
-root_wikilists = warning_tpl_name + '/'  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
+root_wikilists = warning_tpl_name  # где располагать списки секций, лучше в корне подстраницами шаблона-предупреждения
 marker_page_start = '{{-start-}}'
 marker_page_end = '{{-end-}}'
 header = """
@@ -62,7 +64,6 @@ header = """
 (Это служебная таблица даных для подстановок, поэтому с этой страницы ссылки на сноски не работают.)
 
 Список обновляется ботом.
-
 """  # в шапку шаблон {{координационный список}} не нужен, ибо это не список, а подстраница данных скрипта
 footer = '[[Категория:Шаблоны:Подстраницы шаблонов]][[Категория:Шаблоны:Подстраницы Нет полных библиографических описаний|{{SUBPAGENAME}}]]'
 

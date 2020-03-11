@@ -11,24 +11,22 @@ from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
 from scripts.make_wikilists import make_and_save_wikilist
-from scripts.db_models import Session
 
 if __name__ == '__main__':
     t = datetime.now()
     logger.info(f'{t} Start scanner')
 
-    db = Session()
-    db_update = UpdateDB(db)
+    db_update = UpdateDB()
 
     # Опциональные чистки, проще (?) удалить и пересоздать файл базы данных
     # удаление метки проверки у страниц имеющих warning-шаблон
 
     if clear_timechecks_of_erropages:
         logger.info('*** Clear_timechecks_of_erropages')
-        db_update.drop_timechecks_of_erropages()
+        db_update.clear_timechecks_of_erropages()
     if clear_check_pages_with_warnings:
         logger.info('*** Clear_check_pages_with_warnings')
-        db_update.drop_check_pages_with_warnings()
+        db_update.clear_check_pages_with_warnings()
     # сброс всех меток проверки
     if clear_all_check_pages:
         logger.info('*** Clear_all_check_pages')
@@ -59,9 +57,12 @@ if __name__ == '__main__':
 
         # Запись списков
         logger.info('*** Doing save_listpages_for_remove_warning_tpls')
-        save_listpages_for_remove_warning_tpls(db)
+        save_listpages_for_remove_warning_tpls()
         logger.info('*** Doing save_listpages_for_add_warning_tpls')
-        save_listpages_for_add_warning_tpls(db)
+        save_listpages_for_add_warning_tpls()
         logger.info('*** Doing make_wikilist')
-        make_and_save_wikilist(db)
-    Session.remove()
+        make_and_save_wikilist()
+
+        logger.info('*** Doing recheck_lists')
+        if do_recheck_lists:
+            scanner.recheck_lists()
