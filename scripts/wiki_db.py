@@ -7,18 +7,20 @@ from settings import *
 
 
 def get_listpages_have_WarningTpl(limit=''):
-    """Обновить список страниц имеющих установленный шаблон."""
+    """Обновить список страниц имеющих установленный шаблон.
+    # Не используются ORDER и GROUP посколкьу сильно замедляют запрос"""
     sql = f"""SELECT page_id, page_title
-            FROM page
-            JOIN templatelinks ON templatelinks.tl_from = page.page_id
-            WHERE tl_namespace = 10 AND page_namespace = 0
-            AND tl_title LIKE "{normalization_pagename(warning_tpl_name)}"
-            ORDER BY page.page_id ASC;"""
-    pages = tuple(wdb_query(sql))
+                FROM page
+                    INNER JOIN templatelinks ON tl_from = page_id
+                WHERE tl_namespace = 10
+                  AND tl_title = "{normalization_pagename(warning_tpl_name)}"
+                  AND page_namespace = 0;"""
+    pages = wdb_query(sql)
+    # pages = tuple(wdb_query(sql))
     return pages
 
 
-def get_listpages_have_sfnTpl():
+def get_listpages_have_sfnTpl(limit=''):
     """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
     # tpls_str = _list_to_str_params('tl_title', names_sfn_templates)
     # sql = f"""SELECT
@@ -33,18 +35,39 @@ def get_listpages_have_sfnTpl():
     #         GROUP BY page.page_title
     #         ORDER BY page.page_id;"""
     tpls = ','.join((f'"{normalization_pagename(s)}"' for s in names_sfn_templates))
-    sql = f"""SELECT
-              page_id,
-              page_title,
-              rev_timestamp
-            FROM page
-              INNER JOIN templatelinks ON page_id = tl_from
-                AND tl_title IN ({tpls})
-                AND page_namespace = 0 
-                AND tl_namespace = 10 
-              INNER JOIN revision ON page_latest = rev_id;"""
-    pages = tuple(wdb_query(sql))
+    sql = f"""SELECT page_id, page_title, rev_timestamp
+                FROM page
+                  INNER JOIN templatelinks ON page_id = tl_from
+                    AND tl_namespace = 10
+                    AND tl_title IN ({tpls})
+                    AND page_namespace = 0
+                  INNER JOIN revision ON page_latest = rev_id;"""
+    pages = wdb_query(sql)
+    # pages = tuple(wdb_query(sql))
     return pages
+
+
+def _wdb_query(sql):
+    result = []
+    sql = sql.strip(' ;\n')
+    i = 1
+    limit = 10000
+    while True:
+        sql_limit = f'{sql} LIMIT {i}, {limit};'
+        rows = _wdb_query(sql_limit)
+
+        # if not len(rows):  # break the loop when no more rows
+        #     print("Done!")
+        #     break
+
+        if not rows:
+            break
+        for row in rows:  # do something with results
+            result.append(row)
+        # [].extend(tuple(rows))
+
+        i += limit
+    return result
 
 
 def normalization_pagename(t: str) -> str:
@@ -64,8 +87,9 @@ def _list_to_str_params(field: str, strings: Iterator[str]) -> str:
     result = f' AND {field} IN ({tpls})'
     return result
 
-def wdb_query(sql):
-    result = mysql.mysql_query(sql)
+
+def wdb_query(sql, limit=''):
+    result = mysql.mysql_query(sql.format(limit), dbname='ruwiki')
     return result
 
 # def wdb_query_pymysql(sql):
