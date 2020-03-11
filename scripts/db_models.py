@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, Query
@@ -85,6 +85,7 @@ class PageWithWarning(Base):
 class Wikilists(Base):
     """Названия подстраниц бота со списками ошибок"""
     __tablename__ = 'wikilists'
+    id = Column(Integer, primary_key=True, autoincrement=True)
     letter = Column(String(3))
     title = Column(String(255), nullable=False)
 
