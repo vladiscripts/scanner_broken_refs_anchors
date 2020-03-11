@@ -24,16 +24,16 @@ class UpdateDB:
         # чистка PageTimecheck и Ref от записей которых нет в pages
         # не нужно с ForeignKey ondelete="CASCADE"
         # таки нужно
-        self.drop_orphan_by_timecheck()
-        self.drop_orphan_errrefs()
+        self.clear_orphan_by_timecheck()
+        self.clear_orphan_errrefs()
 
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
         # w_pages = wiki_db.get_listpages_have_WarningTpl()
         self.db.query(PageWithWarning).delete()
         for pid, title in w_pages:
-            self.db.add(PageWithWarning(pid, title))
-        self.db.commit()
+            self.s.add(PageWithWarning(pid, title))
+        self.s.commit()
 
     def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
@@ -41,15 +41,17 @@ class UpdateDB:
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
-        db_pages = self.db.query(PageWithSfn).all()
+        db_pages = self.s.query(PageWithSfn).all()
 
         # чистка PageWithSfn
-        self.drop_orphan_sfnpages(w_pages_with_sfns, db_pages)
+        self.clear_orphan_sfnpages(w_pages_with_sfns, db_pages)
 
         # upsert
         logger.info('Updating of timelastedits in PageWithSfn table')
         for page_id, title, timelastedit in w_pages_with_sfns:
-            self.db.merge(PageWithSfn(page_id, title, int(timelastedit)))
+            # self.s.merge(PageWithSfn(page_id, title, timelastedit))
+            pass
+        # -----------
 
         # слишком долгая операция
         # for page_id, title, timelastedit in w_pages_with_sfns:
@@ -67,7 +69,7 @@ class UpdateDB:
         #                      for id, title, timelastedit in w_pages_with_sfns]
         # self.db_session.bulk_save_objects(w_pages_with_sfns)
         # long query
-        self.db.commit()
+        self.s.commit()
 
     def drop_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
         logger.info('Drop_orphan_sfnpages')
@@ -78,48 +80,47 @@ class UpdateDB:
             self.db.query(PageWithSfn).filter(PageWithSfn.page_id.in_(delta)).delete(synchronize_session='fetch')
             self.db.commit()
 
-    def drop_orphan_by_timecheck(self):
+    def clear_orphan_by_timecheck(self):
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
         logger.info('Drop_orphan_by_timecheck')
-        pages = self.db.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(
-            PageWithSfn.page_id.is_(None)).all()
+        pages = self.s.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all()
         for p in pages:
-            self.db.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
-        self.db.commit()
+            c = self.s.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
+        self.s.commit()
 
-    def drop_orphan_errrefs(self):
+    def clear_orphan_errrefs(self):
         logger.info('Drop_refs_of_changed_pages')
         # pages = Session.query(ErrRef.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all()
         # for p in pages:  # DELETE do not work with JOIN
         #     Session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete(synchronize_session='fetch')
-        pages = (p.page_id for p in
-                 self.db.query(ErrRef.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all())
-        self.db.query(ErrRef).filter(ErrRef.page_id.in_(pages)).delete(synchronize_session='fetch')
-        self.db.commit()
+        pages = (p.page_id for p in self.s.query(ErrRef.page_id).outerjoin(PageWithSfn)
+            .filter(PageWithSfn.page_id.is_(None)).all())
+        c = self.s.query(ErrRef).filter(ErrRef.page_id.in_(pages)).delete(synchronize_session='fetch')
+        self.s.commit()
 
-    def drop_timechecks_of_erropages(self):
+    def clear_timechecks_of_erropages(self):
         logger.info('Drop_timechecks_of_erropages')
         # pages = self.db_session.query(ErrRef.page_id).all()
         # for p in pages:
         #     self.db_session.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
-        pages = (p.page_id for p in self.db.query(ErrRef.page_id).all())
-        self.db.query(Timecheck).filter(Timecheck.page_id.in_(pages)).delete(synchronize_session='fetch')
-        self.db.commit()
+        pages = (p.page_id for p in self.s.query(ErrRef.page_id).all())
+        self.s.query(Timecheck).filter(Timecheck.page_id.in_(pages)).delete(synchronize_session='fetch')
+        self.s.commit()
 
     # Helpers
-    def drop_check_pages_with_warnings(self):
+    def clear_check_pages_with_warnings(self):
         """Удаление метки проверки у страниц имеющих warning-шаблон."""
-        pages = self.db.query(PageWithWarning.page_id).all()
+        pages = self.s.query(PageWithWarning.page_id).all()
         for p in pages:
-            self.db.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
-        self.db.commit()
+            self.s.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
+        self.s.commit()
 
     def drop_all_check_pages(self):
         """Очистка таблицы Timecheck: удаление метки проверки у всех страниц"""
-        self.db.query(Timecheck).delete()
-        self.db.commit()
+        self.s.query(Timecheck).delete()
+        self.s.commit()
 
     def drop_all_refs(self):
         """Очистка таблицы Refs"""
-        self.db.query(ErrRef).delete()
-        self.db.commit()
+        self.s.query(ErrRef).delete()
+        self.s.commit()
