@@ -98,4 +98,24 @@ def byte2utf(string):
     return unquote(quote_from_bytes(string), encoding='utf8')
 
 
-Base.metadata.create_all()
+def create_tables():
+    def make_wikilist_titles():
+        wikilists = (
+            ('А', 'А'), ('Б', 'Б'), ('В', 'ВГ'), ('Г', 'ВГ'), ('Д', 'Д'),
+            ('Е', 'ЕЁЖЗИЙ'), ('Ё', 'ЕЁЖЗИЙ'), ('Ж', 'ЕЁЖЗИЙ'), ('З', 'ЕЁЖЗИЙ'), ('И', 'ЕЁЖЗИЙ'), ('Й', 'ЕЁЖЗИЙ'),
+            ('К', 'К'), ('Л', 'ЛМ'), ('М', 'ЛМ'), ('Н', 'НО'),
+            ('О', 'НО'), ('П', 'П'), ('Р', 'Р'), ('С', 'С'), ('Т', 'Т'),
+            ('У', 'УФХ'), ('Ф', 'УФХ'), ('Х', 'УФХ'),
+            ('Ц', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ч', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ш', 'ЦЧШЩЪЫЬЭЮЯ'), ('Щ', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ъ', 'ЦЧШЩЪЫЬЭЮЯ'),
+            ('Ы', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ь', 'ЦЧШЩЪЫЬЭЮЯ'), ('Э', 'ЦЧШЩЪЫЬЭЮЯ'), ('Ю', 'ЦЧШЩЪЫЬЭЮЯ'), ('Я', 'ЦЧШЩЪЫЬЭЮЯ'),
+            ('*', 'Не русские буквы'),
+        )
+        for letter, pagename in wikilists:
+            db_session.merge(Wikilists(letter, pagename))
+        db_session.commit()
+
+    Base.metadata.create_all()
+    make_wikilist_titles()
+
+
+create_tables()
