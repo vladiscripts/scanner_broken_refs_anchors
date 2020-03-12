@@ -3,9 +3,8 @@
 #
 # author: https://github.com/vladiscripts
 #
-from datetime import datetime
 from settings import *
-from scripts.logger import logger
+from scripts import *
 from scripts import scan_pages
 from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB
@@ -53,7 +52,7 @@ if __name__ == '__main__':
             scanner = scan_pages_multithreads.ScannerMultithreads()
         else:
             scanner = scan_pages.Scanner()
-        scanner.do_scan()
+        # scanner.do_scan()
 
         # Запись списков
         logger.info('*** Doing save_listpages_for_remove_warning_tpls')
@@ -64,5 +63,5 @@ if __name__ == '__main__':
         make_and_save_wikilist()
 
         logger.info('*** Doing recheck_lists')
-        if do_recheck_lists:
+        if do_recheck_lists_by_not_multithread:
             scanner.recheck_lists()

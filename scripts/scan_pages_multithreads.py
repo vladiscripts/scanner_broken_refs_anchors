@@ -42,6 +42,9 @@ class ScannerMultithreads(Scanner):
                 # chktime = time_current()
                 chktime = time.gmtime()
                 err_refs = self.scan_page(title, pid)
+                if err_refs is None:
+                    db_delete_page_id(s, pid)
+                    continue
                 with self.db_lock:
                     db_update_pagedata_(s, title, pid, err_refs, chktime)
             self.queue_toscan.task_done()

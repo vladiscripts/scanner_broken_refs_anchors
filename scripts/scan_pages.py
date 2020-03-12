@@ -55,23 +55,32 @@ class Scanner:
         """Сканирование страниц на ошибки"""
         assert not (title is None or title.strip() == '')
         # logger.info(f'scan: {title}')
-        if pid:
-            r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'pageid': pid}, timeout=60)
-        else:
-            r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'page': title}, timeout=60)
+        try:
+            if pid:
+                r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'pageid': pid}, timeout=60)
+            else:
+                r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'page': title}, timeout=60)
+        except Exception as e:
+            # ReadTimeoutError
+            logger.warning(f'{e}. pid={pid}, title={title}, error: {j["error"]}')
+            return
         if r.status_code != 200:
             logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
         if len(r.text) < 200:
             logger.error(f'error: len(r.text) < 200 in page: {title}')
         j = json.loads(r.text)
         if 'error' in j:
+            if j["error"]['code'] == 'nosuchpageid':
+                logger.warning(f'on page with ID. pid={pid}, title={title}, error: {j["error"]}')
+                return
             if j["error"]['code'] == 'missingtitle':
                 logger.warning(f'error on page request - no page. pid={pid}, title={title}, error: {j["error"]}')
                 return
         if 'error' in j or 'warnings' in j:
-            logger.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}')
+            logger.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}\n')
             return
         if not 'parse' in j:
+            logger.warning(f"not 'parse' in j. pid={pid}, title={title}, error: {j['error']}\n")
             return
         text = j['parse']['text']
         err_refs = ScanRefsOfPage(text)
