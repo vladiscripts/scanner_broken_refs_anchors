@@ -15,6 +15,8 @@ Base = declarative_base()
 Session = sessionmaker(bind=db_engine)
 db_session = Session()
 
+Base = declarative_base(bind=db_engine)
+
 
 class PageWithSfn(Base):
     """Страницы с шаблоном типа {{sfn}}"""

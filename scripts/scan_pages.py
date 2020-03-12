@@ -3,8 +3,6 @@
 #
 # author: https://github.com/vladiscripts
 #
-import time
-from urllib.parse import quote
 import requests
 import json
 import pymysql.err
@@ -118,8 +116,10 @@ class Scanner:
     def recheck_lists(self):
         # todo: pid
         lst = file_readlines(filename_listpages_errref_where_no_yet_warning_tpl)
+        logger.info(f'\ntest: {filename_listpages_errref_where_no_yet_warning_tpl}, {len(lst)} pages')
         lst_new = []
         for title in lst:
+            logger.debug(f'scan: {title}')
             # if title != 'Битва_при_Мьяхадосе':
             #     continue
             err_refs = self.scan_page(title)
@@ -132,8 +132,10 @@ class Scanner:
         file_savelines(filename_listpages_errref_where_no_yet_warning_tpl, lst_new)
 
         lst = file_readlines(filename_list_to_remove_warning_tpl)
+        logger.info(f'\ntest: {filename_list_to_remove_warning_tpl}, {len(lst)} pages')
         lst_new = []
         for title in lst:
+            logger.debug(f'scan: {title}')
             err_refs = self.scan_page(title)
             if err_refs is None:
                 continue
@@ -173,6 +175,11 @@ def db_get_list_changed_pages(s, limit=None) -> list:  # offset,limit
     return pages
 
 
+def db_delete_page_id(s, pid=int):
+    s.query(PageWithSfn).filter(PageWithSfn.page_id == pid).delete()
+    s.commit()
+
+
 @session_
 def db_update_pagedata__(s, title: str, page_id: int, err_refs: list) -> None:
     """Сохранение результатов сканирования в БД
@@ -198,12 +205,6 @@ def db_update_pagedata_(s, title: str, page_id: int, err_refs: list, chktime: da
                 s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
             s.merge(Timecheck(page_id, chktime))
         s.commit()
-        # s.begin_nested()
-        # s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
-        # for ref in err_refs:
-        #     s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
-        # s.merge(Timecheck(page_id, chktime))
-        # s.commit()
     except pymysql.err.DataError as e:
         if len(ref.citeref) > 255 or len(ref.text) > 255:
             print()

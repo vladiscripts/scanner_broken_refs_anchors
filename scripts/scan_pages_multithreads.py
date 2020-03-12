@@ -2,14 +2,11 @@
 # author: https://github.com/vladiscripts
 #
 from queue import Queue
-import threading
 from threading import Thread, RLock
-import time
-from scripts.logger import logger
-# from scripts import *
 from scripts.scan_pages import Scanner, db_update_pagedata_, db_update_pagedata__, db_get_list_changed_pages, \
-    time_current
+    time_current, db_delete_page_id
 from scripts.db_models import Session, db_session as s
+from scripts import *
 
 
 class ScannerMultithreads(Scanner):
@@ -17,12 +14,12 @@ class ScannerMultithreads(Scanner):
 
     def __init__(self):
         super().__init__()
-        # self.threads_num = 16
-        # self.pages_limit_by_query = 300
-        # queue_len = 1000
-        self.threads_num = 3
-        self.pages_limit_by_query = 3
-        queue_len = 3
+        self.threads_num = 16
+        self.pages_limit_by_query = 300
+        queue_len = 1000
+        # self.threads_num = 3
+        # self.pages_limit_by_query = 3
+        # queue_len = 3
         self.queue_toscan = Queue(maxsize=queue_len)
         self.db_lock = RLock()
 
@@ -38,9 +35,7 @@ class ScannerMultithreads(Scanner):
             if self.test:
                 logger.info(f'scan: {title}')
             else:
-                print(f'scan: {title}')
-                # chktime = time_current()
-                chktime = time.gmtime()
+                logger.info(f'scan: {title}')
                 err_refs = self.scan_page(title, pid)
                 if err_refs is None:
                     db_delete_page_id(s, pid)
@@ -48,7 +43,6 @@ class ScannerMultithreads(Scanner):
                 with self.db_lock:
                     db_update_pagedata_(s, title, pid, err_refs, datetime.utcnow())
             self.queue_toscan.task_done()
-            print()
         # Session.remove()
         # s.close()
         logger.debug(f'worker end, unfinished_tasks={self.queue_toscan.unfinished_tasks}')
@@ -74,9 +68,7 @@ class ScannerMultithreads(Scanner):
                 if p in k:
                     logger.info(f'p in k: {p}')
                 k.append(p)
-                print()
             self.queue_toscan.join()
-            print()
         # Session.remove()
         # s.close()
         logger.debug(f'self.queue_toscan {self.queue_toscan.unfinished_tasks}')

@@ -1,9 +1,9 @@
 # author: https://github.com/vladiscripts
 #
-from scripts.logger import logger
 from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck, Session, db_session as s
 from scripts import wiki_db
 from vladi_helpers.file_helpers import pickle_save_to_file, pickle_load_from_file
+from scripts import *
 
 
 class UpdateDB:
@@ -32,22 +32,26 @@ class UpdateDB:
 
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
-        # w_pages = wiki_db.get_listpages_have_WarningTpl()
-        # w_pages = tuple(w_pages)
-        # pickle_save_to_file('WarningTpl.pickle', w_pages)
-        w_pages = pickle_load_from_file('WarningTpl.pickle')
+        logger.info('reloading listpages have WarningTpl from WikiDB')
+        w_pages = wiki_db.get_listpages_have_WarningTpl()
+        w_pages = tuple(w_pages)
+        pickle_save_to_file('WarningTpl.pickle', w_pages)
+        # w_pages = pickle_load_from_file('WarningTpl.pickle')
 
+        logger.info('clear PageWithWarning table')
         self.s.query(PageWithWarning).delete()
+        logger.info('Fill PageWithWarning table')
         for pid, title in w_pages:
             self.s.add(PageWithWarning(pid, title))
         self.s.commit()
 
     def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных"""
-        # w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
-        # w_pages_with_sfns = tuple(w_pages_with_sfns)
-        # pickle_save_to_file('wiki_sfnTpl.pickle', w_pages_with_sfns)
-        w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl.pickle')
+        logger.info('reloading listpages have sfnTpl from WikiDB')
+        w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
+        w_pages_with_sfns = tuple(w_pages_with_sfns)
+        pickle_save_to_file('wiki_sfnTpl.pickle', w_pages_with_sfns)
+        # w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl.pickle')
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
@@ -57,10 +61,12 @@ class UpdateDB:
         self.clear_orphan_sfnpages(w_pages_with_sfns, db_pages)
 
         # upsert
-        logger.info('Updating of timelastedits in PageWithSfn table')
+        logger.info('Fill PageWithSfn table')
         for page_id, title, timelastedit in w_pages_with_sfns:
-            # self.s.merge(PageWithSfn(page_id, title, timelastedit))
+            self.s.merge(PageWithSfn(page_id, title, timelastedit))
             pass
+        self.s.commit()
+
         # -----------
 
         # слишком долгая операция
@@ -79,7 +85,7 @@ class UpdateDB:
         #                      for id, title, timelastedit in w_pages_with_sfns]
         # self.db_session.bulk_save_objects(w_pages_with_sfns)
         # long query
-        self.s.commit()
+        # self.s.commit()
 
     def clear_orphan_sfnpages(self, w_pages_with_sfns, db_pages):
         logger.info('Drop_orphan_sfnpages')

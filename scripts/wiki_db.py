@@ -22,6 +22,10 @@ def get_listpages_have_WarningTpl(limit=''):
 
 def get_listpages_have_sfnTpl(limit=''):
     """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
+    """ 
+    можно запрашивать join revesions on lastedit >= max(Timechecks.timecheck)
+    это ограничит размер ответа, а может и длительность запроса (? надо проверять) 
+    """
     # tpls_str = _list_to_str_params('tl_title', names_sfn_templates)
     # sql = f"""SELECT
     #           page.page_id,
