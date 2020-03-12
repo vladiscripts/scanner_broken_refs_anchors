@@ -187,7 +187,7 @@ def db_update_pagedata__(s, title: str, page_id: int, err_refs: list) -> None:
     s.commit()
 
 
-def db_update_pagedata_(s, title: str, page_id: int, err_refs: list, chktime: str) -> None:
+def db_update_pagedata_(s, title: str, page_id: int, err_refs: list, chktime: datetime) -> None:
     """Сохранение результатов сканирования в БД
     Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
     """

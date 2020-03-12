@@ -46,7 +46,7 @@ class ScannerMultithreads(Scanner):
                     db_delete_page_id(s, pid)
                     continue
                 with self.db_lock:
-                    db_update_pagedata_(s, title, pid, err_refs, chktime)
+                    db_update_pagedata_(s, title, pid, err_refs, datetime.utcnow())
             self.queue_toscan.task_done()
             print()
         # Session.remove()

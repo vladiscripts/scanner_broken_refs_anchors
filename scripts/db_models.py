@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, Query
 import re
 from urllib.parse import quote_from_bytes, unquote
-import time
+from datetime import datetime
 
 # db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=False)  # 'sqlite:///:memory:'
 db_engine = create_engine('mysql+pymysql://root:root@localhost/wiki_scanner_refs', echo=True)
@@ -35,7 +35,7 @@ class PageWithSfn(Base):
     def __init__(self, page_id, title, timelastedit):
         self.page_id = page_id
         self.title = byte2utf(title)
-        self.timelastedit = time.strptime(timelastedit.decode(), '%Y%m%d%H%M%S')
+        self.timelastedit = datetime.strptime(timelastedit.decode(), '%Y%m%d%H%M%S')
         fl = self.title[0:1].upper()
         self.wikilist = fl if re.match(r'[А-ЯЁ]', fl) else '*'
 
