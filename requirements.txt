@@ -1,5 +1,6 @@
 requests
-sqlalchemy
-pymysql
+cssselect
 lxml
+pymysql
+sqlalchemy
 pywikibot
