@@ -6,12 +6,14 @@ from sqlalchemy.orm import sessionmaker, relationship, scoped_session, Query
 import re
 from urllib.parse import quote_from_bytes, unquote
 from datetime import datetime
+from engine_conn_str import engine_conn_str
 
-# db_engine = create_engine('sqlite:///pagesrefs.sqlite', echo=False)  # 'sqlite:///:memory:'
-db_engine = create_engine('mysql+pymysql://root:root@localhost/wiki_scanner_refs', echo=True)
-Base = declarative_base()
+# from sqlalchemy.engine.url import URL
+# myDB = URL(drivername='mysql+pymysql', host='localhost', database='',
+#            query={'read_default_file': '~/.pywikibot/replica.my.cnf'})
+# engine = create_engine(name_or_url=myDB)
+db_engine = create_engine(engine_conn_str, echo=True)
 
-# Session = scoped_session(sessionmaker(bind=db_engine))
 Session = sessionmaker(bind=db_engine)
 db_session = Session()
 
