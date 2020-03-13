@@ -26,3 +26,16 @@ def file_readlines(filename: str):
 def list_clean_empty_strs(lst):
     """Чистка пустых строк в списке"""
     return [l.strip() for l in lst if l.strip() != '']
+
+
+def pickle_save_to_file(filename: str, data):
+    import pickle
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def pickle_load_from_file(filename: str):
+    import pickle
+    with open(filename, 'rb') as f:
+        data = pickle.load(f)
+    return data
