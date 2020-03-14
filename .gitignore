@@ -10,3 +10,5 @@ passwords.py
 *.json
 *.sql
 *.pickle
+/engine_conn_str.py
+/time_updatedSfnTpl_from_wikiDB
