@@ -10,6 +10,7 @@ from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB
 from scripts.make_listspages import save_listpages_for_add_warning_tpls, save_listpages_for_remove_warning_tpls
 from scripts.make_wikilists import make_and_save_wikilist
+from scripts.recheck_lists import recheck_lists
 
 if __name__ == '__main__':
     t = datetime.now()
@@ -64,4 +65,4 @@ if __name__ == '__main__':
 
         logger.info('*** Doing recheck_lists')
         if do_recheck_lists_by_not_multithread:
-            scanner.recheck_lists()
+            recheck_lists(scanner)

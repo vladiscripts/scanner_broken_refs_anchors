@@ -113,38 +113,6 @@ class Scanner:
         # s.params.update({"action": "render"})  # для запросов как html, а не через api
         return s
 
-    def recheck_lists(self):
-        # todo: pid
-        lst = file_readlines(filename_listpages_errref_where_no_yet_warning_tpl)
-        logger.info(f'\ntest: {filename_listpages_errref_where_no_yet_warning_tpl}, {len(lst)} pages')
-        lst_new = []
-        for title in lst:
-            logger.debug(f'scan: {title}')
-            # if title != 'Битва_при_Мьяхадосе':
-            #     continue
-            err_refs = self.scan_page(title)
-            if err_refs is None:
-                continue
-            if len(err_refs) == 0:
-                logger.error(f'no errrefs on page "{title}", where it should be')
-                continue
-            lst_new.append(title)
-        file_savelines(filename_listpages_errref_where_no_yet_warning_tpl, lst_new)
-
-        lst = file_readlines(filename_list_to_remove_warning_tpl)
-        logger.info(f'\ntest: {filename_list_to_remove_warning_tpl}, {len(lst)} pages')
-        lst_new = []
-        for title in lst:
-            logger.debug(f'scan: {title}')
-            err_refs = self.scan_page(title)
-            if err_refs is None:
-                continue
-            if len(err_refs) > 0:
-                logger.error(f'errrefs on page "{title}", where it should not be')
-                continue
-            lst_new.append(title)
-        file_savelines(filename_list_to_remove_warning_tpl, lst_new)
-
 
 def session_(func):
     def wrapper(*kargs, **kwargs):
