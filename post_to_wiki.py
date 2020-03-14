@@ -53,6 +53,7 @@ def posting_list():
     command = '%s pagefromfile %s' % (python_and_path, ' '.join(params))
     run(command, filename_wikilists)
 
+
 # todo: заменить {{PAGENAME}} на {{PAGEID}}
 def posting_template():
     """Простановка в статьях шаблона про ошибки"""
@@ -97,14 +98,14 @@ def login():
 
 
 if __name__ == '__main__':
-    t = datetime.now()
-    print(f'{t} Start posting')
 
     # Постинг списков и установка шаблонов в wiki
     if do_all_posts_simulate:
         do_post_wikilist_simulate = do_post_template_simulate = do_remove_template_simulate = True
 
     if do_all_post_to_wiki:
+        t = datetime.now()
+        print(f'{t} Start posting')
         login()
         if do_post_wikilist:
             posting_list()
