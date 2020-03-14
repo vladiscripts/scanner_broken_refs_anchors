@@ -29,4 +29,4 @@ def recheck_lists(scanner):
     recheck(scanner, filename_listpages_errref_where_no_yet_warning_tpl, 1)
 
     # list_to_remove_warning_tpl
-    recheck(scanner, filename_listpages_errref_where_no_yet_warning_tpl, 2)
+    recheck(scanner, filename_list_to_remove_warning_tpl, 2)
