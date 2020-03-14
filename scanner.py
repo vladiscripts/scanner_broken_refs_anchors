@@ -53,7 +53,7 @@ if __name__ == '__main__':
             scanner = scan_pages_multithreads.ScannerMultithreads()
         else:
             scanner = scan_pages.Scanner()
-        # scanner.do_scan()
+        scanner.do_scan()
 
         # Запись списков
         logger.info('*** Doing save_listpages_for_remove_warning_tpls')
