@@ -80,7 +80,7 @@ def remove_template():
     params = [
         '-regex "' + warning_tpl_regexp + '.*?}}" ""', '-nocase', '-dotall',
         '-file:' + filename_list_to_remove_warning_tpl, '-ns:0',
-        '-summary:"-шаблон: ошибочных викиссылок в сносках не найдено"',
+        '-summary:"-шаблон: не найдено ошибочных викиссылок в сносках"',
         '-pt:1', pwb_cfg, '-family:' + family,
         '-user:' + user,
         '-always',
