@@ -41,6 +41,7 @@ class PageWithSfn(Base):
         self.title = byte2utf(title)
         self.timelastedit = datetime.strptime(timelastedit.decode(), '%Y%m%d%H%M%S')
         fl = self.title[0:1].upper()
+        if fl == 'Ё': fl = 'Е'
         self.wikilist = fl if re.match(r'[А-ЯЁ]', fl) else '*'
 
 
