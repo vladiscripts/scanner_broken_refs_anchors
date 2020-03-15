@@ -88,7 +88,7 @@ class Wikilists(Base):
     """Названия подстраниц бота со списками ошибок"""
     __tablename__ = 'wikilists'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    letter = Column(String(3))
+    letter = Column(String(3), unique=True)
     title = Column(String(255), nullable=False)
 
     # pages = relationship('PageWithSfn', backref='wikilist', passive_deletes=True)

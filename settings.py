@@ -19,11 +19,11 @@ multithreads = True
 # True - сканировать и генерировать новые списки.
 # False - только запись списков в файлы и постинг в wiki
 generate_lists = True
-do_recheck_lists_by_not_multithread = True
+do_recheck_lists_by_not_multithread = False
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_lists = False
-update_db_from_wiki = True
+update_db_from_wiki = False
 
 # Сканировать
 do_scan = False
