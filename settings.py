@@ -19,28 +19,28 @@ multithreads = True
 # True - сканировать и генерировать новые списки.
 # False - только запись списков в файлы и постинг в wiki
 generate_lists = True
-do_recheck_lists_by_notMultithread = False
+do_recheck_lists_by_notMultithread = True
 
 # скачать данные из wiki и сканировать, или работать с тем что есть в файле базы
 # отключено при do_generation_lists = False
-update_db_from_wiki = False
+update_db_from_wiki = True
 
 # Сканировать
-do_scan = False
+do_scan = True
 
 # --- Внимание, включение записи в википедию
 # --- Постинг запускается скриптом post_to_wiki.py
-do_post_to_wiki = False  # Отключение всех опций ниже в этой секции
-do_posts_simulate = True  # Симуляция всего постинга ниже в этой секции
+do_post_to_wiki = True  # Отключение всех опций ниже в этой секции
+do_posts_simulate = False  # Симуляция всего постинга ниже в этой секции
 
 do_post_wikilist = True  # Запись списков
-do_post_wikilist_simulate = True  # Симуляция записи
+do_post_wikilist_simulate = False  # Симуляция записи
 
 do_post_template = False  # Запись в статьи шаблона
 do_post_template_simulate = True  # Симуляция записи
 
 do_remove_template = True  # Удаление из статей ненужного шаблона
-do_remove_template_simulate = True  # Симуляция записи
+do_remove_template_simulate = False  # Симуляция записи
 
 # ---
 # Удаление метки проверки у страниц имеющих warning-шаблон.

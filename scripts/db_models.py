@@ -12,7 +12,7 @@ from engine_conn_str import engine_conn_str
 # myDB = URL(drivername='mysql+pymysql', host='localhost', database='',
 #            query={'read_default_file': '~/.pywikibot/replica.my.cnf'})
 # engine = create_engine(name_or_url=myDB)
-db_engine = create_engine(engine_conn_str, echo=True)
+db_engine = create_engine(engine_conn_str, echo=False)
 
 Session = sessionmaker(bind=db_engine)
 db_session = Session()
