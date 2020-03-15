@@ -49,11 +49,12 @@ if __name__ == '__main__':
         # 	scaner = Scanner()
         # 	scaner.do_scan()
 
-        if multithreads:
-            scanner = scan_pages_multithreads.ScannerMultithreads()
-        else:
-            scanner = scan_pages.Scanner()
-        scanner.do_scan()
+        if do_scan:
+            if multithreads:
+                scanner = scan_pages_multithreads.ScannerMultithreads()
+            else:
+                scanner = scan_pages.Scanner()
+            scanner.do_scan()
 
         # Запись списков
         logger.info('*** Doing save_listpages_for_remove_warning_tpls')
@@ -64,5 +65,5 @@ if __name__ == '__main__':
         make_and_save_wikilist()
 
         logger.info('*** Doing recheck_lists')
-        if do_recheck_lists_by_not_multithread:
+        if do_recheck_lists_by_not_multithread and do_scan:
             recheck_lists(scanner)

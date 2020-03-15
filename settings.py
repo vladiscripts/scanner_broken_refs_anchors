@@ -25,6 +25,9 @@ do_recheck_lists_by_not_multithread = True
 # отключено при do_generation_lists = False
 update_db_from_wiki = True
 
+# Сканировать
+do_scan = False
+
 # --- Внимание, включение записи в википедию
 # --- Постинг запускается скриптом post_to_wiki.py
 do_all_post_to_wiki = False  # Отключение всех опций ниже в этой секции
