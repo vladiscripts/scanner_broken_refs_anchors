@@ -39,7 +39,7 @@ def run(command, filename):
     os.rename(filename, f'~{filename}')
 
 
-def posting_list():
+def posting_wikilist():
     """Постинг списков с ошибками, из них сниппеты включаются (transcluding) в страницы."""
     params = [
         '-file:%s' % filename_wikilists,
@@ -100,15 +100,15 @@ def login():
 if __name__ == '__main__':
 
     # Постинг списков и установка шаблонов в wiki
-    if do_all_posts_simulate:
+    if do_posts_simulate:
         do_post_wikilist_simulate = do_post_template_simulate = do_remove_template_simulate = True
 
-    if do_all_post_to_wiki:
+    if do_post_to_wiki:
         t = datetime.now()
         print(f'{t} Start posting')
         login()
         if do_post_wikilist:
-            posting_list()
+            posting_wikilist()
         if do_post_template:
             posting_template()
         if do_remove_template:

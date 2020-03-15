@@ -65,5 +65,5 @@ if __name__ == '__main__':
         make_and_save_wikilist()
 
         logger.info('*** Doing recheck_lists')
-        if do_recheck_lists_by_not_multithread and do_scan:
+        if do_recheck_lists_by_notMultithread and do_scan:
             recheck_lists(scanner)
