@@ -60,7 +60,7 @@ class Scanner:
                 r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'page': title}, timeout=60)
         except Exception as e:
             # ReadTimeoutError
-            logger.warning(f'{e}. pid={pid}, title={title}, error: {j["error"]}')
+            logger.warning(f'{e}. pid={pid}, title={title}, error: {e}')
             return
         if r.status_code != 200:
             logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
