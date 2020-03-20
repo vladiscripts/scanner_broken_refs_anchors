@@ -6,7 +6,7 @@
 import requests
 import json
 import pymysql.err
-from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session
+from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session, db_session as s
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts import *
 from settings import *
@@ -20,33 +20,27 @@ from settings import *
 
 class Scanner:
     def __init__(self):
+        self.pages_limit_by_query = 300
         self.s = self.open_requests_session()
 
     def do_scan(self):
         """Сканирование страниц на ошибки"""
-        offset, limit = 0, 100
-        # s = open_requests_session()
         while True:
-            # pages = self.db_get_list_changed_pages(offset, limit)
-            pages = db_get_list_changed_pages(limit)
+            pages = db_get_list_changed_pages(s, limit=self.pages_limit_by_query)
             if not pages: break
 
             results = []
             for pid, title in pages:
-                # if pid != 54229: continue
+                logger.info(f'scan: {title}')
                 err_refs = self.scan_page(title, pid)
                 if err_refs is None:
                     continue
-                # results.append([pid, err_refs])
                 results.append([title, pid, err_refs])
-                # else: print()
 
             for title, pid, err_refs in results:
                 # if title == 'Скачок_Резеля': logger.info(title)
                 # if pid != 54229: print()
-                # if pid != 54229: continue
-                db_update_pagedata(title, pid, err_refs)
-            # offset = offset + limit
+                db_update_pagedata_(s, title, pid, err_refs, datetime.utcnow())
         self.s.close()
 
     def scan_page(self, title: str, pid=None) -> Optional[List[namedtuple]]:
