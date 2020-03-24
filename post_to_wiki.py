@@ -29,8 +29,7 @@ def run(command, filename):
     # ToDo код завершения всегда == 0, ошибка не проверятся.
     # ToDo Хотя это может это только если сам pwb не закрылся по Exception? Сейчас нет времени на тесты.
     # ToDo Если же == 0 в любом случае, то надо открывать вопрос на Phabricator
-    if code != 0:
-        raise Exception('posting subprocess exited with status %r' % code)
+    assert code == 0, f'posting subprocess exited with status {code}'
     # p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')  # .wait()
     # stdout, stderr = p.communicate()
     # if p.returncode != 0:
@@ -93,8 +92,7 @@ def remove_template():
 def login():
     command = f'{python_and_path} login -family:wikipedia'
     code = subprocess.Popen(shlex.split(command)).wait()
-    if code != 0:
-        raise Exception
+    assert code == 0
 
 
 if __name__ == '__main__':
