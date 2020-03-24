@@ -10,6 +10,7 @@ from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session, db_sessio
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts import *
 from settings import *
+from . import request_html
 
 
 # [p.page_id for p in Session.query(PageWithSfn.page_id, PageWithSfn.title) \
@@ -21,14 +22,13 @@ from settings import *
 class Scanner:
     def __init__(self):
         self.pages_limit_by_query = 300
-        self.s = self.open_requests_session()
+        self.downloader = request_html.Downloader()
 
     def do_scan(self):
         """Сканирование страниц на ошибки"""
         while True:
             pages = db_get_list_changed_pages(s, limit=self.pages_limit_by_query)
             if not pages: break
-
             results = []
             for pid, title in pages:
                 logger.info(f'scan: {title}')
@@ -41,71 +41,14 @@ class Scanner:
                 # if title == 'Скачок_Резеля': logger.info(title)
                 # if pid != 54229: print()
                 db_update_pagedata_(s, title, pid, err_refs, datetime.utcnow())
-        self.s.close()
+        self.downloader.s.close()
 
     def scan_page(self, title: str, pid=None) -> Optional[List[namedtuple]]:
         """Сканирование страниц на ошибки"""
-        assert not (title is None or title.strip() == '')
-        # logger.info(f'scan: {title}')
-        try:
-            if pid:
-                r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'pageid': pid}, timeout=60)
-            else:
-                r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'page': title}, timeout=60)
-        except Exception as e:
-            # ReadTimeoutError
-            logger.warning(f'{e}. pid={pid}, title={title}, error: {e}')
-            return
-        if r.status_code != 200:
-            logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
-        if len(r.text) < 200:
-            logger.error(f'error: len(r.text) < 200 in page: {title}')
-        j = json.loads(r.text)
-        if 'error' in j:
-            if j["error"]['code'] == 'nosuchpageid':
-                logger.warning(f'on page with ID. pid={pid}, title={title}, error: {j["error"]}')
-                return
-            if j["error"]['code'] == 'missingtitle':
-                logger.warning(f'error on page request - no page. pid={pid}, title={title}, error: {j["error"]}')
-                return
-        if 'error' in j or 'warnings' in j:
-            logger.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}\n')
-            return
-        if not 'parse' in j:
-            logger.warning(f"not 'parse' in j. pid={pid}, title={title}, error: {j['error']}\n")
-            return
-        text = j['parse']['text']
-        err_refs = ScanRefsOfPage(text)
-        assert err_refs is not None
-        return err_refs
-
-    # def _scan_page_via_html(self, pid, title: str) -> Optional[List[namedtuple]]:
-    #     """Сканирование страниц на ошибки"""
-    #     assert not (title is None or title.strip() == '')
-    #     logger.info(f'scan: {title}')
-    #     # r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)   # + params={"action": "render"}
-    #     try:
-    #         r = s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}')
-    #     except Exception as e:
-    #         logger.info(f'error: requests: {title}; {e}')
-    #         return None
-    #     if '|' in title:
-    #         logger.debug("'|' in title: {title}")
-    #     if r.status_code != 200:
-    #         logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
-    #     if len(r.text) < 200:
-    #         logger.error(f'error: len(r.text) < 200 in page: {title}')
-    #     err_refs = ScanRefsOfPage(r.text)
-    #     assert err_refs is not None
-    #     return err_refs
-
-    def open_requests_session(self) -> requests.Session:
-        s = requests.Session()
-        s.headers.update({'User-Agent': 'user:textworkerBot',
-                          'Accept-Encoding': 'gzip, deflate'})
-        s.params.update({"action": "parse", 'format': 'json', 'prop': 'text', 'utf8': 1, 'formatversion': 2})
-        # s.params.update({"action": "render"})  # для запросов как html, а не через api
-        return s
+        text = self.downloader.get_page(title, pid)
+        if text is not None:
+            err_refs = ScanRefsOfPage(text)
+            return err_refs
 
 
 def session_(func):
