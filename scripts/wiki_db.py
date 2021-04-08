@@ -101,7 +101,8 @@ def wdb_query(sql, limit=''):
 #     import passwords
 #     connection = pymysql.connect(
 #         # Для доступа к wiki-БД с ПК необходим ssh-тунель с перебросом порта с localhost
-#         # ssh -L 4711:ruwiki.labsdb:3306 <username>@login.tools.wmflabs.org -i "<path/to/key>"
+#         # порт должен совпадать с указанным в /home/vladislav/.pywikibot/user-config.py  db_port
+#         # ssh -L 4711:ruwiki.web.db.svc.wikimedia.cloud:3306 <username>@login.toolforge.org -i "<path/to/key>"
 #         # см. https://wikitech.wikimedia.org/wiki/Help:Tool_Labs/Database#Connecting_to_the_database_replicas_from_your_own_computer
 #         # host='127.0.0.1', port=4711,
 #         # или для доступа из скриптов на tools.wmflabs.org напрямую:
