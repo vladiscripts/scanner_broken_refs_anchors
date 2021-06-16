@@ -63,7 +63,7 @@ def posting_template():
     params = [
         '-file:' + filename_listpages_errref_where_no_yet_warning_tpl,
         '-text:"{{%s}}"' % warning_tpl_name,
-        '-except:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
+        '-grepnot:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
         '-summary:"+шаблон: некорректные викиссылки в сносках"',
         '-pt:1', pwb_cfg, '-family:' + family,
         '-user:' + user,
