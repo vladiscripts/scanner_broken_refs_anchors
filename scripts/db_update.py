@@ -35,11 +35,12 @@ class UpdateDB:
         logger.info('loading from WikiDB')
         w_pages = wiki_db.get_listpages_have_WarningTpl()
         w_pages = tuple(w_pages)
-        pickle_save_to_file('WarningTpl_update.pickle', w_pages)
+        # pickle_save_to_file('WarningTpl_update.pickle', w_pages)
         # w_pages = pickle_load_from_file('WarningTpl_update.pickle')
 
         logger.info('clear PageWithWarning table')
         self.s.query(PageWithWarning).delete()
+
         logger.info('Fill PageWithWarning table')
         for pid, title in w_pages:
             self.s.add(PageWithWarning(pid, title))
@@ -62,7 +63,7 @@ class UpdateDB:
         logger.info('loading from WikiDB')
         w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
         w_pages_with_sfns = tuple(w_pages_with_sfns)
-        pickle_save_to_file('wiki_sfnTpl_update.pickle', w_pages_with_sfns)
+        # pickle_save_to_file('wiki_sfnTpl_update.pickle', w_pages_with_sfns)
         # w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl_update.pickle')
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
