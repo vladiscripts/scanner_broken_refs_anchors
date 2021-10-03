@@ -11,9 +11,10 @@ from datetime import datetime
 from settings import *
 
 python_and_path = 'python %s/pwb.py' % os.getenv('PWBPATH')
-pwb_cfg = '-dir:~/.pywikibot/'
 family = 'wikipedia'
 user = 'TextworkerBot'
+pwb_cfg = '-dir:~/.pywikibot/'
+args_base = [f'-family:{family}', '-lang:ru', f'-user:{user}', '-pt:1', pwb_cfg]
 
 
 # ToDo:
@@ -40,16 +41,15 @@ def run(command, filename):
 
 def posting_wikilist():
     """Постинг списков с ошибками, из них сниппеты включаются (transcluding) в страницы."""
-    params = [
+    args = [
         '-file:%s' % filename_wikilists,
         '-begin:"%s"' % marker_page_start, '-end:"%s"' % marker_page_end, '-notitle',
         '-summary:"обновление списка"',
-        '-pt:1', pwb_cfg, '-family:' + family,
-        '-user:' + user,
         '-force',
     ]
-    if do_post_wikilist_simulate: params.append('-simulate')  # "-simulate" параметр для тестирования записи pwb
-    command = '%s pagefromfile %s' % (python_and_path, ' '.join(params))
+    args.extend(args_base)
+    if do_post_wikilist_simulate: args.append('-simulate')  # "-simulate" параметр для тестирования записи pwb
+    command = '%s pagefromfile %s' % (python_and_path, ' '.join(args))
     run(command, filename_wikilists)
 
 
@@ -60,37 +60,35 @@ def posting_template():
         # warning_tpl_regexp,
         "[Рр]едактирую", "[Ss]ubst:L", "[Ii]n-?use(-by)?", "[Pp]rocess(ing)?",
         "[Пп]равлю", "[Пп]еревожу", "[Пп]ерерабатываю", "[Сс]татья редактируется", "[Вв]икифицирую", ]
-    params = [
+    args = [
         '-file:' + filename_listpages_errref_where_no_yet_warning_tpl,
         '-text:"{{%s}}"' % warning_tpl_name,
         '-grepnot:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
         '-summary:"+шаблон: некорректные викиссылки в сносках"',
-        '-pt:1', pwb_cfg, '-family:' + family,
-        '-user:' + user,
         '-always',
     ]
-    if do_post_template_simulate: params.append('-simulate')
-    command = '%s add_text %s' % (python_and_path, ' '.join(params))
+    args.extend(args_base)
+    if do_post_template_simulate: args.append('-simulate')
+    command = '%s add_text %s' % (python_and_path, ' '.join(args))
     run(command, filename_listpages_errref_where_no_yet_warning_tpl)
 
 
 def remove_template():
     """Удаление шаблона из статей"""
-    params = [
+    args = [
         '-regex "' + warning_tpl_regexp + '.*?}}" ""', '-nocase', '-dotall',
         '-file:' + filename_list_to_remove_warning_tpl, '-ns:0',
         '-summary:"-шаблон: не найдено ошибочных викиссылок в сносках"',
-        '-pt:1', pwb_cfg, '-family:' + family,
-        '-user:' + user,
         '-always',
     ]
-    if do_remove_template_simulate: params.append('-simulate')
-    command = '%s replace %s' % (python_and_path, ' '.join(params))
+    args.extend(args_base)
+    if do_remove_template_simulate: args.append('-simulate')
+    command = '%s replace %s' % (python_and_path, ' '.join(args))
     run(command, filename_list_to_remove_warning_tpl)
 
 
 def login():
-    command = f'{python_and_path} login -family:wikipedia'
+    command = f'{python_and_path} login {" ".join(args_base)}'
     code = subprocess.Popen(shlex.split(command)).wait()
     assert code == 0
 
