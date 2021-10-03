@@ -98,8 +98,13 @@ def login():
 if __name__ == '__main__':
 
     # Постинг списков и установка шаблонов в wiki
+    # do_posts_simulate = True
     if do_posts_simulate:
         do_post_wikilist_simulate = do_post_template_simulate = do_remove_template_simulate = True
+
+    # to tests
+    # posting_wikilist()
+    # posting_template()
 
     if do_post_to_wiki:
         t = datetime.now()
