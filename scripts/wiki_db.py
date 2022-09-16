@@ -12,8 +12,9 @@ def get_listpages_have_WarningTpl(limit=''):
     sql = f"""SELECT page_id, page_title
                 FROM page
                     INNER JOIN templatelinks ON tl_from = page_id
-                WHERE tl_namespace = 10
-                  AND tl_title = "{normalization_pagename(warning_tpl_name)}"
+                    INNER JOIN linktarget on tl_target_id = lt_id 
+                WHERE lt_namespace = 10
+                  AND lt_title = "{normalization_pagename(warning_tpl_name)}"
                   AND page_namespace = 0;"""
     pages = wdb_query(sql)
     # pages = tuple(wdb_query(sql))
@@ -42,8 +43,9 @@ def get_listpages_have_sfnTpl(limit=''):
     sql = f"""SELECT page_id, page_title, rev_timestamp
                 FROM page
                   INNER JOIN templatelinks ON page_id = tl_from
-                    AND tl_namespace = 10
-                    AND tl_title IN ({tpls})
+                  INNER JOIN linktarget on tl_target_id = lt_id 
+                    AND lt_namespace = 10
+                    AND lt_title IN ({tpls})
                     AND page_namespace = 0
                   INNER JOIN revision ON page_latest = rev_id;"""
     pages = wdb_query(sql)
