@@ -111,11 +111,13 @@ def db_update_pagedata_(s, title: str, page_id: int, err_refs: list, chktime: da
             s.merge(Timecheck(page_id, chktime))
         s.commit()
     except pymysql.err.DataError as e:
+        print(title)
         if len(ref.citeref) > 255 or len(ref.text) > 255:
-            print()
-        print()
+            print('len(ref.citeref) > 255 or len(ref.text) > 255')
+        print(e)
     except Exception as e:
-        print()
+        print(title)
+        print(e)
 
 
 def db_update_pagedata(title: str, page_id: int, err_refs: list) -> None:
