@@ -56,7 +56,7 @@ class ErrRef(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     page_id = Column(Integer, ForeignKey('pages_with_sfn.page_id', ondelete='CASCADE', onupdate='CASCADE'), index=True)
     citeref = Column(String(255), nullable=False)
-    link_to_sfn = Column(String(255), nullable=False)
+    link_to_sfn = Column(String(2000), nullable=False)
     text = Column(String(255), nullable=False)
 
     def __init__(self, page_id, citeref, link_to_sfn, text):
