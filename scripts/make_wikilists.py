@@ -24,7 +24,7 @@ def make_wikilists_by_page_ids():
             refs_wikilinks = []
             for ref in page_refs:
                 ankor = ref.link_to_sfn
-                if re.search(r'^[\w_-]+$', ref.link_to_sfn): ankor = '{{urlencode:%s}}' % ref.link_to_sfn
+                if not re.search(r'^[\w_-]+$', ref.link_to_sfn): ankor = '{{urlencode:%s}}' % ref.link_to_sfn
                 refs_wikilinks.append(f"[[#{ankor}|{ref.text}]]")
             refs_entry = '* {pid} [[{title}]]:<br><section begin="{pid}" />{all_wikilinks}<section end="{pid}" />' \
                 .format(title=p.title.replace('_', ' '), pid=p.page_id, all_wikilinks=', '.join(refs_wikilinks))
