@@ -103,21 +103,27 @@ def db_update_pagedata_(s, title: str, page_id: int, err_refs: list, chktime: da
     """Сохранение результатов сканирования в БД
     Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
     """
-    try:
-        with s.begin_nested():
-            s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
-            for ref in err_refs:
-                s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
-            s.merge(Timecheck(page_id, chktime))
-        s.commit()
-    except pymysql.err.DataError as e:
-        print(title)
-        if len(ref.citeref) > 255 or len(ref.text) > 255:
-            print('len(ref.citeref) > 255 or len(ref.text) > 255')
-        print(e)
-    except Exception as e:
-        print(title)
-        print(e)
+    # try:
+    #     with s.begin_nested():
+    #         s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+    #         for ref in err_refs:
+    #             s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
+    #         s.merge(Timecheck(page_id, chktime))
+    #     s.commit()
+    # except pymysql.err.DataError as e:
+    #     print(title)
+    #     if len(ref.citeref) > 255 or len(ref.text) > 255:
+    #         print('len(ref.citeref) > 255 or len(ref.text) > 255')
+    #     print(e)
+    # except Exception as e:
+    #     print(title)
+    #     print(e)
+    with s.begin_nested():
+        s.query(ErrRef).filter(ErrRef.page_id == page_id).delete()
+        for ref in err_refs:
+            s.add(ErrRef(page_id, ref.citeref, ref.link_to_sfn, ref.text))
+        s.merge(Timecheck(page_id, chktime))
+    s.commit()
 
 
 def db_update_pagedata(title: str, page_id: int, err_refs: list) -> None:
