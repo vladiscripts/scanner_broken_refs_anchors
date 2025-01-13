@@ -17,7 +17,7 @@ db_engine = create_engine(engine_conn_str, echo=False)
 Session = sessionmaker(bind=db_engine)
 db_session = Session()
 
-Base = declarative_base(bind=db_engine)
+Base = declarative_base()
 
 
 class PageWithSfn(Base):
@@ -81,4 +81,4 @@ def byte2utf(string):
     return unquote(quote_from_bytes(string), encoding='utf8')
 
 
-Base.metadata.create_all()
+Base.metadata.create_all(bind=db_engine)
