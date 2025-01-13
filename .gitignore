@@ -1,0 +1,15 @@
+__pycache__/
+\.idea/
+*.txt
+*.sqlite
+passwords.py
+*.sqlite-journal
+*.sqlite.sql
+*.err
+*.csv
+*.json
+*.sql
+*.pickle
+/engine_conn_str.py
+/time_updatedSfnTpl_from_wikiDB
+settings.py
