@@ -64,16 +64,12 @@ def session_(func):
 
 def db_get_list_changed_pages(s, limit=None) -> list:  # offset,limit
     # s = Session()
+    q = s.query(PageWithSfn) \
+        .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
+        .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck))
     if limit:
-        _pages = s.query(PageWithSfn) \
-            .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
-            .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck)) \
-            .limit(limit).all()
-    else:
-        _pages = s.query(PageWithSfn) \
-            .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
-            .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck)) \
-            .all()
+        q = q.limit(limit)
+    _pages = q.all()
     # .offset(offset).limit(limit).all()
     # Session.remove()
     pages = [(p.page_id, p.title) for p in _pages]
