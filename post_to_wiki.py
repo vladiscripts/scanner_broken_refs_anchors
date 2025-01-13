@@ -54,7 +54,7 @@ def posting_wikilist():
 
 
 # todo: заменить {{PAGENAME}} на {{PAGEID}}
-def posting_template():
+def posting_template(date):
     """Простановка в статьях шаблона про ошибки"""
     excepts = [
         # warning_tpl_regexp,
@@ -62,7 +62,7 @@ def posting_template():
         "[Пп]равлю", "[Пп]еревожу", "[Пп]ерерабатываю", "[Сс]татья редактируется", "[Вв]икифицирую", ]
     args = [
         '-file:' + filename_listpages_errref_where_no_yet_warning_tpl,
-        '-text:"{{%s}}"' % warning_tpl_name,
+        '-text:"{{%s|дата=%s}}"' % (warning_tpl_regexp, date),
         '-grepnot:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
         '-summary:"+шаблон: некорректные викиссылки в сносках"',
         '-always',
@@ -111,6 +111,6 @@ if __name__ == '__main__':
         if do_post_wikilist:
             posting_wikilist()
         if do_post_template:
-            posting_template()
+            posting_template(t.date())
         if do_remove_template:
             remove_template()
