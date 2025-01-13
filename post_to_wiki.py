@@ -62,7 +62,7 @@ def posting_template(date):
         "[Пп]равлю", "[Пп]еревожу", "[Пп]ерерабатываю", "[Сс]татья редактируется", "[Вв]икифицирую", ]
     args = [
         '-file:' + filename_listpages_errref_where_no_yet_warning_tpl,
-        '-text:"{{%s|дата=%s}}"' % (warning_tpl_regexp, date),
+        '-text:"{{%s|дата=%s}}"' % (warning_tpl_name, date),
         '-grepnot:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
         '-summary:"+шаблон: некорректные викиссылки в сносках"',
         '-always',
