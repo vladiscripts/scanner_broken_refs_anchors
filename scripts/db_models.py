@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, scoped_session, Query
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session, declarative_base, Query
 import re
 from urllib.parse import quote_from_bytes, unquote
 from datetime import datetime
