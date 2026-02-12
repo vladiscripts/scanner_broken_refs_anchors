@@ -19,7 +19,7 @@ db_session = Session()
 Base = declarative_base()
 
 
-class PageWithSfn(Base):
+class PagesWithSfn(Base):
     """Страницы с шаблоном типа {{sfn}}"""
     __tablename__ = 'pages_with_sfn'
     page_id = Column(Integer, primary_key=True)

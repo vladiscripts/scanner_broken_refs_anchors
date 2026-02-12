@@ -6,7 +6,7 @@
 import requests
 import json
 import pymysql.err
-from scripts.db_models import PageWithSfn, ErrRef, Timecheck, Session, db_session as s
+from scripts.db_models import PagesWithSfn, ErrRef, Timecheck, Session, db_session as s
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from scripts import *
 from settings import *
@@ -64,9 +64,9 @@ def session_(func):
 
 def db_get_list_changed_pages(s, limit=None) -> list:  # offset,limit
     # s = Session()
-    q = s.query(PageWithSfn) \
-        .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id) \
-        .filter((Timecheck.timecheck.is_(None)) | (PageWithSfn.timelastedit > Timecheck.timecheck))
+    q = s.query(PagesWithSfn) \
+        .outerjoin(Timecheck, PagesWithSfn.page_id == Timecheck.page_id) \
+        .filter((Timecheck.timecheck.is_(None)) | (PagesWithSfn.timelastedit > Timecheck.timecheck))
     if limit:
         q = q.limit(limit)
     _pages = q.all()
@@ -77,7 +77,7 @@ def db_get_list_changed_pages(s, limit=None) -> list:  # offset,limit
 
 
 def db_delete_page_id(s, pid=int):
-    s.query(PageWithSfn).filter(PageWithSfn.page_id == pid).delete()
+    s.query(PagesWithSfn).filter(PagesWithSfn.page_id == pid).delete()
     s.commit()
 
 

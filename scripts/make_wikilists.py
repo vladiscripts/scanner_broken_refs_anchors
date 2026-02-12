@@ -4,15 +4,15 @@
 import itertools
 import re
 from settings import *
-from scripts.db_models import PageWithSfn, ErrRef, db_session as s
+from scripts.db_models import PagesWithSfn, ErrRef, db_session as s
 from scripts.make_listspages import file_savetext
 
 
 def make_wikilists_by_page_ids():
-    pq = (s.query(PageWithSfn.page_id, PageWithSfn.title, ErrRef.link_to_sfn, ErrRef.text)
-          .join(ErrRef, PageWithSfn.page_id == ErrRef.page_id)
+    pq = (s.query(PagesWithSfn.page_id, PagesWithSfn.title, ErrRef.link_to_sfn, ErrRef.text)
+          .join(ErrRef, PagesWithSfn.page_id == ErrRef.page_id)
           .filter(ErrRef.page_id.isnot(None))
-          .order_by(PageWithSfn.page_id, ErrRef.citeref))
+          .order_by(PagesWithSfn.page_id, ErrRef.citeref))
     refs_pages4check = pq.all()
 
     wikilists = []

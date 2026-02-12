@@ -1,6 +1,6 @@
 # author: https://github.com/vladiscripts
 #
-from scripts.db_models import PageWithSfn, ErrRef, PageWithWarning, Timecheck, Session, db_session as s
+from scripts.db_models import PagesWithSfn, ErrRef, PageWithWarning, Timecheck, Session, db_session as s
 from scripts import wiki_db
 from scripts import *
 
@@ -68,7 +68,7 @@ class UpdateDB:
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
-        db_pages = self.s.query(PageWithSfn).all()
+        db_pages = self.s.query(PagesWithSfn).all()
 
         # чистка PageWithSfn
         self.clear_orphan_sfnpages(w_pages_with_sfns, db_pages)
@@ -76,7 +76,7 @@ class UpdateDB:
         # upsert
         logger.info('Fill PageWithSfn table')
         for page_id, title, timelastedit in w_pages_with_sfns:
-            self.s.merge(PageWithSfn(page_id, title, timelastedit))
+            self.s.merge(PagesWithSfn(page_id, title, timelastedit))
             pass
         self.s.commit()
 
@@ -109,13 +109,13 @@ class UpdateDB:
             share = 100
             chunks = [delta[i:i + share] for i in range(0, len(delta), share)]
             for chunk in chunks:
-                self.s.query(PageWithSfn).filter(PageWithSfn.page_id.in_(chunk)).delete(synchronize_session='fetch')
+                self.s.query(PagesWithSfn).filter(PagesWithSfn.page_id.in_(chunk)).delete(synchronize_session='fetch')
                 self.s.commit()
 
     def clear_orphan_by_timecheck(self):
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
         logger.info('Drop_orphan_by_timecheck')
-        pages = self.s.query(Timecheck.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all()
+        pages = self.s.query(Timecheck.page_id).outerjoin(PagesWithSfn).filter(PagesWithSfn.page_id.is_(None)).all()
         for p in pages:
             c = self.s.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete()
         self.s.commit()
@@ -125,8 +125,8 @@ class UpdateDB:
         # pages = Session.query(ErrRef.page_id).outerjoin(PageWithSfn).filter(PageWithSfn.page_id.is_(None)).all()
         # for p in pages:  # DELETE do not work with JOIN
         #     Session.query(ErrRef).filter(ErrRef.page_id == p.page_id).delete(synchronize_session='fetch')
-        pages = (p.page_id for p in self.s.query(ErrRef.page_id).outerjoin(PageWithSfn)
-            .filter(PageWithSfn.page_id.is_(None)).all())
+        pages = (p.page_id for p in self.s.query(ErrRef.page_id).outerjoin(PagesWithSfn)
+            .filter(PagesWithSfn.page_id.is_(None)).all())
         c = self.s.query(ErrRef).filter(ErrRef.page_id.in_(pages)).delete(synchronize_session='fetch')
         self.s.commit()
 
