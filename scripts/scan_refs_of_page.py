@@ -1,16 +1,18 @@
-# coding: utf-8
-#
 # author: https://github.com/vladiscripts
-#
+from typing import NamedTuple
 import re
 from lxml.html import tostring, fromstring
-from . import *
 
 tag_a = re.compile(r'<a [^>]*>(.*?)</a>', re.DOTALL)
-SFN = namedtuple('SFN', 'citeref text link_to_sfn')
 
 
-def ScanRefsOfPage(html: str) -> List[namedtuple]:
+class SFN(NamedTuple):
+    citeref: str
+    text: str
+    link_to_sfn: str
+
+
+def ScanRefsOfPage(html: str) -> list[SFN]:
     # """ Разница списков сносок с имеющейся библиографией. Возращает: self.full_errrefs """
     htmltree = fromstring(html)
 
@@ -30,7 +32,7 @@ def ScanRefsOfPage(html: str) -> List[namedtuple]:
     return err_refs
 
 
-def find_sfns_on_page(htmltree) -> (Set[str], List[namedtuple]):
+def find_sfns_on_page(htmltree) -> tuple[set[str], list[SFN]]:
     """ Список сносок из раздела 'Примечания'.
     Возвращает:
     self.list_sfns - список только sfn-id
@@ -49,7 +51,7 @@ def find_sfns_on_page(htmltree) -> (Set[str], List[namedtuple]):
     return list_sfns, all_sfns_info
 
 
-def find_citations_on_page(htmltree) -> Set[str]:
+def find_citations_on_page(htmltree) -> set[str]:
     """ Список id библиографии. Возвращает: self.list_refs """
     # cssselect использован для надёжности.
     # В xpath сложней выбор по классу, когда в атрибутах их несколько через пробел

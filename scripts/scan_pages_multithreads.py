@@ -3,10 +3,9 @@
 #
 from queue import Queue
 from threading import Thread, RLock
-from scripts.scan_pages import Scanner, db_update_pagedata_, db_update_pagedata__, db_get_list_changed_pages, \
-    time_current, db_delete_page_id
-from scripts.db_models import Session, db_session as s
-from scripts import *
+from scripts.scan_pages import Scanner, db_update_pagedata_, db_get_list_changed_pages, PageData
+from scripts.db_models import Session
+from scripts import datetime, logger
 
 
 class ScannerMultithreads(Scanner):
@@ -25,7 +24,6 @@ class ScannerMultithreads(Scanner):
 
     def crawler(self):
         logger.debug(f'worker start, unfinished_tasks={self.queue_toscan.unfinished_tasks}')
-        # s = Session()
         while True:
             page = self.queue_toscan.get()
             if page is None:
@@ -38,26 +36,21 @@ class ScannerMultithreads(Scanner):
                 logger.info(f'scan: {title}')
                 err_refs = self.scan_page(title, pid)
                 if err_refs is None:
-                    # db_delete_page_id(s, pid)
+                    # db_delete_page_id(pid)  # Не чистим ДБ от этой страницы здесь — это делается в другом скрипте
                     continue
-                with self.db_lock:
-                    db_update_pagedata_(s, title, pid, err_refs, datetime.utcnow())
+                with Session() as s:  # Создаём новую сессию для обновления данных
+                    db_update_pagedata_(s, PageData(title, pid, err_refs), datetime.utcnow())
             self.queue_toscan.task_done()
-        # Session.remove()
-        # s.close()
         logger.debug(f'worker end, unfinished_tasks={self.queue_toscan.unfinished_tasks}')
 
     def pages_feed(self):
         logger.debug(f'thread_pages')
         k = []
         c = 0
-        # s = Session()
         while True:
             c += 1
-            pages = db_get_list_changed_pages(s, limit=self.pages_limit_by_query)
-            # pages1 = pages.copy()
-            # todo: дублируются сканирования страниц
-            # todo: не записываются в БД ли не корректно читаются
+            with Session() as s:
+                pages = db_get_list_changed_pages(limit=self.pages_limit_by_query)
             if not pages:
                 for i in range(self.threads_num):
                     self.queue_toscan.put(None)
@@ -80,10 +73,8 @@ class ScannerMultithreads(Scanner):
         t_pages.start()
 
         logger.debug(f't.start()')
-        t_crawlers = [Thread(target=self.crawler, name=f'crawler-{i}') for i in range(self.threads_num)]  # daemon=True
+        t_crawlers = [Thread(target=self.crawler, name=f'crawler-{i}') for i in range(self.threads_num)]
         [t.start() for t in t_crawlers]
-
-        # self.queue_toscan.join()
 
         [t.join() for t in t_crawlers]
         logger.debug(f'end threads')

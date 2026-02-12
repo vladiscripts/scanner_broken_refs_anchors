@@ -1,12 +1,11 @@
-# coding: utf-8
 # author: https://github.com/vladiscripts
 #
-from typing import Callable, Iterator
+from typing import Iterator
 from pywikibot.data import mysql
 from settings import *
 
 
-def get_listpages_have_WarningTpl(limit=''):
+def get_listpages_have_WarningTpl():
     """Обновить список страниц имеющих установленный шаблон.
     # Не используются ORDER и GROUP посколкьу сильно замедляют запрос"""
     sql = f"""SELECT page_id, page_title
@@ -21,7 +20,7 @@ def get_listpages_have_WarningTpl(limit=''):
     return pages
 
 
-def get_listpages_have_sfnTpl(limit=''):
+def get_listpages_have_sfnTpl():
     """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
     """ 
     можно запрашивать join revesions on lastedit >= max(Timechecks.timecheck)
@@ -53,27 +52,27 @@ def get_listpages_have_sfnTpl(limit=''):
     return pages
 
 
-def _wdb_query(sql):
-    result = []
-    sql = sql.strip(' ;\n')
-    i = 1
-    limit = 10000
-    while True:
-        sql_limit = f'{sql} LIMIT {i}, {limit};'
-        rows = _wdb_query(sql_limit)
-
-        # if not len(rows):  # break the loop when no more rows
-        #     print("Done!")
-        #     break
-
-        if not rows:
-            break
-        for row in rows:  # do something with results
-            result.append(row)
-        # [].extend(tuple(rows))
-
-        i += limit
-    return result
+# def _wdb_query(sql):
+#     result = []
+#     sql = sql.strip(' ;\n')
+#     i = 1
+#     limit = 10000
+#     while True:
+#         sql_limit = f'{sql} LIMIT {i}, {limit};'
+#         rows = _wdb_query(sql_limit)
+#
+#         # if not len(rows):  # break the loop when no more rows
+#         #     print("Done!")
+#         #     break
+#
+#         if not rows:
+#             break
+#         for row in rows:  # do something with results
+#             result.append(row)
+#         # [].extend(tuple(rows))
+#
+#         i += limit
+#     return result
 
 
 def normalization_pagename(t: str) -> str:
@@ -82,19 +81,19 @@ def normalization_pagename(t: str) -> str:
     return t[0:1].upper() + t[1:].replace(' ', '_')
 
 
-def list_to_str_params(string, strings: Iterator[str], couple_arg='LIKE', wordjoin=' OR ') -> str:
-    """Return string like:  string LIKE string1 OR string LIKE string2"""
-    return wordjoin.join([f'%s %s "%s"' % (string, couple_arg, normalization_pagename(s)) for s in strings])
+# def list_to_str_params(string, strings: Iterator[str], couple_arg='LIKE', wordjoin=' OR ') -> str:
+#     """Return string like:  string LIKE string1 OR string LIKE string2"""
+#     return wordjoin.join([f'%s %s "%s"' % (string, couple_arg, normalization_pagename(s)) for s in strings])
 
 
-def _list_to_str_params(field: str, strings: Iterator[str]) -> str:
-    """Return string like:  string LIKE string1 OR string LIKE string2"""
-    tpls = ','.join((f'"{normalization_pagename(s)}"' for s in strings))
-    result = f' AND {field} IN ({tpls})'
-    return result
+# def _list_to_str_params(field: str, strings: Iterator[str]) -> str:
+#     """Return string like:  string LIKE string1 OR string LIKE string2"""
+#     tpls = ','.join((f'"{normalization_pagename(s)}"' for s in strings))
+#     result = f' AND {field} IN ({tpls})'
+#     return result
 
 
-def wdb_query(sql, limit=''):
+def wdb_query(sql, limit='') -> tuple[str] | None:
     result = mysql.mysql_query(sql.format(limit), dbname='ruwiki')
     return result
 

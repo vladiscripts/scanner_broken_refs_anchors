@@ -1,6 +1,5 @@
-# coding: utf-8
 # author: https://github.com/vladiscripts
-from scripts import *
+from scripts import file_savelines
 from settings import *
 from scripts.db_models import PagesWithSfn, ErrRef, PageWithWarning, Session
 

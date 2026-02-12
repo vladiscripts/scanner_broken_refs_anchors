@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-# coding: utf-8
-#
 # author: https://github.com/vladiscripts
 #
 from settings import *
-from scripts import *
+from scripts import datetime, logger
 from scripts import scan_pages
 from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB
@@ -50,10 +48,7 @@ if __name__ == '__main__':
         # 	scaner.do_scan()
 
         if do_scan:
-            if multithreads:
-                scanner = scan_pages_multithreads.ScannerMultithreads()
-            else:
-                scanner = scan_pages.Scanner()
+            scanner = scan_pages_multithreads.ScannerMultithreads() if multithreads else scan_pages.Scanner()
             scanner.do_scan()
 
         # Запись списков
@@ -64,6 +59,6 @@ if __name__ == '__main__':
         logger.info('*** Doing make_wikilist')
         make_and_save_wikilist()
 
-        logger.info('*** Doing recheck_lists')
         if do_recheck_lists_by_notMultithread and do_scan:
+            logger.info('*** Doing recheck_lists')
             recheck_lists(scanner)

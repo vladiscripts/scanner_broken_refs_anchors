@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-# coding: utf-8
-#
 # author: https://github.com/vladiscripts
 #
 import requests
 import json
-from scripts.scan_refs_of_page import ScanRefsOfPage
-from scripts import *
+from scripts import logger
 
 
 class Downloader:
@@ -21,7 +18,7 @@ class Downloader:
         # s.params.update({"action": "render"})  # для запросов как html, а не через api
         return s
 
-    def get_page(self, title: str, pid=None) -> Optional[str]:
+    def get_page(self, title: str, pid=None) -> str | None:
         """Сканирование страниц на ошибки"""
         assert not (title is None or title.strip() == '')
         # logger.info(f'scan: {title}')
@@ -50,12 +47,12 @@ class Downloader:
         if 'warnings' in j:
             logger.warning(f'warnings on page request. pid={pid}, title={title}, error: {j["error"]}\n')
             return
-        if not 'parse' in j:
+        if 'parse' not in j:
             logger.warning(f"not 'parse' in j. pid={pid}, title={title}, error: {j['error']}\n")
             return
         return j['parse']['text']
 
-    def get_page_via_html(self, pid, title: str) -> Optional[List[namedtuple]]:
+    def get_page_via_html(self, pid, title: str) -> str | None:
         """Сканирование страниц на ошибки"""
         from urllib.parse import quote
         assert not (title is None or title.strip() == '')

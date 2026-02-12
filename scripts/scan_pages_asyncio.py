@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
-#
 # author: https://github.com/vladiscripts
 #
 import asyncio
@@ -10,6 +8,7 @@ from urllib.parse import quote
 from scripts.scan_pages import db_get_list_changed_pages, scan_page
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from settings import *
+from scripts import logger, logger
 
 
 class Scanner:
@@ -29,7 +28,7 @@ class Scanner:
             tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
             finished, unfinished = await asyncio.wait(tasks)
             if len(unfinished):
-                logging.error('have unfinished async tasks')
+                logger.error('have unfinished async tasks')
 
     async def db_works(self, p):
         scan_page(p)
@@ -40,7 +39,7 @@ class Scanner:
         url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
 
         if page_title == 'None' or page_title is None:
-            logging.error('!!!!!!!!!!!!!')
+            logger.error('!!!!!!!!!!!!!')
 
         async with sem:
             retries = 0
@@ -50,7 +49,7 @@ class Scanner:
 
                     if response.status == 200:
                         response_text = await response.text()
-                        logging.info(page_title + ':')
+                        logger.info(page_title + ':')
                         page = ScanRefsOfPage(response_text)
                         errrefs = page.err_refs
                         # try:
@@ -64,15 +63,14 @@ class Scanner:
                         retries += 1
                         await asyncio.sleep(1)
                     else:
-                        logging.error(page_title + ' response.status != 200')
+                        logger.error(f'{page_title} response.status != 200')
                     response.close()
                     break
 
                 except (aiohttp.ClientOSError, aiohttp.ClientResponseError,
                         aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
-                    logging.error(
-                        '!!! Error. Page title: "%s"; url: %s; error: %r. Can will work on a next request.' % (
-                        page_title, url, e))
+                    logger.error(
+                        f'!!! Error. Page title: "{page_title}"; url: {url}; error: {e}. Can will work on a next request.')
                     retries += 1
                     await asyncio.sleep(1)
 

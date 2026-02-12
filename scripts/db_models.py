@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, relationship, scoped_session, declarative_base, Query
-import re
+from sqlalchemy.orm import sessionmaker, declarative_base
 from urllib.parse import quote_from_bytes, unquote
 from datetime import datetime
 from engine_conn_str import engine_conn_str
@@ -12,10 +10,7 @@ from engine_conn_str import engine_conn_str
 #            query={'read_default_file': '~/.pywikibot/replica.my.cnf'})
 # engine = create_engine(name_or_url=myDB)
 db_engine = create_engine(engine_conn_str, echo=False)
-
 Session = sessionmaker(bind=db_engine)
-db_session = Session()
-
 Base = declarative_base()
 
 

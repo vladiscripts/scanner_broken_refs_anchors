@@ -1,4 +1,4 @@
-from scripts import *
+from scripts import logger, file_readlines, file_savelines
 from settings import *
 
 
@@ -14,7 +14,7 @@ def recheck(scanner, filename: str, type_opp: int):
         if err_refs is None:
             continue
         if type_opp == 1 and len(err_refs) == 0:
-            logger.error('no errrefs on page "{title}", where it should be'.format(title=title))
+            logger.error(f'no errrefs on page "{title}", where it should be')
             continue
         elif type_opp == 2 and len(err_refs) > 0:
             logger.error(f'errrefs on page "{title}", where it should not be')

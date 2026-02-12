@@ -1,19 +1,18 @@
-# coding: utf-8
 # author: https://github.com/vladiscripts
-#
 import itertools
 import re
 from settings import *
-from scripts.db_models import PagesWithSfn, ErrRef, db_session as s
-from scripts.make_listspages import file_savetext
+from scripts.db_models import PagesWithSfn, ErrRef, Session
+from scripts import file_savetext
 
 
 def make_wikilists_by_page_ids():
-    pq = (s.query(PagesWithSfn.page_id, PagesWithSfn.title, ErrRef.link_to_sfn, ErrRef.text)
-          .join(ErrRef, PagesWithSfn.page_id == ErrRef.page_id)
-          .filter(ErrRef.page_id.isnot(None))
-          .order_by(PagesWithSfn.page_id, ErrRef.citeref))
-    refs_pages4check = pq.all()
+    with Session() as s:
+        pq = (s.query(PagesWithSfn.page_id, PagesWithSfn.title, ErrRef.link_to_sfn, ErrRef.text)
+              .join(ErrRef, PagesWithSfn.page_id == ErrRef.page_id)
+              .filter(ErrRef.page_id.isnot(None))
+              .order_by(PagesWithSfn.page_id, ErrRef.citeref))
+        refs_pages4check = pq.all()
 
     wikilists = []
     for k, group_list in itertools.groupby(refs_pages4check, key=lambda g: g.page_id // 1000000):
@@ -24,7 +23,8 @@ def make_wikilists_by_page_ids():
             refs_wikilinks = []
             for ref in page_refs:
                 ankor = ref.link_to_sfn
-                if not re.search(r'^[\w_-]+$', ref.link_to_sfn): ankor = '{{urlencode:%s}}' % ref.link_to_sfn
+                if not re.search(r'^[\w_-]+$', ref.link_to_sfn):
+                    ankor = '{{urlencode:%s}}' % ref.link_to_sfn
                 refs_wikilinks.append(f"[[#{ankor}|{ref.text}]]")
             refs_entry = '* {pid} [[{title}]]:<br><section begin="{pid}" />{all_wikilinks}<section end="{pid}" />' \
                 .format(title=p.title.replace('_', ' '), pid=p.page_id, all_wikilinks=', '.join(refs_wikilinks))
