@@ -56,8 +56,8 @@ class Scanner:
 
 
 def db_get_list_changed_pages(limit=None) -> list[tuple[int, str]]:
+    """ Возвращает страницы, которые ещё не проверялись (timecheck IS NULL), или изменились с последней проверки (timelastedit > timecheck)"""
     with Session() as s:
-        # Возвращает страницы, которые ещё не проверялись (timecheck IS NULL), или изменились с последней проверки (timelastedit > timecheck)
         stmt = (
             select(PagesWithSfn.page_id, PagesWithSfn.title)
             .outerjoin(Timecheck, PagesWithSfn.page_id == Timecheck.page_id)
