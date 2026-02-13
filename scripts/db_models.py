@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from urllib.parse import quote_from_bytes, unquote
 from datetime import datetime
+
 from engine_conn_str import engine_conn_str
 
 # from sqlalchemy.engine.url import URL
@@ -26,10 +26,10 @@ class PagesWithSfn(Base):
     #                          passive_deletes=True)  # cascade='all,delete,delete-orphan'
     # ref = relationship('ErrRef', backref='refs', passive_deletes=True)
 
-    def __init__(self, page_id, title, timelastedit):
+    def __init__(self, page_id, title, timelastedit: datetime):
         self.page_id = page_id
-        self.title = byte2utf(title)
-        self.timelastedit = datetime.strptime(timelastedit.decode(), '%Y%m%d%H%M%S')
+        self.title = title
+        self.timelastedit = timelastedit
 
 
 class Timecheck(Base):
@@ -39,7 +39,7 @@ class Timecheck(Base):
                      primary_key=True)
     timecheck = Column(DateTime)
 
-    def __init__(self, page_id, timecheck):
+    def __init__(self, page_id, timecheck: datetime):
         self.page_id = page_id
         self.timecheck = timecheck
 
@@ -68,11 +68,7 @@ class PageWithWarning(Base):
 
     def __init__(self, page_id, title):
         self.page_id = page_id
-        self.title = byte2utf(title)
-
-
-def byte2utf(string):
-    return unquote(quote_from_bytes(string), encoding='utf8')
+        self.title = title
 
 
 Base.metadata.create_all(bind=db_engine)

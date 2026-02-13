@@ -28,7 +28,6 @@ class UpdateDB:
         logger.info('reloading listpages have WarningTpl from WikiDB')
         logger.info('loading from WikiDB')
         w_pages = wiki_db.get_listpages_have_WarningTpl()
-        w_pages = tuple(w_pages)
         # pickle_save_to_file('WarningTpl_update.pickle', w_pages)
         # w_pages = pickle_load_from_file('WarningTpl_update.pickle')
 
@@ -57,7 +56,6 @@ class UpdateDB:
         logger.info('reloading listpages have sfnTpl from WikiDB')
         logger.info('loading from WikiDB')
         w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
-        w_pages_with_sfns = tuple(w_pages_with_sfns)
         # pickle_save_to_file('wiki_sfnTpl_update.pickle', w_pages_with_sfns)
         # w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl_update.pickle')
 

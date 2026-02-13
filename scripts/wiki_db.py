@@ -1,11 +1,13 @@
 # author: https://github.com/vladiscripts
-#
-from typing import Iterator
+from typing import Iterator, Generator
 from pywikibot.data import mysql
+from urllib.parse import quote_from_bytes, unquote
+from datetime import datetime
+
 from settings import *
 
 
-def get_listpages_have_WarningTpl():
+def get_listpages_have_WarningTpl() -> tuple[tuple[int, str]]:
     """Обновить список страниц имеющих установленный шаблон.
     # Не используются ORDER и GROUP посколкьу сильно замедляют запрос"""
     sql = f"""SELECT page_id, page_title
@@ -15,12 +17,11 @@ def get_listpages_have_WarningTpl():
                 WHERE lt_namespace = 10
                   AND lt_title = "{normalization_pagename(warning_tpl_name)}"
                   AND page_namespace = 0;"""
-    pages = wdb_query(sql)
-    # pages = tuple(wdb_query(sql))
-    return pages
+    pages = tuple((p[0], byte2utf(p[1])) for p in wdb_query(sql))
+    return pages  # type: ignore
 
 
-def get_listpages_have_sfnTpl():
+def get_listpages_have_sfnTpl() -> tuple[tuple[int, str, datetime]]:
     """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
     """ 
     можно запрашивать join revesions on lastedit >= max(Timechecks.timecheck)
@@ -47,9 +48,8 @@ def get_listpages_have_sfnTpl():
                     AND lt_title IN ({tpls})
                     AND page_namespace = 0
                   INNER JOIN revision ON page_latest = rev_id;"""
-    pages = wdb_query(sql)
-    # pages = tuple(wdb_query(sql))
-    return pages
+    pages = tuple((p[0], byte2utf(p[1]), datetime.strptime(p[2].decode(), '%Y%m%d%H%M%S')) for p in wdb_query(sql))
+    return pages  # type: ignore
 
 
 # def _wdb_query(sql):
@@ -93,9 +93,13 @@ def normalization_pagename(t: str) -> str:
 #     return result
 
 
-def wdb_query(sql, limit='') -> tuple[str] | None:
+def wdb_query(sql, limit='') -> Generator:
     result = mysql.mysql_query(sql.format(limit), dbname='ruwiki')
     return result
+
+
+def byte2utf(string):
+    return unquote(quote_from_bytes(string), encoding='utf8')
 
 # def wdb_query_pymysql(sql):
 #     import pymysql
