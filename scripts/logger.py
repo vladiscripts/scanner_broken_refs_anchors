@@ -6,7 +6,7 @@ def make_logger(name):
     log_handler = logging.StreamHandler()
     log_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
     _logger.addHandler(log_handler)
-    _logger.setLevel(logging.INFO)
+    _logger.setLevel(logging.DEBUG)
     return _logger
 
 

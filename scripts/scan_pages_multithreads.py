@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # author: https://github.com/vladiscripts
-#
 from queue import Queue
 from threading import Thread, RLock
 from scripts.scan_pages import Scanner, db_update_pagedata_, db_get_list_changed_pages, PageData
