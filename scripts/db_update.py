@@ -64,7 +64,7 @@ class UpdateDB:
         with Session() as s:
             db_pages = s.query(PagesWithSfn).all()
 
-            # чистка PageWithSfn
+            # чистка PagesWithSfn
             self.clear_orphan_sfnpages(w_pages_with_sfns, db_pages, s)
 
             # upsert
