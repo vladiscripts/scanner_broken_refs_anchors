@@ -1,7 +1,10 @@
 # author: https://github.com/vladiscripts
+from sqlalchemy import select, delete
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+
 from scripts.db_models import PagesWithSfn, ErrRef, PageWithWarning, Timecheck, Session
 from scripts import wiki_db
-from scripts import logger
+from scripts import logger, _chunked
 
 
 class UpdateDB:
@@ -28,17 +31,26 @@ class UpdateDB:
         logger.info('reloading listpages have WarningTpl from WikiDB')
         logger.info('loading from WikiDB')
         w_pages = wiki_db.get_listpages_have_WarningTpl()
+        logger.info(f'Downloaded {len(w_pages)} records of pages with WarningTpl from WikiDB')
         # pickle_save_to_file('WarningTpl_update.pickle', w_pages)
         # w_pages = pickle_load_from_file('WarningTpl_update.pickle')
 
         with Session() as s:
-            logger.info('clear PageWithWarning table')
-            s.query(PageWithWarning).delete(synchronize_session='fetch')
+            try:
+                logger.info('clear PageWithWarning table')
+                s.execute(delete(PageWithWarning))
 
-            logger.info('Fill PageWithWarning table')
-            for pid, title in w_pages:
-                s.add(PageWithWarning(pid, title))
-            s.commit()
+                if w_pages:
+                    logger.info('Fill PageWithWarning table')
+                    data = [PageWithWarning(pid, title).as_dict() for pid, title in w_pages]
+                    stmt = mysql_insert(PageWithWarning.__table__).values(data)
+                    s.execute(stmt)
+                s.commit()
+
+            except Exception as e:
+                s.rollback()
+                logger.error(f"Failed to update PageWithWarning: {e}")
+                raise
 
     def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных
@@ -56,22 +68,27 @@ class UpdateDB:
         logger.info('reloading listpages have sfnTpl from WikiDB')
         logger.info('loading from WikiDB')
         w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
+        logger.info(f'Downloaded {len(w_pages_with_sfns)} records of pages with sfnTpl from WikiDB')
         # pickle_save_to_file('wiki_sfnTpl_update.pickle', w_pages_with_sfns)
         # w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl_update.pickle')
 
         # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
         #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
+
         with Session() as s:
-            db_pages = s.query(PagesWithSfn).all()
-
             # чистка PagesWithSfn
-            self.clear_orphan_sfnpages(w_pages_with_sfns, db_pages, s)
+            self.clear_orphan_sfnpages(s, w_pages_with_sfns)
 
-            # upsert
-            logger.info('Fill PageWithSfn table')
-            for page_id, title, timelastedit in w_pages_with_sfns:
-                s.merge(PagesWithSfn(page_id, title, timelastedit))
+            # Подготовка данных с использованием модели (без дублирования логики)
+            upsert_data = [PagesWithSfn(page_id, title, timelastedit).as_dict() for page_id, title, timelastedit in w_pages_with_sfns]
+
+            if upsert_data:
+                stmt = mysql_insert(PagesWithSfn.__table__).values(upsert_data)
+                stmt = stmt.on_duplicate_key_update(title=stmt.inserted.title, timelastedit=stmt.inserted.timelastedit)
+                s.execute(stmt)
             s.commit()
+
+        logger.info('reload_listpages_have_sfnTpl completed')
 
         # -----------
 
@@ -93,62 +110,54 @@ class UpdateDB:
         # long query
         # self.s.commit()
 
-    def clear_orphan_sfnpages(self, w_pages_with_sfns, db_pages, s):
+    def clear_orphan_sfnpages(self, s, w_pages_with_sfns):
         logger.info('Drop_orphan_sfnpages')
-        db_pages_ids = {p.page_id for p in db_pages}
-        w_pages_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
-        delta = tuple(db_pages_ids - w_pages_ids)
-        if delta:
-            share = 100
-            chunks = [delta[i:i + share] for i in range(0, len(delta), share)]
-            for chunk in chunks:
-                s.query(PagesWithSfn).filter(PagesWithSfn.page_id.in_(chunk)).delete(synchronize_session='fetch')
-                s.commit()
+        w_page_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
+        db_page_ids = {r[0] for r in s.execute(select(PagesWithSfn.page_id)).fetchall()}
+        to_delete = db_page_ids - w_page_ids
+        if to_delete:
+            for chunk in _chunked(to_delete, 1000):
+                stmt = delete(PagesWithSfn).where(PagesWithSfn.page_id.in_(chunk))
+                s.execute(stmt)
 
     def clear_orphan_by_timecheck(self):
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
         logger.info('Drop_orphan_by_timecheck')
         with Session() as s:
-            pages = s.query(Timecheck.page_id).outerjoin(PagesWithSfn).filter(PagesWithSfn.page_id.is_(None)).all()
-            for p in pages:
-                s.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
+            stmt = delete(Timecheck).where(~Timecheck.page_id.in_(select(PagesWithSfn.page_id)))
+            s.execute(stmt)
             s.commit()
 
     def clear_orphan_errrefs(self):
         logger.info('Drop_refs_of_changed_pages')
         with Session() as s:
-            pages = (p.page_id for p in s.query(ErrRef.page_id).outerjoin(PagesWithSfn)
-            .filter(PagesWithSfn.page_id.is_(None)).all())
-            s.query(ErrRef).filter(ErrRef.page_id.in_(pages)).delete(synchronize_session='fetch')
+            stmt = delete(ErrRef).where(~ErrRef.page_id.in_(select(PagesWithSfn.page_id)))
+            s.execute(stmt)
             s.commit()
 
     def clear_timechecks_of_erropages(self):
         logger.info('Drop_timechecks_of_erropages')
         with Session() as s:
-            # pages = s.query(ErrRef.page_id).all()
-            # for p in pages:
-            #     s.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
-            pages = (p.page_id for p in s.query(ErrRef.page_id).all())
-            s.query(Timecheck).filter(Timecheck.page_id.in_(pages)).delete(synchronize_session='fetch')
+            stmt = delete(Timecheck).where(Timecheck.page_id.in_(select(ErrRef.page_id).distinct()))
+            s.execute(stmt)
             s.commit()
 
     # Helpers
     def clear_check_pages_with_warnings(self):
         """Удаление метки проверки у страниц имеющих warning-шаблон."""
         with Session() as s:
-            pages = s.query(PageWithWarning.page_id).all()
-            for p in pages:
-                s.query(Timecheck).filter(Timecheck.page_id == p.page_id).delete(synchronize_session='fetch')
+            stmt = delete(Timecheck).where(Timecheck.page_id.in_(select(PageWithWarning.page_id)))
+            s.execute(stmt)
             s.commit()
 
     def drop_all_check_pages(self):
         """Очистка таблицы Timecheck: удаление метки проверки у всех страниц"""
         with Session() as s:
-            s.query(Timecheck).delete()
+            s.execute(delete(Timecheck))
             s.commit()
 
     def drop_all_refs(self):
         """Очистка таблицы Refs"""
         with Session() as s:
-            s.query(ErrRef).delete()
+            s.execute(delete(ErrRef))
             s.commit()

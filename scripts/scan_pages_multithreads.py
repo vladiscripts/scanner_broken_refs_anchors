@@ -2,9 +2,9 @@
 # author: https://github.com/vladiscripts
 from queue import Queue
 from threading import Thread, RLock
-from scripts.scan_pages import Scanner, db_update_pagedata_, db_get_list_changed_pages, PageData
+from scripts.scan_pages import Scanner, db_update_pages_data, db_get_list_changed_pages, PageData
 from scripts.db_models import Session
-from scripts import datetime, logger
+from scripts import datetime, timezone, logger
 
 
 class ScannerMultithreads(Scanner):
@@ -37,8 +37,10 @@ class ScannerMultithreads(Scanner):
                 if err_refs is None:
                     # db_delete_page_id(pid)  # Не чистим ДБ от этой страницы здесь — это делается в другом скрипте
                     continue
-                with Session() as s:  # Создаём новую сессию для обновления данных
-                    db_update_pagedata_(s, PageData(title, pid, err_refs), datetime.utcnow())
+                # with Session() as s:  # Создаём новую сессию для обновления данных
+                    # db_update_pagedata_(s, PageData(title, pid, err_refs, datetime.now(timezone.utc)))
+                p = PageData(title, pid, err_refs, datetime.now(timezone.utc))
+                db_update_pages_data([p])  # todo: по одной записывать не оптимально
             self.queue_toscan.task_done()
         logger.debug(f'worker end, unfinished_tasks={self.queue_toscan.unfinished_tasks}')
 
@@ -48,8 +50,7 @@ class ScannerMultithreads(Scanner):
         c = 0
         while True:
             c += 1
-            with Session() as s:
-                pages = db_get_list_changed_pages(limit=self.pages_limit_by_query)
+            pages = db_get_list_changed_pages(limit=self.pages_limit_by_query)
             if not pages:
                 for i in range(self.threads_num):
                     self.queue_toscan.put(None)

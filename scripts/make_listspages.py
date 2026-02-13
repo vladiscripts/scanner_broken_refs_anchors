@@ -1,29 +1,34 @@
 # author: https://github.com/vladiscripts
+from sqlalchemy import select
+
 from scripts import file_savelines
 from settings import *
 from scripts.db_models import PagesWithSfn, ErrRef, PageWithWarning, Session
 
 
 def save_listpages_for_remove_warning_tpls():
-    s = Session()
-    query = s.query(PageWithWarning.title) \
-        .outerjoin(ErrRef, PageWithWarning.page_id == ErrRef.page_id) \
-        .filter(ErrRef.page_id.is_(None))
-    # Session.remove()
-    s.close()
-    list_to_remove_warning_tpl = (str(title[0]) for title in query.all())
-    file_savelines(filename_list_to_remove_warning_tpl, sorted(list_to_remove_warning_tpl))
+    """Создать список страниц, где можно удалить шаблон-предупреждение (нет ошибочных сносок)."""
+    with Session() as s:
+        stmt = (
+            select(PageWithWarning.title)
+            .outerjoin(ErrRef, PageWithWarning.page_id == ErrRef.page_id)
+            .where(ErrRef.page_id.is_(None))
+            .order_by(PageWithWarning.title)
+        )
+        titles = [row[0] for row in s.execute(stmt).fetchall()]
+        file_savelines(filename_list_to_remove_warning_tpl, sorted(titles))
 
 
 def save_listpages_for_add_warning_tpls():
     """Список куда предупреждение ещё не поставлено."""
-    s = Session()
-    errpages_without_warning_tpl = s.query(PagesWithSfn.title) \
-        .outerjoin(PageWithWarning, PagesWithSfn.page_id == PageWithWarning.page_id) \
-        .join(ErrRef, PagesWithSfn.page_id == ErrRef.page_id) \
-        .filter(PageWithWarning.page_id.is_(None), ErrRef.page_id.isnot(None)) \
-        .group_by(PagesWithSfn.title).all()
-    # Session.remove()
-    s.close()
-    errpages_without_warning_tpl = (p.title for p in errpages_without_warning_tpl)
-    file_savelines(filename_listpages_errref_where_no_yet_warning_tpl, errpages_without_warning_tpl)
+    with Session() as s:
+        stmt = (
+            select(PagesWithSfn.title)
+            .join(ErrRef, PagesWithSfn.page_id == ErrRef.page_id)
+            .outerjoin(PageWithWarning, PagesWithSfn.page_id == PageWithWarning.page_id)
+            .where(PageWithWarning.page_id.is_(None))
+            .group_by(PagesWithSfn.title)
+            .order_by(PagesWithSfn.title)
+        )
+        titles = [row.title for row in s.execute(stmt).fetchall()]
+        file_savelines(filename_listpages_errref_where_no_yet_warning_tpl, titles)

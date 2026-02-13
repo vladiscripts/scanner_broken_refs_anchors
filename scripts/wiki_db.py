@@ -1,5 +1,5 @@
 # author: https://github.com/vladiscripts
-from typing import Iterator, Generator
+from typing import Generator
 from pywikibot.data import mysql
 from urllib.parse import quote_from_bytes, unquote
 from datetime import datetime
@@ -43,11 +43,11 @@ def get_listpages_have_sfnTpl() -> tuple[tuple[int, str, datetime]]:
     sql = f"""SELECT page_id, page_title, rev_timestamp
                 FROM page
                   INNER JOIN templatelinks ON page_id = tl_from
-                  INNER JOIN linktarget on tl_target_id = lt_id 
-                    AND lt_namespace = 10
-                    AND lt_title IN ({tpls})
+                  INNER JOIN linktarget on tl_target_id = lt_id
+                  INNER JOIN revision ON page_latest = rev_id
+                  WHERE lt_namespace = 10
                     AND page_namespace = 0
-                  INNER JOIN revision ON page_latest = rev_id;"""
+                    AND lt_title IN ({tpls});"""
     pages = tuple((p[0], byte2utf(p[1]), datetime.strptime(p[2].decode(), '%Y%m%d%H%M%S')) for p in wdb_query(sql))
     return pages  # type: ignore
 

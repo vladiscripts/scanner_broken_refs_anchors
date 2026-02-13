@@ -2,6 +2,8 @@
 # author: https://github.com/vladiscripts
 import time
 from typing import NamedTuple
+from sqlalchemy import select, delete
+from sqlalchemy.dialects.mysql import insert
 from scripts.db_models import PagesWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage, SFN
 from scripts import datetime, timezone, logger
@@ -17,6 +19,7 @@ class PageData(NamedTuple):
     title: str
     pid: int  # page_id
     err_refs: list[SFN]
+    checktime: datetime
 
 
 class Scanner:
@@ -28,63 +31,89 @@ class Scanner:
         """Сканирование страниц на ошибки"""
         while True:
             pages = db_get_list_changed_pages(limit=self.pages_limit_by_query)
+            logger.info(f'Сканируем пачку из {len(pages)} изменённых страниц...')
             if not pages:
                 break
             results = []
             for pid, title in pages:
                 logger.info(f'scan: {title}')
-                if err_refs := self.scan_page(title, pid):
-                    results.append(PageData(title, pid, err_refs))
+                err_refs = self.scan_page(title, pid)
+                if err_refs is None:
+                    logger.debug(f'Ошибка при скачивании страницы "{title}", {pid=}')
+                    continue
+                p = PageData(title, pid, err_refs, datetime.now(timezone.utc))
+                results.append(p)
 
-            for p in results:
-                # if title == 'Скачок_Резеля': logger.info(title)
-                # if pid != 54229: print()
-                db_update_pagedata(p, datetime.now(timezone.utc))
+            db_update_pages_data(results)
+
         self.downloader.s.close()
 
-    def scan_page(self, title: str, pid=None) -> list[SFN] | None:
-        """Сканирование страниц на ошибки"""
+    def scan_page(self, title: str, pid: int) -> list[SFN] | None:
+        """Сканирование страницы на ошибки"""
         if text := self.downloader.get_page(title, pid):
-            err_refs = ScanRefsOfPage(text)
-            return err_refs
+            return ScanRefsOfPage(text)
+        return None
 
 
 def db_get_list_changed_pages(limit=None) -> list[tuple[int, str]]:
     with Session() as s:
-        q = s.query(PagesWithSfn).outerjoin(Timecheck, PagesWithSfn.page_id == Timecheck.page_id) \
-            .filter((Timecheck.timecheck.is_(None)) | (PagesWithSfn.timelastedit > Timecheck.timecheck))
+        # Возвращает страницы, которые ещё не проверялись (timecheck IS NULL), или изменились с последней проверки (timelastedit > timecheck)
+        stmt = (
+            select(PagesWithSfn.page_id, PagesWithSfn.title)
+            .outerjoin(Timecheck, PagesWithSfn.page_id == Timecheck.page_id)
+            .where(
+                (Timecheck.timecheck.is_(None)) |
+                (PagesWithSfn.timelastedit > Timecheck.timecheck))
+            .order_by(PagesWithSfn.page_id))
         if limit:
-            q = q.limit(limit)
-        _pages = q.all()
-        pages = [(p.page_id, p.title) for p in _pages]
-        return pages
+            stmt = stmt.limit(limit)
+        r = s.execute(stmt)
+        records = [(p.page_id, p.title) for p in r]
+        return records
 
 
 def db_delete_page_id(pid: int):
     with Session() as s:
-        s.query(PagesWithSfn).filter(PagesWithSfn.page_id == pid).delete(synchronize_session='fetch')
+        stmt = delete(PagesWithSfn).where(PagesWithSfn.page_id == pid)
+        s.execute(stmt)
         s.commit()
 
 
-def db_update_pagedata_(s, p: PageData, chktime: datetime) -> None:
-    """Сохранение результатов сканирования в БД
-    Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
-    """
-    with s.begin_nested():
-        s.query(ErrRef).filter(ErrRef.page_id == p.pid).delete(synchronize_session='fetch')
-        for ref in p.err_refs:
-            s.add(ErrRef(p.pid, ref.citeref, ref.link_to_sfn, ref.text))
-        s.merge(Timecheck(p.pid, chktime))
-    s.commit()
+# def db_update_pagedata_(s, p: PageData) -> None:
+#     """Сохранение результатов сканирования в БД
+#     Очистка db от списка старых ошибок в поддтаблицах автоматическая, с помощью ForeignKey ondelete='CASCADE'
+#     """
+#     with s.begin_nested():
+#         s.query(ErrRef).filter(ErrRef.page_id == p.pid).delete(synchronize_session='fetch')
+#         for ref in p.err_refs:
+#             s.add(ErrRef(p.pid, ref.citeref, ref.link_to_sfn, ref.text))
+#         s.merge(Timecheck(p.pid, p.checktime))
 
 
-def db_update_pagedata(p: PageData, chktime: datetime) -> None:
+def db_update_pages_data(pages: list[PageData]) -> None:
     """Сохранение результатов сканирования в БД"""
-    logger.debug(f'db_updating: {p.title}')
-    with Session() as s:
-        db_update_pagedata_(s, p, chktime)
-    logger.debug(f'db_updated: {p.title}')
+    logger.debug(f'db_updating')
+    try:
+        with Session() as s:
+            for p in pages:
+                # Удалить записи из таблицы о битых сносках
+                s.execute(delete(ErrRef).where(ErrRef.page_id == p.pid))
 
+                # Обновить таблицу с битыми сносками
+                if p.err_refs:
+                    err_objects = [ErrRef(p.pid, ref.citeref, ref.link_to_sfn, ref.text) for ref in p.err_refs]
+                    err_data = [obj.as_dict() for obj in err_objects]
+                    s.execute(insert(ErrRef), err_data)
+
+                # Обновить таблицу с датой последнего сканирования
+                stmt = (insert(Timecheck.__table__).values(page_id=p.pid, timecheck=p.checktime).on_duplicate_key_update(timecheck=p.checktime))
+                s.execute(stmt)
+            s.commit()
+            logger.debug('Пакет обновлён в БД')
+
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении БД: {e}")
+        raise
 
 # @staticmethod
 # def db_update_pagedata_packet(pages: List[Tuple[str, int, tuple]]) -> None:
@@ -100,10 +129,6 @@ def db_update_pagedata(p: PageData, chktime: datetime) -> None:
 #             s.merge(Timecheck(pid, time_current()))
 #         s.commit()
 
-
-def time_current():
-    return time.strftime('%Y%m%d%H%M%S', time.gmtime())
-    # return datetime.timestamp()..utcfromtimestamp(ts).strftime('%Y%m%d%H%M%S')
 
 # for test
 # page = ScanRefsOfPage('2091672', 'Марк Фульвий Флакк (консул 125 года до н. э.)')

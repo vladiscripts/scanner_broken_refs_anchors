@@ -2,6 +2,13 @@ from datetime import datetime, timezone
 from .logger import logger
 
 
+def _chunked(iterable, n):
+    """Разбивает итерируемый объект на чанки по n элементов."""
+    lst = list(iterable)
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def file_savelines(filename, strlist, append=False):
     mode = 'a' if append else 'w'
     text = '\n'.join(strlist)
