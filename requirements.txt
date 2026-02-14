@@ -1,6 +1,7 @@
+python>=3.9
 requests
 cssselect
 lxml
 pymysql
-sqlalchemy
+sqlalchemy>=2.0
 pywikibot
