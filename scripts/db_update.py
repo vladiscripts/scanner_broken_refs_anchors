@@ -32,8 +32,6 @@ class UpdateDB:
         logger.info('loading from WikiDB')
         pages_with_warning_in_wiki = wiki_db.get_listpages_have_WarningTpl()
         logger.info(f'Downloaded {len(pages_with_warning_in_wiki)} records of pages with WarningTpl from WikiDB')
-        # pickle_save_to_file('WarningTpl_update.pickle', pages_with_warning_in_wiki)
-        # pages_with_warning_in_wiki = pickle_load_from_file('WarningTpl_update.pickle')
 
         with Session() as s:
             try:
@@ -58,8 +56,6 @@ class UpdateDB:
         logger.info('loading from WikiDB')
         pages_with_sfns_wiki = wiki_db.get_listpages_have_sfnTpl()  # long query ~126000 rows per 9-11 seconds
         logger.info(f'Downloaded {len(pages_with_sfns_wiki)} records of pages with sfnTpl from WikiDB')
-        # pickle_save_to_file('wiki_sfnTpl_update.pickle', pages_with_sfns_wiki)
-        # pages_with_sfns_wiki = pickle_load_from_file('wiki_sfnTpl_update.pickle')
 
         with Session() as s:
             # чистка PagesWithSfn
@@ -74,26 +70,6 @@ class UpdateDB:
             s.commit()
 
         logger.info('reload_listpages_have_sfnTpl completed')
-
-        # -----------
-
-        # слишком долгая операция
-        # for page_id, title, timelastedit in pages_with_sfns_wiki:
-        #     for db in db_pages:
-        #         if page_id == db.page_id:
-        #             if int(timelastedit) >= int(db.timecheck) or title.decode("utf-8") != db.title:
-        #                 self.db_session.merge(PageWithSfn(page_id, self.byte2utf(title), int(timelastedit)))
-        #             break
-
-        # очистка и перезаливка таблицы
-        # не подходит - если удалять все, то параметр ForeignKey ondelete="CASCADE" удалит и все проверки
-        # if len(pages_with_sfns_wiki) > 10000:  # 10000 иногда возвращается обрезанный результат
-        #     self.db_session.query(PageWithSfn).delete()
-        # pages_with_sfns_wiki = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
-        #                      for id, title, timelastedit in pages_with_sfns_wiki]
-        # self.db_session.bulk_save_objects(pages_with_sfns_wiki)
-        # long query
-        # self.s.commit()
 
     def clear_orphan_sfnpages(self, s, pages_with_sfns_wiki):
         """Синхронизация базы данных с WikiDB. Удаление из таблицы PagesWithSfn записей о страницах у которых в Википедии удалён шаблон {{sfn}}."""
