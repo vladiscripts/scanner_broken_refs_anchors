@@ -30,19 +30,19 @@ class UpdateDB:
         """Обновить список страниц имеющих установленный шаблон."""
         logger.info('reloading listpages have WarningTpl from WikiDB')
         logger.info('loading from WikiDB')
-        w_pages = wiki_db.get_listpages_have_WarningTpl()
-        logger.info(f'Downloaded {len(w_pages)} records of pages with WarningTpl from WikiDB')
-        # pickle_save_to_file('WarningTpl_update.pickle', w_pages)
-        # w_pages = pickle_load_from_file('WarningTpl_update.pickle')
+        pages_with_warning_in_wiki = wiki_db.get_listpages_have_WarningTpl()
+        logger.info(f'Downloaded {len(pages_with_warning_in_wiki)} records of pages with WarningTpl from WikiDB')
+        # pickle_save_to_file('WarningTpl_update.pickle', pages_with_warning_in_wiki)
+        # pages_with_warning_in_wiki = pickle_load_from_file('WarningTpl_update.pickle')
 
         with Session() as s:
             try:
                 logger.info('clear PageWithWarning table')
                 s.execute(delete(PageWithWarning))
 
-                if w_pages:
+                if pages_with_warning_in_wiki:
                     logger.info('Fill PageWithWarning table')
-                    data = [PageWithWarning(pid, title).as_dict() for pid, title in w_pages]
+                    data = [PageWithWarning(r.page_id, r.title).as_dict() for r in pages_with_warning_in_wiki]
                     stmt = mysql_insert(PageWithWarning.__table__).values(data)
                     s.execute(stmt)
                 s.commit()
@@ -53,35 +53,20 @@ class UpdateDB:
                 raise
 
     def reload_listpages_have_sfnTpl(self):
-        """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных
-
-        Вариант: скачке только обновлений, имеющих sfn сейчас. См. git-branch `wikiDB_query_since_saved_last_run_time`.
-        Проблема: не учитываются страницы у которых sfn был удалён.
-        Получается, что если скачивать только обновления, надо делать два запроса:
-        1. обновлений имеющих шаблон сейчас
-        2. послать список всех страниц с sfn из локальной БД (~40k), и сравнив со списком всех в БД сейчас.
-        Второй запрос - это тоже что просто запросить все страницы, + много усложнений.
-        Вариант не имеет смысла.
-        Или проверять отдельными запросами - к API и WikiDB наличие sfn на странице. Но это затратно.
-        """
-
+        """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных."""
         logger.info('reloading listpages have sfnTpl from WikiDB')
         logger.info('loading from WikiDB')
-        w_pages_with_sfns = wiki_db.get_listpages_have_sfnTpl()  # long query ~45000 rows
-        logger.info(f'Downloaded {len(w_pages_with_sfns)} records of pages with sfnTpl from WikiDB')
-        # pickle_save_to_file('wiki_sfnTpl_update.pickle', w_pages_with_sfns)
-        # w_pages_with_sfns = pickle_load_from_file('wiki_sfnTpl_update.pickle')
-
-        # db_pages = self.db_session.query(PageWithSfn.page_id, PageWithSfn.title, Timecheck.timecheck) \
-        #     .outerjoin(Timecheck, PageWithSfn.page_id == Timecheck.page_id).all()
+        pages_with_sfns_wiki = wiki_db.get_listpages_have_sfnTpl()  # long query ~126000 rows per 9-11 seconds
+        logger.info(f'Downloaded {len(pages_with_sfns_wiki)} records of pages with sfnTpl from WikiDB')
+        # pickle_save_to_file('wiki_sfnTpl_update.pickle', pages_with_sfns_wiki)
+        # pages_with_sfns_wiki = pickle_load_from_file('wiki_sfnTpl_update.pickle')
 
         with Session() as s:
             # чистка PagesWithSfn
-            self.clear_orphan_sfnpages(s, w_pages_with_sfns)
+            self.clear_orphan_sfnpages(s, pages_with_sfns_wiki)
 
-            # Подготовка данных с использованием модели (без дублирования логики)
-            upsert_data = [PagesWithSfn(page_id, title, timelastedit).as_dict() for page_id, title, timelastedit in w_pages_with_sfns]
-
+            # обновление PagesWithSfn
+            upsert_data = [PagesWithSfn(r.page_id, r.title, r.timelastedit).as_dict() for r in pages_with_sfns_wiki]
             if upsert_data:
                 stmt = mysql_insert(PagesWithSfn.__table__).values(upsert_data)
                 stmt = stmt.on_duplicate_key_update(title=stmt.inserted.title, timelastedit=stmt.inserted.timelastedit)
@@ -93,7 +78,7 @@ class UpdateDB:
         # -----------
 
         # слишком долгая операция
-        # for page_id, title, timelastedit in w_pages_with_sfns:
+        # for page_id, title, timelastedit in pages_with_sfns_wiki:
         #     for db in db_pages:
         #         if page_id == db.page_id:
         #             if int(timelastedit) >= int(db.timecheck) or title.decode("utf-8") != db.title:
@@ -102,19 +87,20 @@ class UpdateDB:
 
         # очистка и перезаливка таблицы
         # не подходит - если удалять все, то параметр ForeignKey ondelete="CASCADE" удалит и все проверки
-        # if len(w_pages_with_sfns) > 10000:  # 10000 иногда возвращается обрезанный результат
+        # if len(pages_with_sfns_wiki) > 10000:  # 10000 иногда возвращается обрезанный результат
         #     self.db_session.query(PageWithSfn).delete()
-        # w_pages_with_sfns = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
-        #                      for id, title, timelastedit in w_pages_with_sfns]
-        # self.db_session.bulk_save_objects(w_pages_with_sfns)
+        # pages_with_sfns_wiki = [PageWithSfn(id, self.byte2utf(title), int(timelastedit))
+        #                      for id, title, timelastedit in pages_with_sfns_wiki]
+        # self.db_session.bulk_save_objects(pages_with_sfns_wiki)
         # long query
         # self.s.commit()
 
-    def clear_orphan_sfnpages(self, s, w_pages_with_sfns):
+    def clear_orphan_sfnpages(self, s, pages_with_sfns_wiki):
+        """Синхронизация базы данных с WikiDB. Удаление из таблицы PagesWithSfn записей о страницах у которых в Википедии удалён шаблон {{sfn}}."""
         logger.info('Drop_orphan_sfnpages')
-        w_page_ids = {page_id for page_id, title, timelastedit in w_pages_with_sfns}
-        db_page_ids = {r[0] for r in s.execute(select(PagesWithSfn.page_id)).fetchall()}
-        to_delete = db_page_ids - w_page_ids
+        page_ids_wiki = {r.page_id for r in pages_with_sfns_wiki}
+        page_ids_db = {r.page_id for r in s.execute(select(PagesWithSfn.page_id)).fetchall()}
+        to_delete = page_ids_db - page_ids_wiki
         if to_delete:
             for chunk in _chunked(to_delete, 1000):
                 stmt = delete(PagesWithSfn).where(PagesWithSfn.page_id.in_(chunk))
@@ -142,7 +128,6 @@ class UpdateDB:
             s.execute(stmt)
             s.commit()
 
-    # Helpers
     def clear_check_pages_with_warnings(self):
         """Удаление метки проверки у страниц имеющих warning-шаблон."""
         with Session() as s:

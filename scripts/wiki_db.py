@@ -1,5 +1,5 @@
 # author: https://github.com/vladiscripts
-from typing import Generator
+from typing import NamedTuple, Generator
 from pywikibot.data import mysql
 from urllib.parse import quote_from_bytes, unquote
 from datetime import datetime
@@ -7,9 +7,21 @@ from datetime import datetime
 from settings import *
 
 
-def get_listpages_have_WarningTpl() -> tuple[tuple[int, str]]:
-    """Обновить список страниц имеющих установленный шаблон.
-    # Не используются ORDER и GROUP посколкьу сильно замедляют запрос"""
+class PageWithSfnInWiki(NamedTuple):
+    """Страница с {{sfn}} и временем последнего редактирования."""
+    page_id: int
+    title: str
+    timelastedit: datetime
+
+
+class PageWithWarningInWiki(NamedTuple):
+    """Страница с установленным шаблоном-предупреждением."""
+    page_id: int
+    title: str
+
+
+def get_listpages_have_WarningTpl() -> tuple[PageWithWarningInWiki, ...]:
+    """Получить список страниц, имеющих установленный шаблон-предупреждение."""
     sql = f"""SELECT page_id, page_title
                 FROM page
                     INNER JOIN templatelinks ON tl_from = page_id
@@ -17,28 +29,12 @@ def get_listpages_have_WarningTpl() -> tuple[tuple[int, str]]:
                 WHERE lt_namespace = 10
                   AND lt_title = "{normalization_pagename(warning_tpl_name)}"
                   AND page_namespace = 0;"""
-    pages = tuple((p[0], byte2utf(p[1])) for p in wdb_query(sql))
-    return pages  # type: ignore
+    pages = tuple(PageWithWarningInWiki(r[0], byte2utf(r[1])) for r in wdb_query(sql))
+    return pages
 
 
-def get_listpages_have_sfnTpl() -> tuple[tuple[int, str, datetime]]:
-    """Обновить список страниц, имеющих шаблоны типа {{sfn}}"""
-    """ 
-    можно запрашивать join revesions on lastedit >= max(Timechecks.timecheck)
-    это ограничит размер ответа, а может и длительность запроса (? надо проверять) 
-    """
-    # tpls_str = _list_to_str_params('tl_title', names_sfn_templates)
-    # sql = f"""SELECT
-    #           page.page_id,
-    #           page.page_title,
-    #           MAX(revision.rev_timestamp) AS timelastedit
-    #         FROM page
-    #           INNER JOIN templatelinks ON page.page_id = templatelinks.tl_from
-    #           INNER JOIN revision ON page.page_id = revision.rev_page
-    #         WHERE templatelinks.tl_namespace = 10 AND page.page_namespace = 0
-    #         AND ({tpls_str})
-    #         GROUP BY page.page_title
-    #         ORDER BY page.page_id;"""
+def get_listpages_have_sfnTpl() -> tuple[PageWithSfnInWiki, ...]:
+    """Получить список страниц, имеющих шаблоны типа {{sfn}}."""
     tpls = ','.join((f'"{normalization_pagename(s)}"' for s in names_sfn_templates))
     sql = f"""SELECT page_id, page_title, rev_timestamp
                 FROM page
@@ -48,31 +44,8 @@ def get_listpages_have_sfnTpl() -> tuple[tuple[int, str, datetime]]:
                   WHERE lt_namespace = 10
                     AND page_namespace = 0
                     AND lt_title IN ({tpls});"""
-    pages = tuple((p[0], byte2utf(p[1]), datetime.strptime(p[2].decode(), '%Y%m%d%H%M%S')) for p in wdb_query(sql))
-    return pages  # type: ignore
-
-
-# def _wdb_query(sql):
-#     result = []
-#     sql = sql.strip(' ;\n')
-#     i = 1
-#     limit = 10000
-#     while True:
-#         sql_limit = f'{sql} LIMIT {i}, {limit};'
-#         rows = _wdb_query(sql_limit)
-#
-#         # if not len(rows):  # break the loop when no more rows
-#         #     print("Done!")
-#         #     break
-#
-#         if not rows:
-#             break
-#         for row in rows:  # do something with results
-#             result.append(row)
-#         # [].extend(tuple(rows))
-#
-#         i += limit
-#     return result
+    pages = tuple(PageWithSfnInWiki(r[0], byte2utf(r[1]), datetime.strptime(r[2].decode(), '%Y%m%d%H%M%S')) for r in wdb_query(sql))
+    return pages
 
 
 def normalization_pagename(t: str) -> str:
@@ -101,36 +74,10 @@ def wdb_query(sql, limit='') -> Generator:
 def byte2utf(string):
     return unquote(quote_from_bytes(string), encoding='utf8')
 
-# def wdb_query_pymysql(sql):
-#     import pymysql
-#     import passwords
-#     connection = pymysql.connect(
-#         # Для доступа к wiki-БД с ПК необходим ssh-тунель с перебросом порта с localhost
-#         # порт должен совпадать с указанным в /home/vladislav/.pywikibot/user-config.py  db_port
-#         # ssh -L 4711:ruwiki.web.db.svc.wikimedia.cloud:3306 <username>@login.toolforge.org -i "<path/to/key>"
-#         # см. https://wikitech.wikimedia.org/wiki/Help:Tool_Labs/Database#Connecting_to_the_database_replicas_from_your_own_computer
-#         # host='127.0.0.1', port=4711,
-#         # или для доступа из скриптов на tools.wmflabs.org напрямую:
-#         # host='ruwiki.labsdb', port=3306,
-#         host='127.0.0.1' if run_local_not_from_wmflabs else 'ruwiki.labsdb',
-#         port=4711 if run_local_not_from_wmflabs else 3306,
-#         db='ruwiki_p',
-#         user=passwords.wdb_user,
-#         password=passwords.wdb_pw,
-#         use_unicode=True, charset="utf8")
-#     try:
-#         with connection.cursor() as cursor:
-#             cursor.execute(sql)
-#         result = cursor.fetchall()
-#     finally:
-#         connection.close()
-#     return result
-
 # def query_transcludes_any_tpl(self, tpl_name):
-#     """Полоучение списка трансклюзий какого-либо шаблона.
+#     """Получение списка трансклюзий какого-либо шаблона.
 #     Для тестов в основном, и сброса отметки проверки и перепроверки неучтённых шаблонов."""
-#     tpls_str = self.list_to_str_params('tl_title',
-#                                        map(self.normalization_pagename, self.str2list(tpl_name)))
+#     tpls_str = self.list_to_str_params('tl_title', map(self.normalization_pagename, self.str2list(tpl_name)))
 #     sql = f"""SELECT page_id, page_title
 # 		FROM page
 # 		JOIN templatelinks ON templatelinks.tl_from = page.page_id
