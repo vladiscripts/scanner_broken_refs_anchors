@@ -25,7 +25,7 @@ class PagesWithSfn(BaseModel, Base):
     __table_args__ = {'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_unicode_ci'}
     page_id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
-    timelastedit = Column(DateTime)  # VARBINARY(14) on wikiDB
+    timelastedit = Column(DateTime)
 
     # ref = relationship('ErrRef', backref='refs', passive_deletes=True)
     # timecheck = relationship('Timecheck', backref='timechecks',
