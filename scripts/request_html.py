@@ -14,7 +14,7 @@ class Downloader:
         s = requests.Session()
         s.headers.update({'User-Agent': 'user:textworkerBot',
                           'Accept-Encoding': 'gzip, deflate'})
-        s.params.update({"action": "parse", 'format': 'json', 'prop': 'text', 'utf8': 1, 'formatversion': 2})
+        s.params = {"action": "parse", 'format': 'json', 'prop': 'text', 'utf8': 1, 'formatversion': 2}
         # s.params.update({"action": "render"})  # для запросов как html, а не через api
         return s
 
@@ -30,7 +30,7 @@ class Downloader:
         except Exception as e:
             # ReadTimeoutError
             logger.warning(f'{e}. pid={pid}, title={title}, error: {e}')
-            return
+            return None
         if r.status_code != 200:
             logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
         if len(r.text) < 200:
@@ -43,13 +43,13 @@ class Downloader:
                 logger.warning(f'error on page request - no page. pid={pid}, title={title}, error: {j["error"]}')
             else:
                 logger.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}\n')
-            return
+            return None
         if 'warnings' in j:
             logger.warning(f'warnings on page request. pid={pid}, title={title}, error: {j["error"]}\n')
-            return
+            return None
         if 'parse' not in j:
             logger.warning(f"not 'parse' in j. pid={pid}, title={title}, error: {j['error']}\n")
-            return
+            return None
         return j['parse']['text']
 
     def get_page_via_html(self, pid, title: str) -> str | None:

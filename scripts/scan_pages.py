@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# author: https://github.com/vladiscripts
-import time
+# import time
 from typing import NamedTuple
 from sqlalchemy import select, delete
 from sqlalchemy.dialects.mysql import insert
@@ -48,7 +46,7 @@ class Scanner:
 
         self.downloader.s.close()
 
-    def scan_page(self, title: str, pid: int) -> list[SFN] | None:
+    def scan_page(self, title: str, pid: int | None = None) -> list[SFN] | None:
         """Сканирование страницы на ошибки"""
         if text := self.downloader.get_page(title, pid):
             return ScanRefsOfPage(text)

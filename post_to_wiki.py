@@ -61,7 +61,7 @@ def posting_template(date):
     args = [
         '-file:' + filename_listpages_errref_where_no_yet_warning_tpl,
         '-text:"{{%s|дата=%s}}"' % (warning_tpl_name, date),
-        '-grepnot:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
+        r'-grepnot:"\{\{([Шш]аблон:)?(%s)\s*[|}]"' % '|'.join(excepts),
         '-summary:"+шаблон: некорректные викиссылки в сносках"',
         '-always',
     ]
