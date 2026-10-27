@@ -5,7 +5,7 @@
 # 20 1 * * * jsub -once -quiet -N bra -o /dev/null -e /dev/null ~/scripts/broken_refs/run.sh  # without logging
 #
 # `pyenv activate venv3.6.4`  # work on Python > v3.6
-source $PYTHONENV/bin/activate
+source ~/pyvenv/bin/activate
 cd ~/scripts/broken_refs
 ./scanner.py
 ./post_to_wiki.py
