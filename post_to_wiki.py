@@ -9,16 +9,9 @@ from datetime import datetime
 from settings import *
 
 python_and_path = 'python %s/pwb.py' % os.getenv('PWBPATH')
-family = 'wikipedia'
 user = 'TextworkerBot'
 pwb_cfg = '-dir:~/.pywikibot/'
-args_base = [f'-family:{family}', '-lang:ru', f'-user:{user}', '-pt:1', pwb_cfg]
-
-
-# ToDo:
-# чтобы опять не писались в ВП предупреждения, на основе старых статусов проверки,
-# - можно проверять код завершения предыдущего скрипта на ошибку,
-# - переименовывать файлы со списками после их обработки
+args_base = [f'-site:wikipedia:ru', f'-user:{user}', '-pt:1', pwb_cfg]
 
 
 def run(command, filename):
@@ -87,7 +80,6 @@ def remove_template():
 
 
 def login():
-    print(os.getenv('PWBPATH'))
     command = f'{python_and_path} login {" ".join(args_base)}'
     code = subprocess.Popen(shlex.split(command)).wait()
     assert code == 0
