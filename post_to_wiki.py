@@ -20,6 +20,7 @@ args_base = [f'-family:{family}', '-lang:ru', f'-user:{user}', '-pt:1', pwb_cfg]
 # - можно проверять код завершения предыдущего скрипта на ошибку,
 # - переименовывать файлы со списками после их обработки
 
+
 def run(command, filename):
     if not os.path.isfile(filename):
         raise Exception(f'No file "{filename}"')

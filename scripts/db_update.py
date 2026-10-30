@@ -4,7 +4,7 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 from scripts.db_models import PagesWithSfn, ErrRef, PageWithWarning, Timecheck, Session
 from scripts import wiki_db
-from scripts import logger, _chunked
+from scripts import log, _chunked
 
 
 class UpdateDB:
@@ -28,18 +28,18 @@ class UpdateDB:
 
     def reload_listpages_have_WarningTpl(self):
         """Обновить список страниц имеющих установленный шаблон."""
-        logger.info('reloading listpages have WarningTpl from WikiDB')
-        logger.info('loading from WikiDB')
+        log.info('reloading listpages have WarningTpl from WikiDB')
+        log.info('loading from WikiDB')
         pages_with_warning_in_wiki = wiki_db.get_listpages_have_WarningTpl()
-        logger.info(f'Downloaded {len(pages_with_warning_in_wiki)} records of pages with WarningTpl from WikiDB')
+        log.info(f'Downloaded {len(pages_with_warning_in_wiki)} records of pages with WarningTpl from WikiDB')
 
         with Session() as s:
             try:
-                logger.info('clear PageWithWarning table')
+                log.info('clear PageWithWarning table')
                 s.execute(delete(PageWithWarning))
 
                 if pages_with_warning_in_wiki:
-                    logger.info('Fill PageWithWarning table')
+                    log.info('Fill PageWithWarning table')
                     data = [PageWithWarning(r.page_id, r.title).as_dict() for r in pages_with_warning_in_wiki]
                     stmt = mysql_insert(PageWithWarning.__table__).values(data)
                     s.execute(stmt)
@@ -47,15 +47,15 @@ class UpdateDB:
 
             except Exception as e:
                 s.rollback()
-                logger.error(f"Failed to update PageWithWarning: {e}")
+                log.error(f"Failed to update PageWithWarning: {e}")
                 raise
 
     def reload_listpages_have_sfnTpl(self):
         """Загрузка списка страниц имеющих шаблоны типа {{sfn}}, и обновление ими базы данных."""
-        logger.info('reloading listpages have sfnTpl from WikiDB')
-        logger.info('loading from WikiDB')
+        log.info('reloading listpages have sfnTpl from WikiDB')
+        log.info('loading from WikiDB')
         pages_with_sfns_wiki = wiki_db.get_listpages_have_sfnTpl()  # long query ~126000 rows per 9-11 seconds
-        logger.info(f'Downloaded {len(pages_with_sfns_wiki)} records of pages with sfnTpl from WikiDB')
+        log.info(f'Downloaded {len(pages_with_sfns_wiki)} records of pages with sfnTpl from WikiDB')
 
         with Session() as s:
             # чистка PagesWithSfn
@@ -69,11 +69,11 @@ class UpdateDB:
                 s.execute(stmt)
             s.commit()
 
-        logger.info('reload_listpages_have_sfnTpl completed')
+        log.info('reload_listpages_have_sfnTpl completed')
 
     def clear_orphan_sfnpages(self, s, pages_with_sfns_wiki):
         """Синхронизация базы данных с WikiDB. Удаление из таблицы PagesWithSfn записей о страницах у которых в Википедии удалён шаблон {{sfn}}."""
-        logger.info('Drop_orphan_sfnpages')
+        log.info('Drop_orphan_sfnpages')
         page_ids_wiki = {r.page_id for r in pages_with_sfns_wiki}
         page_ids_db = {r.page_id for r in s.execute(select(PagesWithSfn.page_id)).fetchall()}
         to_delete = page_ids_db - page_ids_wiki
@@ -84,21 +84,21 @@ class UpdateDB:
 
     def clear_orphan_by_timecheck(self):
         """Если в pages нет записи о статье, то удалить ее строки из timecheck"""
-        logger.info('Drop_orphan_by_timecheck')
+        log.info('Drop_orphan_by_timecheck')
         with Session() as s:
             stmt = delete(Timecheck).where(~Timecheck.page_id.in_(select(PagesWithSfn.page_id)))
             s.execute(stmt)
             s.commit()
 
     def clear_orphan_errrefs(self):
-        logger.info('Drop_refs_of_changed_pages')
+        log.info('Drop_refs_of_changed_pages')
         with Session() as s:
             stmt = delete(ErrRef).where(~ErrRef.page_id.in_(select(PagesWithSfn.page_id)))
             s.execute(stmt)
             s.commit()
 
     def clear_timechecks_of_erropages(self):
-        logger.info('Drop_timechecks_of_erropages')
+        log.info('Drop_timechecks_of_erropages')
         with Session() as s:
             stmt = delete(Timecheck).where(Timecheck.page_id.in_(select(ErrRef.page_id).distinct()))
             s.execute(stmt)

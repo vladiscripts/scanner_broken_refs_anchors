@@ -4,7 +4,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.dialects.mysql import insert
 from scripts.db_models import PagesWithSfn, ErrRef, Timecheck, Session
 from scripts.scan_refs_of_page import ScanRefsOfPage, SFN
-from scripts import datetime, timezone, logger
+from scripts import datetime, timezone, log
 from . import request_html
 
 
@@ -29,15 +29,15 @@ class Scanner:
         """Сканирование страниц на ошибки"""
         while True:
             pages = db_get_list_changed_pages(limit=self.pages_limit_by_query)
-            logger.info(f'Сканируем пачку из {len(pages)} изменённых страниц...')
+            log.info(f'Сканируем пачку из {len(pages)} изменённых страниц...')
             if not pages:
                 break
             results = []
             for pid, title in pages:
-                logger.info(f'scan: {title}')
+                log.info(f'scan: {title}')
                 err_refs = self.scan_page(title, pid)
                 if err_refs is None:
-                    logger.debug(f'Ошибка при скачивании страницы "{title}", {pid=}')
+                    log.debug(f'Ошибка при скачивании страницы "{title}", {pid=}')
                     continue
                 p = PageData(title, pid, err_refs, datetime.now(timezone.utc))
                 results.append(p)
@@ -90,7 +90,7 @@ def db_delete_page_id(pid: int):
 
 def db_update_pages_data(pages: list[PageData]) -> None:
     """Сохранение результатов сканирования в БД"""
-    logger.debug(f'db_updating')
+    log.debug(f'db_updating')
     try:
         with Session() as s:
             for p in pages:
@@ -107,10 +107,10 @@ def db_update_pages_data(pages: list[PageData]) -> None:
                 stmt = (insert(Timecheck.__table__).values(page_id=p.pid, timecheck=p.checktime).on_duplicate_key_update(timecheck=p.checktime))
                 s.execute(stmt)
             s.commit()
-            logger.debug('Пакет обновлён в БД')
+            log.debug('Пакет обновлён в БД')
 
     except Exception as e:
-        logger.error(f"Ошибка при обновлении БД: {e}")
+        log.error(f"Ошибка при обновлении БД: {e}")
         raise
 
 # @staticmethod

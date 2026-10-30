@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from .logger import logger
+from .logger import log
 
 
 def _chunked(iterable, n):

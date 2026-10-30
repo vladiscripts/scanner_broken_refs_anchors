@@ -8,7 +8,7 @@ from urllib.parse import quote
 from scripts.scan_pages import db_get_list_changed_pages, scan_page
 from scripts.scan_refs_of_page import ScanRefsOfPage
 from settings import *
-from scripts import logger, logger
+from scripts import log
 
 
 class Scanner:
@@ -28,7 +28,7 @@ class Scanner:
             tasks = [asyncio.ensure_future(self.scan_pagehtml_for_referrors(sem, p, session)) for p in list_pages]
             finished, unfinished = await asyncio.wait(tasks)
             if len(unfinished):
-                logger.error('have unfinished async tasks')
+                log.error('have unfinished async tasks')
 
     async def db_works(self, p):
         scan_page(p)
@@ -39,7 +39,7 @@ class Scanner:
         url = 'https://ru.wikipedia.org/wiki/' + quote(page_title)
 
         if page_title == 'None' or page_title is None:
-            logger.error('!!!!!!!!!!!!!')
+            log.error('!!!!!!!!!!!!!')
 
         async with sem:
             retries = 0
@@ -49,7 +49,7 @@ class Scanner:
 
                     if response.status == 200:
                         response_text = await response.text()
-                        logger.info(page_title + ':')
+                        log.info(page_title + ':')
                         page = ScanRefsOfPage(response_text)
                         errrefs = page.err_refs
                         # try:
@@ -63,13 +63,13 @@ class Scanner:
                         retries += 1
                         await asyncio.sleep(1)
                     else:
-                        logger.error(f'{page_title} response.status != 200')
+                        log.error(f'{page_title} response.status != 200')
                     response.close()
                     break
 
                 except (aiohttp.ClientOSError, aiohttp.ClientResponseError,
                         aiohttp.ServerDisconnectedError, asyncio.TimeoutError) as e:
-                    logger.error(
+                    log.error(
                         f'!!! Error. Page title: "{page_title}"; url: {url}; error: {e}. Can will work on a next request.')
                     retries += 1
                     await asyncio.sleep(1)

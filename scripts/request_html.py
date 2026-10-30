@@ -3,7 +3,7 @@
 #
 import requests
 import json
-from scripts import logger
+from scripts import log
 
 
 class Downloader:
@@ -29,26 +29,26 @@ class Downloader:
                 r = self.s.get('https://ru.wikipedia.org/w/api.php', params={'page': title}, timeout=60)
         except Exception as e:
             # ReadTimeoutError
-            logger.warning(f'{e}. pid={pid}, title={title}, error: {e}')
+            log.warning(f'{e}. pid={pid}, title={title}, error: {e}')
             return None
         if r.status_code != 200:
-            logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
+            log.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
         if len(r.text) < 200:
-            logger.error(f'error: len(r.text) < 200 in page: {title}')
+            log.error(f'error: len(r.text) < 200 in page: {title}')
         j = json.loads(r.text)
         if 'error' in j:
             if j["error"]['code'] == 'nosuchpageid':
-                logger.warning(f'on page with ID. pid={pid}, title={title}, error: {j["error"]}')
+                log.warning(f'on page with ID. pid={pid}, title={title}, error: {j["error"]}')
             elif j["error"]['code'] == 'missingtitle':
-                logger.warning(f'error on page request - no page. pid={pid}, title={title}, error: {j["error"]}')
+                log.warning(f'error on page request - no page. pid={pid}, title={title}, error: {j["error"]}')
             else:
-                logger.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}\n')
+                log.warning(f'error on page request. pid={pid}, title={title}, error: {j["error"]}\n')
             return None
         if 'warnings' in j:
-            logger.warning(f'warnings on page request. pid={pid}, title={title}, error: {j["error"]}\n')
+            log.warning(f'warnings on page request. pid={pid}, title={title}, error: {j["error"]}\n')
             return None
         if 'parse' not in j:
-            logger.warning(f"not 'parse' in j. pid={pid}, title={title}, error: {j['error']}\n")
+            log.warning(f"not 'parse' in j. pid={pid}, title={title}, error: {j['error']}\n")
             return None
         return j['parse']['text']
 
@@ -56,17 +56,17 @@ class Downloader:
         """Сканирование страниц на ошибки"""
         from urllib.parse import quote
         assert not (title is None or title.strip() == '')
-        logger.info(f'scan: {title}')
+        log.info(f'scan: {title}')
         try:
             r = self.s.get(f'https://ru.wikipedia.org/wiki/{quote(title)}', timeout=60)  # + params={"action": "render"}
         except Exception as e:
-            logger.info(f'error: requests: {title}; {e}')
+            log.info(f'error: requests: {title}; {e}')
             return None
         if '|' in title:
-            logger.debug("'|' in title: {title}")
+            log.debug("'|' in title: {title}")
         if r.status_code != 200:
-            logger.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
+            log.error(f'HTTPerror {r.status_code} ({r.reason}): {title}')
         if len(r.text) < 200:
-            logger.error(f'error: len(r.text) < 200 in page: {title}')
+            log.error(f'error: len(r.text) < 200 in page: {title}')
         text = r.text
         return text

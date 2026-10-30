@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pathlib
 from vladi_helpers.file_helpers import json_load_from_file, json_save_to_file, file_save
 from settings import *
-from scripts.logger import logger
+from scripts.logger import log
 from scripts import scan_pages
 from scripts import scan_pages_multithreads
 from scripts.db_update import UpdateDB

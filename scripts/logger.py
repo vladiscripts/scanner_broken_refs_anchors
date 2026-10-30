@@ -10,4 +10,4 @@ def make_logger(name):
     return _logger
 
 
-logger = make_logger('scanner')
+log = make_logger('scanner')
