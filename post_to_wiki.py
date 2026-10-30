@@ -87,6 +87,7 @@ def remove_template():
 
 
 def login():
+    print(os.getenv('PWBPATH'))
     command = f'{python_and_path} login {" ".join(args_base)}'
     code = subprocess.Popen(shlex.split(command)).wait()
     assert code == 0
